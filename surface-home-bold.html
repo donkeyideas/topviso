@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Surface — Bold</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ebe7dc;
+    --paper-3: #e0dbce;
+    --ink: #0e0e0c;
+    --ink-2: #3a3a36;
+    --ink-3: #72716a;
+    --ink-4: #a8a69b;
+    --line: #d8d3c4;
+    --line-soft: #e4e0d3;
+    --accent: #1d3fd9;
+    --accent-2: #0a1f8a;
+    --accent-wash: #e8ecfa;
+    --warn: #c43b1e;
+    --ok: #1f6a3a;
+    --gold: #b58300;
+    --display: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 0 32px; }
+
+  /* ===== NAV ===== */
+  .nav {
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    background: rgba(244, 241, 234, 0.95);
+    backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .nav-inner { max-width: 1400px; margin: 0 auto; display: flex; width: 100%; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand-mark { width: 16px; height: 16px; background: var(--ink); border-radius: 50%; position: relative; top: 2px; }
+  .brand-mark::after { content: ""; position: absolute; top: 3.5px; left: 3.5px; width: 9px; height: 9px; background: var(--accent); border-radius: 50%; }
+  .brand-name { font-family: var(--display); font-size: 28px; letter-spacing: -0.02em; line-height: 1; }
+  .nav-links { display: flex; gap: 32px; margin-left: 48px; flex: 1; }
+  .nav-links a { font-size: 14px; color: var(--ink-2); font-weight: 500; }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta { display: flex; gap: 10px; align-items: center; }
+
+  .ann-bar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 24px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+  }
+  .ann-bar strong { color: #6dd48e; font-weight: 600; }
+  .ann-bar .ann-pill { background: var(--accent); padding: 2px 8px; border-radius: 3px; font-weight: 600; font-size: 10px; }
+  .ann-bar a { color: var(--paper); text-decoration: underline; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn.ink { background: var(--ink); color: var(--paper); }
+  .btn.ink:hover { background: #000; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  .btn.accent { background: var(--accent); color: white; box-shadow: 0 4px 16px rgba(29,63,217,0.25); }
+  .btn.accent:hover { background: var(--accent-2); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(29,63,217,0.35); }
+  .btn.ghost { background: transparent; color: var(--ink); }
+  .btn.ghost:hover { color: var(--accent); }
+  .btn.lg { padding: 16px 28px; font-size: 16px; font-weight: 700; }
+  .btn.xl { padding: 20px 36px; font-size: 18px; font-weight: 700; border-radius: 8px; }
+
+  /* ===== HERO - BIG ENERGY ===== */
+  .hero {
+    padding: 80px 32px 64px;
+    text-align: center;
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(29,63,217,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; position: relative; }
+
+  .badge-launch {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(29,63,217,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 28px;
+  }
+  .badge-launch .live-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+
+  .hero h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 108px;
+    line-height: 0.95;
+    letter-spacing: -0.045em;
+    margin-bottom: 24px;
+    color: var(--ink);
+  }
+  .hero h1 .serif { font-family: var(--display); font-weight: 400; font-style: italic; color: var(--accent); letter-spacing: -0.025em; }
+
+  .hero .lede {
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink-2);
+    max-width: 720px;
+    margin: 0 auto 40px;
+  }
+  .hero .lede strong { color: var(--ink); font-weight: 700; background: linear-gradient(180deg, transparent 60%, #e8ecfa 60%); padding: 0 4px; }
+
+  .hero-cta { display: flex; gap: 14px; justify-content: center; margin-bottom: 40px; flex-wrap: wrap; }
+
+  .hero-proof {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+  }
+  .hero-proof .avatars { display: flex; }
+  .hero-proof .avatars .av { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--paper); margin-left: -6px; }
+  .hero-proof .avatars .av:first-child { margin-left: 0; }
+  .hero-proof .stars { color: var(--gold); letter-spacing: 0.05em; font-size: 13px; }
+
+  /* Big stat strip */
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin: 64px -32px 0;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 40px 32px;
+  }
+  .stat-strip .stat { text-align: center; border-right: 1px solid #2a2a28; padding: 0 20px; }
+  .stat-strip .stat:last-child { border-right: none; }
+  .stat-strip .stat .n {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 60px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    color: var(--paper);
+    margin-bottom: 8px;
+  }
+  .stat-strip .stat .n em { font-family: var(--display); font-style: italic; font-weight: 400; color: var(--accent); font-size: 68px; }
+  .stat-strip .stat .l { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-4); }
+
+  /* ===== LOGO MARQUEE ===== */
+  .marquee-section { padding: 40px 0; background: var(--paper); border-bottom: 1px solid var(--line); overflow: hidden; }
+  .marquee-title { text-align: center; font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 28px; }
+  .marquee-title em { font-family: var(--display); font-style: italic; color: var(--ink); font-size: 16px; letter-spacing: 0; text-transform: none; }
+  .marquee {
+    display: flex;
+    gap: 64px;
+    white-space: nowrap;
+    animation: scroll 30s linear infinite;
+    align-items: center;
+  }
+  @keyframes scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee .ml {
+    font-family: var(--display);
+    font-size: 28px;
+    color: var(--ink-3);
+    letter-spacing: -0.015em;
+    flex-shrink: 0;
+  }
+  .marquee .ml em { font-style: italic; color: var(--ink); }
+
+  /* ===== SECTION BASE ===== */
+  section { padding: 100px 32px; border-bottom: 1px solid var(--line); }
+  .sec-head { text-align: center; margin-bottom: 64px; max-width: 900px; margin-left: auto; margin-right: auto; }
+  .sec-kicker {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--accent-wash);
+    color: var(--accent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 18px;
+  }
+  .sec-head h2 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 64px;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    margin-bottom: 16px;
+  }
+  .sec-head h2 em { font-family: var(--display); font-style: italic; font-weight: 400; color: var(--accent); letter-spacing: -0.02em; }
+  .sec-head p { font-size: 19px; color: var(--ink-3); max-width: 640px; margin: 0 auto; line-height: 1.45; }
+
+  /* ===== PROBLEM SECTION ===== */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: center;
+  }
+  .problem-stat {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 16px;
+    padding: 56px 44px;
+    position: relative;
+    overflow: hidden;
+  }
+  .problem-stat::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(29,63,217,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .problem-stat .pct {
+    font-family: var(--sans);
+    font-weight: 900;
+    font-size: 180px;
+    line-height: 0.85;
+    letter-spacing: -0.05em;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: block;
+  }
+  .problem-stat .pct em { font-family: var(--display); font-style: italic; font-weight: 400; }
+  .problem-stat h3 { font-size: 28px; font-weight: 700; margin-bottom: 12px; line-height: 1.15; letter-spacing: -0.02em; }
+  .problem-stat p { font-size: 16px; color: var(--paper-3); line-height: 1.5; }
+  .problem-text h3 { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 20px; }
+  .problem-text h3 em { font-family: var(--display); font-style: italic; color: var(--accent); font-weight: 400; }
+  .problem-text p { font-size: 17px; line-height: 1.55; color: var(--ink-2); margin-bottom: 18px; }
+
+  /* ===== FEATURE GRID BIG ===== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .feature-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    padding: 36px 32px;
+    position: relative;
+    transition: all 0.2s;
+    overflow: hidden;
+    min-height: 380px;
+    display: flex;
+    flex-direction: column;
+  }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 20px 50px rgba(14,14,12,0.08); }
+  .feature-card.hl { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .feature-card.hl:hover { border-color: var(--accent); }
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--accent-wash);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 24px;
+    font-style: italic;
+    margin-bottom: 22px;
+  }
+  .feature-card.hl .feature-icon { background: var(--accent); color: white; }
+  .feature-card .feat-badge {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--accent);
+    color: white;
+    border-radius: 999px;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+  }
+  .feature-card h3 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
+  .feature-card p { font-size: 15px; color: var(--ink-3); line-height: 1.5; margin-bottom: 20px; flex: 1; }
+  .feature-card.hl p { color: var(--paper-3); }
+  .feature-card .feat-metric {
+    font-family: var(--display);
+    font-size: 44px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    margin-bottom: 4px;
+    color: var(--accent);
+  }
+  .feature-card.hl .feat-metric { color: #6dd48e; }
+  .feature-card .feat-metric-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-3); text-transform: uppercase; }
+  .feature-card.hl .feat-metric-label { color: var(--ink-4); }
+
+  /* ===== TESTIMONIAL CARDS ===== */
+  .testim-section {
+    background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%);
+  }
+  .testim-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .testim-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 28px;
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+  }
+  .testim-card .stars { color: var(--gold); font-size: 16px; letter-spacing: 0.05em; margin-bottom: 18px; }
+  .testim-card p {
+    font-size: 18px;
+    line-height: 1.45;
+    color: var(--ink);
+    margin-bottom: 24px;
+    flex: 1;
+    font-weight: 500;
+  }
+  .testim-card p em { color: var(--accent); font-style: italic; font-family: var(--display); font-size: 22px; font-weight: 400; }
+  .testim-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .testim-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--ink); color: var(--paper); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; }
+  .testim-author strong { display: block; font-size: 14px; font-weight: 700; }
+  .testim-author small { font-size: 12px; color: var(--ink-3); }
+
+  /* ===== COMPARISON CARDS ===== */
+  .vs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px; margin: 0 auto; }
+  .vs-card { background: #fff; border-radius: 16px; padding: 36px 32px; border: 1px solid var(--line); }
+  .vs-card.them { background: var(--paper-2); }
+  .vs-card.us { background: var(--ink); color: var(--paper); border-color: var(--ink); position: relative; }
+  .vs-card.us::before {
+    content: "WINNER";
+    position: absolute;
+    top: -12px;
+    left: 32px;
+    background: #6dd48e;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 3px;
+    letter-spacing: 0.14em;
+  }
+  .vs-card h3 { font-family: var(--sans); font-weight: 700; font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .vs-card.us h3 em { font-family: var(--display); font-style: italic; font-weight: 400; color: var(--accent); }
+  .vs-card .vs-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-3); margin-bottom: 28px; text-transform: uppercase; }
+  .vs-card.us .vs-sub { color: var(--ink-4); }
+  .vs-card ul { list-style: none; }
+  .vs-card li { padding: 12px 0; font-size: 15px; border-bottom: 1px solid var(--line-soft); display: flex; gap: 12px; align-items: flex-start; }
+  .vs-card.us li { border-color: #2a2a28; color: var(--paper-3); }
+  .vs-card.us li strong { color: var(--paper); }
+  .vs-card.them li { color: var(--ink-3); }
+  .vs-card.them li::before { content: "✕"; color: var(--warn); font-weight: 700; font-size: 14px; flex-shrink: 0; }
+  .vs-card.us li::before { content: "✓"; color: #6dd48e; font-weight: 800; font-size: 16px; flex-shrink: 0; }
+
+  /* ===== PRICING ===== */
+  .price-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .price-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px 32px;
+    border: 2px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .price-card.hl {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--accent);
+    transform: scale(1.04);
+    box-shadow: 0 30px 80px rgba(29,63,217,0.25);
+    z-index: 2;
+  }
+  .price-card .bs {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .price-card h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+  .price-card .p-sub { font-size: 14px; color: var(--ink-3); margin-bottom: 28px; }
+  .price-card.hl .p-sub { color: var(--ink-4); }
+  .price-card .amt {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 80px;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin-bottom: 6px;
+  }
+  .price-card .amt small { font-size: 20px; color: var(--ink-3); font-weight: 400; letter-spacing: -0.01em; }
+  .price-card.hl .amt small { color: var(--ink-4); }
+  .price-card .amt em { font-family: var(--display); font-weight: 400; font-style: italic; color: var(--accent); }
+  .price-card .p-note { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3); margin-bottom: 32px; }
+  .price-card.hl .p-note { color: var(--ink-4); }
+  .price-card ul { list-style: none; flex: 1; margin-bottom: 28px; padding-top: 24px; border-top: 1px solid var(--line-soft); }
+  .price-card.hl ul { border-color: #2a2a28; }
+  .price-card li { padding: 9px 0; font-size: 14.5px; color: var(--ink-2); display: flex; gap: 10px; align-items: flex-start; }
+  .price-card.hl li { color: var(--paper-3); }
+  .price-card li::before { content: "✓"; color: var(--accent); font-weight: 800; flex-shrink: 0; }
+  .price-card.hl li::before { color: #6dd48e; }
+  .price-card li strong { color: var(--ink); font-weight: 700; }
+  .price-card.hl li strong { color: var(--paper); }
+
+  /* ===== FINAL CTA ===== */
+  .final-cta {
+    background: linear-gradient(135deg, var(--ink) 0%, #1a1a18 100%);
+    color: var(--paper);
+    padding: 120px 32px;
+    text-align: center;
+    border: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1000px;
+    height: 600px;
+    background: radial-gradient(ellipse, rgba(29,63,217,0.3) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .final-cta-inner { position: relative; max-width: 1000px; margin: 0 auto; }
+  .final-cta h2 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 96px;
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    margin-bottom: 24px;
+  }
+  .final-cta h2 em { font-family: var(--display); font-style: italic; font-weight: 400; color: var(--accent); }
+  .final-cta p { font-size: 22px; color: var(--paper-3); max-width: 700px; margin: 0 auto 44px; line-height: 1.4; }
+  .final-cta .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .final-cta .fc-trust {
+    margin-top: 36px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink-4);
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 60px 32px 40px;
+    background: var(--paper);
+    border-top: 1px solid var(--line);
+  }
+  .footer-inner { max-width: 1400px; margin: 0 auto; }
+  .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 40px; }
+  .footer-grid h4 { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 14px; }
+  .footer-grid ul { list-style: none; }
+  .footer-grid li { font-size: 13px; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
+  .footer-grid li:hover { color: var(--accent); }
+  .footer-grid p { font-size: 13px; color: var(--ink-3); max-width: 360px; margin-top: 16px; line-height: 1.5; }
+  .footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.1em; }
+
+  @media (max-width: 1100px) {
+    .hero h1 { font-size: 56px; }
+    .sec-head h2 { font-size: 40px; }
+    .hero-cta, .cta-row { flex-direction: column; }
+    .nav-links { display: none; }
+    .stat-strip { grid-template-columns: repeat(2, 1fr); }
+    .problem-grid, .features-grid, .testim-grid, .vs-grid, .price-grid, .footer-grid { grid-template-columns: 1fr; }
+    .price-card.hl { transform: none; }
+    .problem-stat .pct { font-size: 120px; }
+    .final-cta h2 { font-size: 44px; }
+    section { padding: 60px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- announcement bar -->
+<div class="ann-bar">
+  <span class="ann-pill">NEW</span>
+  LLM Tracker now covers <strong>Copilot</strong> and <strong>Perplexity Pro</strong> — all 7 surfaces in one place
+  <a href="#">See it live →</a>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <div style="display: flex; align-items: center;">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Surface</div>
+      </div>
+      <div class="nav-links">
+        <a href="#">Product</a>
+        <a href="#">Customers</a>
+        <a href="#">Pricing</a>
+        <a href="#">Changelog</a>
+        <a href="#">Docs</a>
+      </div>
+    </div>
+    <div class="nav-cta">
+      <a href="#" class="btn ghost">Sign in</a>
+      <a href="#" class="btn accent">Start free trial →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="badge-launch">
+      <span class="live-dot"></span>
+      <span>LIVE · 2,147 TEAMS TRACKING 7 SURFACES RIGHT NOW</span>
+    </div>
+
+    <h1>Get found on <span class="serif">every surface</span><br/>your users actually search.</h1>
+
+    <p class="lede">App Store. Play Store. ChatGPT. Claude. Gemini. Perplexity. Copilot. <strong>Your users already use all seven — your ASO tool probably covers two.</strong></p>
+
+    <div class="hero-cta">
+      <a href="#" class="btn accent xl">Start 14-day free trial →</a>
+      <a href="#" class="btn ghost xl">▶ Watch 2-min demo</a>
+    </div>
+
+    <div class="hero-proof">
+      <div class="avatars">
+        <div class="av" style="background: #1d3fd9;"></div>
+        <div class="av" style="background: #c43b1e;"></div>
+        <div class="av" style="background: #1f6a3a;"></div>
+        <div class="av" style="background: #b58300;"></div>
+        <div class="av" style="background: #0e0e0c;"></div>
+      </div>
+      <span class="stars">★★★★★</span>
+      <span>Rated <strong style="color:var(--ink);">4.8/5</strong> by <strong style="color:var(--ink);">2,147 teams</strong></span>
+    </div>
+  </div>
+
+  <!-- Stat strip -->
+  <div class="stat-strip">
+    <div class="stat">
+      <div class="n">2,147</div>
+      <div class="l">TEAMS ON SURFACE</div>
+    </div>
+    <div class="stat">
+      <div class="n"><em>$184K</em></div>
+      <div class="l">IN MRR (APR '26)</div>
+    </div>
+    <div class="stat">
+      <div class="n">128%</div>
+      <div class="l">NET REVENUE RETENTION</div>
+    </div>
+    <div class="stat">
+      <div class="n"><em>+84%</em></div>
+      <div class="l">AVG CVR LIFT · 90 DAYS</div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO MARQUEE -->
+<section class="marquee-section">
+  <div class="marquee-title">Trusted by the best teams in <em>mobile growth</em></div>
+  <div class="marquee">
+    <div class="ml">Moburst</div>
+    <div class="ml"><em>Phiture</em></div>
+    <div class="ml">yellowHEAD</div>
+    <div class="ml">AppAgent</div>
+    <div class="ml"><em>Kite Health</em></div>
+    <div class="ml">Lumen</div>
+    <div class="ml">Gummicube</div>
+    <div class="ml"><em>Fetch Rewards</em></div>
+    <div class="ml">Calm</div>
+    <div class="ml">Strava</div>
+    <!-- duplicated for infinite loop -->
+    <div class="ml">Moburst</div>
+    <div class="ml"><em>Phiture</em></div>
+    <div class="ml">yellowHEAD</div>
+    <div class="ml">AppAgent</div>
+    <div class="ml"><em>Kite Health</em></div>
+    <div class="ml">Lumen</div>
+    <div class="ml">Gummicube</div>
+    <div class="ml"><em>Fetch Rewards</em></div>
+    <div class="ml">Calm</div>
+    <div class="ml">Strava</div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section>
+  <div class="problem-grid">
+    <div class="problem-stat">
+      <span class="pct"><em>40%</em></span>
+      <h3>of users now ask an AI before they ever open a store.</h3>
+      <p>Your next user is asking Claude or ChatGPT for the best budgeting app <em style="color: #6dd48e;">right now</em>. Are you the answer?</p>
+    </div>
+    <div class="problem-text">
+      <h3>Every other tool stopped at <em>App Store</em>.</h3>
+      <p>AppTweak, Sensor Tower, AppFollow — they track keywords on Apple and Google. That was enough in 2022.</p>
+      <p><strong>But the share of discovery happening inside LLMs has gone from 0% to 40% in 18 months.</strong> If you're not tracking it, you don't know you're losing.</p>
+      <p>Surface is the first — and only — platform that maps every surface. All seven. One dashboard. Real metrics.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES BIG -->
+<section>
+  <div class="sec-head">
+    <div class="sec-kicker">EVERYTHING YOU NEED</div>
+    <h2>One tool. <em>Seven surfaces</em>.<br/>Every metric that matters.</h2>
+    <p>We built everything AppTweak and Sensor Tower offer, then added the stuff they can't: LLM tracking, intent clustering, agent readiness, real MMM attribution.</p>
+  </div>
+
+  <div class="features-grid">
+
+    <div class="feature-card hl">
+      <div class="feat-badge">FLAGSHIP</div>
+      <div class="feature-icon">✦</div>
+      <h3>LLM Tracker</h3>
+      <p>Poll ChatGPT, Claude, Gemini, Perplexity, Copilot every day. Find the prompts you rank for, the ones you don't, and which sources the AIs cite.</p>
+      <div class="feat-metric">5,880/day</div>
+      <div class="feat-metric-label">PROMPTS POLLED · 7 ENGINES</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">K</div>
+      <h3>Keywords + Intent</h3>
+      <p>Not just keyword ranks. Intent clusters that map your app to what users actually mean, not just what they type.</p>
+      <div class="feat-metric">2.4M</div>
+      <div class="feat-metric-label">KEYWORDS INDEXED</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">C</div>
+      <h3>Creative Lab</h3>
+      <p>Pre-launch testing on synthetic users, then native store experiments, then auto-rollout. Stop manually uploading screenshots.</p>
+      <div class="feat-metric">+84%</div>
+      <div class="feat-metric-label">AVG CVR LIFT</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">A</div>
+      <h3>Attribution</h3>
+      <p>Bayesian MMM + geo holdouts + LLM referral tracking. Know your real CAC, not your attributed fantasy.</p>
+      <div class="feat-metric">−42%</div>
+      <div class="feat-metric-label">AVG CAC SAVINGS</div>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">R</div>
+      <h3>Reviews+</h3>
+      <p>Predictive rating risk + sentiment clustering + auto-routing to Linear/Jira. Ship fixes before ratings drop.</p>
+      <div class="feat-metric">+0.4★</div>
+      <div class="feat-metric-label">AVG 90-DAY RATING GAIN</div>
+    </div>
+
+    <div class="feature-card hl">
+      <div class="feat-badge">BETA</div>
+      <div class="feature-icon">⧉</div>
+      <h3>Agent Ready</h3>
+      <p>When ChatGPT starts installing apps for users, you want to be on the shortlist. Score your readiness. Get the manifest.</p>
+      <div class="feat-metric">72/100</div>
+      <div class="feat-metric-label">AVG SURFACE SCORE (VS 38 INDUSTRY)</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testim-section">
+  <div class="sec-head">
+    <div class="sec-kicker">LOVED BY 2,147 TEAMS</div>
+    <h2>Teams that got sick of <em>guessing</em>.</h2>
+    <p>From indie devs tracking a single launch to agencies managing portfolios of 200+ apps.</p>
+  </div>
+
+  <div class="testim-grid">
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>Surface is the <em>first tool</em> that showed us we were invisible on ChatGPT. Fixing that moved the needle harder than six months of traditional ASO.</p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #1d3fd9;">SC</div>
+        <div><strong>Sarah Chen</strong><small>Head of Growth · Lumen Finance</small></div>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>We replaced three tools with one. <em>Saved $2,400/month</em> and got LLM tracking that nobody else offers.</p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #c43b1e;">MB</div>
+        <div><strong>Miguel Barros</strong><small>Growth Lead · Moburst</small></div>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>The Creative Lab alone paid for the annual plan. Our icon test showed <em>a 23% CVR lift</em> before we ever pushed it to the store.</p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #1f6a3a;">JL</div>
+        <div><strong>Jenna Liu</strong><small>Product · Kite Health</small></div>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>Intent Map is the only tool that understands what users <em>actually</em> mean when they search. Our impressions doubled in 6 weeks.</p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #b58300;">AP</div>
+        <div><strong>Alex Park</strong><small>CEO · Wren Journal</small></div>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>Attribution finally works. Their MMM killed $18K/month of Meta spend we <em>thought was working</em>. Wasn't.</p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #0e0e0c;">TR</div>
+        <div><strong>Tomás Rivera</strong><small>CMO · Phiture</small></div>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="stars">★★★★★</div>
+      <p>Reviews+ auto-routes every 1-star to our on-call engineer. <em>Response time dropped from 4 days to 90 minutes.</em></p>
+      <div class="testim-author">
+        <div class="testim-avatar" style="background: #4a5cc4;">RK</div>
+        <div><strong>Rachel Kim</strong><small>Eng Manager · Orbit Fitness</small></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- VS COMPARISON -->
+<section>
+  <div class="sec-head">
+    <div class="sec-kicker">HEAD TO HEAD</div>
+    <h2>Why teams are <em>switching</em> from legacy tools.</h2>
+    <p>We respect what AppTweak and Sensor Tower built. But the world changed, and they haven't.</p>
+  </div>
+
+  <div class="vs-grid">
+    <div class="vs-card them">
+      <h3>Legacy ASO tools</h3>
+      <div class="vs-sub">APPTWEAK · SENSOR TOWER · APPFOLLOW</div>
+      <ul>
+        <li>Track App Store + Play Store — that's it</li>
+        <li>Zero visibility into ChatGPT, Claude, Gemini</li>
+        <li>Keyword-only (no intent or semantic clustering)</li>
+        <li>No incrementality measurement / MMM</li>
+        <li>Last-touch attribution only</li>
+        <li>No agent-readiness scoring</li>
+        <li>API locked to enterprise tier</li>
+        <li>Starts at $89/mo, scales to $1,500+</li>
+      </ul>
+    </div>
+    <div class="vs-card us">
+      <h3>Surface</h3>
+      <div class="vs-sub">ONE TOOL · 7 SURFACES · 8 MODULES</div>
+      <ul>
+        <li>All <strong>7 discovery surfaces</strong>, one dashboard</li>
+        <li><strong>LLM tracking</strong> across ChatGPT, Claude, Gemini, Perplexity, Copilot</li>
+        <li><strong>Intent clustering</strong> for Apple Tags + semantic search</li>
+        <li>Real <strong>Bayesian MMM</strong> with geo holdouts</li>
+        <li><strong>Cross-surface attribution</strong> including LLM referrals</li>
+        <li><strong>Agent-readiness</strong> scoring + manifests</li>
+        <li>API access <strong>at every tier</strong></li>
+        <li>Starts at <strong>$49/mo</strong>, Team at $290</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section>
+  <div class="sec-head">
+    <div class="sec-kicker">TRANSPARENT PRICING</div>
+    <h2>Pay for <em>scale</em>, not for features.</h2>
+    <p>Every plan includes LLM tracking. Every plan includes API access. Every plan includes unlimited keywords. No gatekeeping on the important stuff.</p>
+  </div>
+
+  <div class="price-grid">
+
+    <div class="price-card">
+      <h3>Solo</h3>
+      <div class="p-sub">For indie devs and side-projects</div>
+      <div class="amt">$49<small>/mo</small></div>
+      <div class="p-note">OR $490/YR · SAVE 17%</div>
+      <ul>
+        <li><strong>1 app</strong> tracked across 7 surfaces</li>
+        <li><strong>500 keywords</strong> + intent clusters</li>
+        <li><strong>25 LLM prompts</strong> across all 5 engines</li>
+        <li>All core modules (Reviews, Competitors, Optimizer)</li>
+        <li>API access · 10K calls/mo</li>
+        <li>Community + email support</li>
+      </ul>
+      <a href="#" class="btn ink" style="justify-content: center;">Start free trial</a>
+    </div>
+
+    <div class="price-card hl">
+      <div class="bs">🔥 MOST POPULAR</div>
+      <h3>Team</h3>
+      <div class="p-sub">For growth teams and startups</div>
+      <div class="amt"><em>$290</em><small>/mo</small></div>
+      <div class="p-note">OR $2,900/YR · SAVE 17%</div>
+      <ul>
+        <li><strong>Up to 10 apps</strong> tracked</li>
+        <li><strong>Unlimited keywords</strong> + intent clusters</li>
+        <li><strong>200 LLM prompts</strong> across all engines</li>
+        <li>All modules <strong>+ Creative Lab</strong></li>
+        <li>API · 250K calls/mo · webhook triggers</li>
+        <li>Linear, Jira, Slack, Segment integrations</li>
+        <li>Slack support · 8h SLA</li>
+      </ul>
+      <a href="#" class="btn accent" style="justify-content: center;">Start free trial →</a>
+    </div>
+
+    <div class="price-card">
+      <h3>Enterprise</h3>
+      <div class="p-sub">For agencies and large orgs</div>
+      <div class="amt">Custom</div>
+      <div class="p-note">STARTS AT $18K/YEAR</div>
+      <ul>
+        <li><strong>Unlimited apps</strong> and portfolios</li>
+        <li><strong>Unlimited</strong> keywords, prompts, calls</li>
+        <li>All modules <strong>+ Attribution (MMM)</strong></li>
+        <li>Dedicated MMM model + geo holdouts</li>
+        <li>SSO · SCIM · SOC 2 · DPA</li>
+        <li>Dedicated CSM · 1h SLA</li>
+        <li>Onboarding + training included</li>
+      </ul>
+      <a href="#" class="btn ink" style="justify-content: center;">Book a call</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <div class="final-cta-inner">
+    <h2>Be <em>everywhere</em> users<br/>are searching.</h2>
+    <p>Join 2,147 teams who stopped guessing and started measuring the full picture. 14-day free trial. No credit card. Full access to all 7 surfaces.</p>
+    <div class="cta-row">
+      <a href="#" class="btn accent xl">Start free trial →</a>
+      <a href="#" class="btn ghost xl" style="color: var(--paper); border: 1px solid #3a3a36;">Book a 20-min demo</a>
+    </div>
+    <div class="fc-trust">
+      SOC 2 · GDPR · CCPA · NO CREDIT CARD REQUIRED · CANCEL ANYTIME
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="brand">
+          <div class="brand-mark"></div>
+          <div class="brand-name">Surface</div>
+        </div>
+        <p>The full map of how your app gets found. App Store. Play Store. ChatGPT. Claude. Gemini. Perplexity. Copilot.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li>LLM Tracker</li>
+          <li>Keywords</li>
+          <li>Creative Lab</li>
+          <li>Attribution</li>
+          <li>Reviews+</li>
+          <li>API</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Resources</h4>
+        <ul>
+          <li>Docs</li>
+          <li>Journal</li>
+          <li>Benchmarks</li>
+          <li>Changelog</li>
+          <li>Status</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <ul>
+          <li>About</li>
+          <li>Careers</li>
+          <li>Customers</li>
+          <li>Press</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Legal</h4>
+        <ul>
+          <li>Privacy</li>
+          <li>Terms</li>
+          <li>Security</li>
+          <li>DPA</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© SURFACE INC · MMXXVI</div>
+      <div>ALL SYSTEMS · <span style="color: var(--ok);">NORMAL</span></div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

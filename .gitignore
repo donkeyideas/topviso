@@ -1,0 +1,54 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build
+.next/
+.turbo/
+dist/
+out/
+build/
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.local.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# debug
+npm-debug.log*
+pnpm-debug.log*
+
+# test
+coverage/
+
+# supabase
+supabase/.temp/
+
+# expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# sentry
+.sentryclirc
+
+# turbo
+.turbo
+
+# claude
+.claude/

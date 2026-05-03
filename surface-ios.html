@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Surface · iOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ebe7dc;
+    --paper-3: #e0dbce;
+    --ink: #0e0e0c;
+    --ink-2: #3a3a36;
+    --ink-3: #72716a;
+    --ink-4: #a8a69b;
+    --line: #d8d3c4;
+    --line-soft: #e4e0d3;
+    --accent: #1d3fd9;
+    --accent-2: #0a1f8a;
+    --accent-wash: #e8ecfa;
+    --warn: #c43b1e;
+    --warn-wash: #f7e6df;
+    --ok: #1f6a3a;
+    --ok-wash: #e0efe3;
+    --gold: #b58300;
+    --display: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+  /* ============ PAGE LAYOUT ============ */
+  .wrap { max-width: 1440px; margin: 0 auto; padding: 48px 32px 80px; }
+  .header { padding-bottom: 28px; margin-bottom: 40px; border-bottom: 1px solid var(--line); }
+  .header-inner { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; }
+  .brand { display: flex; align-items: baseline; gap: 10px; margin-bottom: 20px; }
+  .brand-mark { width: 12px; height: 12px; background: var(--ink); border-radius: 50%; position: relative; top: 2px; }
+  .brand-mark::after { content: ""; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .brand-name { font-family: var(--display); font-size: 22px; letter-spacing: -0.02em; line-height: 1; }
+  .brand-tag { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase; padding-left: 8px; border-left: 1px solid var(--line); align-self: center; }
+  .header h1 { font-family: var(--display); font-size: 52px; line-height: 1; letter-spacing: -0.025em; font-weight: 400; margin-bottom: 12px; max-width: 780px; }
+  .header h1 em { font-style: italic; color: var(--accent); }
+  .header p { font-size: 15px; color: var(--ink-3); max-width: 580px; line-height: 1.5; }
+  .header-meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.08em; line-height: 1.8; text-align: right; }
+  .header-meta strong { color: var(--ink); font-family: var(--display); font-size: 17px; font-weight: 400; letter-spacing: -0.01em; display: block; }
+
+  /* ============ PHONE GRID ============ */
+  .phone-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 40px; }
+
+  .phone-wrap { display: flex; flex-direction: column; align-items: center; }
+  .phone-label { font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .phone-label .num { background: var(--ink); color: var(--paper); padding: 2px 6px; border-radius: 3px; font-weight: 600; }
+  .phone-caption { font-family: var(--display); font-style: italic; font-size: 14px; line-height: 1.4; color: var(--ink-2); text-align: center; margin-top: 14px; max-width: 230px; }
+
+  /* ============ PHONE FRAME ============ */
+  .phone {
+    width: 100%;
+    max-width: 240px;
+    aspect-ratio: 9/19.5;
+    background: var(--ink);
+    border-radius: 38px;
+    padding: 8px;
+    position: relative;
+    box-shadow:
+      0 0 0 1.5px #2a2a28,
+      0 18px 48px rgba(14,14,12,0.18),
+      0 4px 12px rgba(14,14,12,0.08);
+  }
+  .phone-screen {
+    background: var(--paper);
+    border-radius: 30px;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-dyn-island {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 84px;
+    height: 26px;
+    background: var(--ink);
+    border-radius: 999px;
+    z-index: 10;
+  }
+  .status-bar {
+    padding: 14px 20px 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    height: 44px;
+  }
+  .status-bar .right { display: flex; align-items: center; gap: 3px; font-size: 11px; }
+  .status-bar svg { display: block; }
+
+  /* ============ TAB BAR ============ */
+  .tab-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(244,241,234,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(216,211,196,0.6);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 6px 0 22px;
+  }
+  .tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--sans);
+    font-size: 9px;
+    color: var(--ink-4);
+    font-weight: 500;
+    padding: 4px 0;
+  }
+  .tab-item.active { color: var(--accent); }
+  .tab-item svg { width: 22px; height: 22px; }
+
+  /* ============ COMMON SCREEN PARTS ============ */
+  .scroll-area {
+    flex: 1;
+    overflow: hidden;
+    padding-bottom: 56px;
+  }
+  .nav-head {
+    padding: 4px 20px 16px;
+  }
+  .nav-title-sm {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .nav-title {
+    font-family: var(--display);
+    font-size: 28px;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .nav-title em { font-style: italic; color: var(--accent); }
+  .nav-sub {
+    font-size: 11px;
+    color: var(--ink-3);
+  }
+
+  /* ============ CARDS ============ */
+  .m-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    margin: 0 14px 10px;
+    padding: 12px 14px;
+  }
+  .m-card.highlight {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .m-card.highlight .m-sub, .m-card.highlight .m-meta { color: rgba(255,255,255,0.8); }
+  .m-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .m-title { font-size: 12px; font-weight: 600; line-height: 1.25; }
+  .m-sub { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .m-val { font-family: var(--display); font-size: 28px; line-height: 1; letter-spacing: -0.02em; }
+  .m-val.sm { font-size: 20px; }
+  .m-delta { font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; font-weight: 500; }
+  .m-delta.up { color: var(--ok); }
+  .m-delta.down { color: var(--warn); }
+  .m-meta { font-size: 10px; color: var(--ink-3); margin-top: 4px; }
+
+  /* ============ SECTION HEAD IN APP ============ */
+  .m-section-head {
+    padding: 16px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .m-section-head h2 {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+  .m-section-head h2 em { font-style: italic; }
+  .m-section-head .more {
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ============ PILL / BADGE ============ */
+  .m-pill { display: inline-flex; align-items: center; font-size: 9px; padding: 2px 6px; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; border-radius: 3px; font-weight: 600; }
+  .m-pill.ok { background: var(--ok-wash); color: var(--ok); }
+  .m-pill.warn { background: var(--warn-wash); color: var(--warn); }
+  .m-pill.acc { background: var(--accent-wash); color: var(--accent); }
+  .m-pill.dark { background: var(--ink); color: var(--paper); }
+  .m-pill.new { background: var(--accent); color: white; }
+
+  /* ============ BARS ============ */
+  .m-bar { height: 5px; background: var(--paper-3); border-radius: 3px; overflow: hidden; }
+  .m-bar .f { height: 100%; border-radius: 3px; }
+
+  /* ============ ICON (SVG) ============ */
+  .ico { width: 32px; height: 32px; background: var(--accent-wash); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 14px; flex-shrink: 0; }
+  .ico.warn { background: var(--warn-wash); color: var(--warn); }
+  .ico.ok { background: var(--ok-wash); color: var(--ok); }
+  .ico.dark { background: var(--ink); color: var(--paper); }
+  .ico.lg { width: 40px; height: 40px; }
+
+  /* ============ ALERT ROW ============ */
+  .alert-row {
+    padding: 10px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .alert-row:last-child { border: none; }
+  .alert-body { flex: 1; min-width: 0; }
+  .alert-title { font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .alert-meta { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.04em; }
+  .alert-meta .time { color: var(--ink-4); }
+
+  /* ============ KEYWORD ROW ============ */
+  .kw-row {
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .kw-row:last-child { border: none; }
+  .kw-name { font-size: 12px; font-weight: 500; }
+  .kw-meta { font-family: var(--mono); font-size: 9px; color: var(--ink-3); margin-top: 2px; letter-spacing: 0.04em; }
+  .kw-rank { font-family: var(--display); font-size: 22px; line-height: 1; letter-spacing: -0.02em; }
+  .kw-delta { font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; text-align: right; margin-top: 2px; }
+  .kw-delta.up { color: var(--ok); }
+  .kw-delta.down { color: var(--warn); }
+
+  /* ============ REVIEW ============ */
+  .review-bubble {
+    background: var(--paper-2);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin: 0 14px 8px;
+  }
+  .review-bubble .rb-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .review-bubble .stars {
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .review-bubble .rb-text {
+    font-family: var(--display);
+    font-style: italic;
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .review-bubble .rb-meta {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--ink-3);
+    letter-spacing: 0.04em;
+  }
+
+  /* ============ ENGINE BAR ============ */
+  .engine-row {
+    padding: 8px 14px;
+    display: grid;
+    grid-template-columns: 60px 1fr 34px;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+  }
+  .engine-name { font-weight: 600; }
+  .engine-val { text-align: right; font-family: var(--mono); font-weight: 600; font-size: 10px; }
+
+  /* ============ SEPARATOR ============ */
+  .sep-line {
+    height: 1px;
+    background: var(--line-soft);
+    margin: 6px 20px;
+  }
+
+  /* ============ FAB / FLOATING ============ */
+  .compose-fab {
+    position: absolute;
+    right: 14px;
+    bottom: 72px;
+    width: 44px;
+    height: 44px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 16px rgba(14,14,12,0.25);
+    font-size: 18px;
+  }
+
+  /* ============ FOOTER INFO ============ */
+  .footer-info {
+    margin-top: 56px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .fi-block .fi-num { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.14em; margin-bottom: 8px; }
+  .fi-block h4 { font-family: var(--display); font-size: 20px; line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 6px; font-weight: 400; }
+  .fi-block p { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
+
+  @media (max-width: 1280px) {
+    .phone-row { grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .phone-row > .phone-wrap:nth-child(n+4) { grid-column: span 1; }
+  }
+  @media (max-width: 800px) {
+    .phone-row { grid-template-columns: 1fr 1fr; }
+    .header-inner { grid-template-columns: 1fr; }
+    .header-meta { text-align: left; }
+    .footer-info { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ HEADER ============ -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-name">Surface</div>
+      <div class="brand-tag">iOS · v0.1</div>
+    </div>
+    <div class="header-inner">
+      <div>
+        <h1>In your pocket, <em>always live</em>.</h1>
+        <p>The native Surface app. Keyword shifts, review spikes, LLM citation changes, and test results — pushed to you the moment they matter. Glance in 5 seconds, act in 20.</p>
+      </div>
+      <div class="header-meta">
+        SCREENS · <strong>5 core flows</strong>
+        PLATFORM · <strong>iOS 18+ / iPhone</strong>
+        PUSH · <strong>APNs · silent + rich</strong>
+        OFFLINE · <strong>Last 24h cached</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHONE ROW ============ -->
+  <div class="phone-row">
+
+    <!-- ============ SCREEN 1: TODAY ============ -->
+    <div class="phone-wrap">
+      <div class="phone-label"><span class="num">01</span> TODAY · HOME</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="right">
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 9h2V6H1v3zM4 9h2V4H4v5zM7 9h2V2H7v7zM10 9h2V0h-2v9z" fill="#0e0e0c"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3c1.1 0 2.1.4 2.9 1.1l-.7.7c-.6-.5-1.4-.8-2.2-.8s-1.6.3-2.2.8l-.7-.7C4.9 3.4 5.9 3 7 3zM7 5c.6 0 1.1.2 1.5.6l-.7.7c-.2-.2-.5-.3-.8-.3s-.6.1-.8.3l-.7-.7C5.9 5.2 6.4 5 7 5zM7 7c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5z" fill="#0e0e0c"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="#0e0e0c" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="#0e0e0c"/><rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="#0e0e0c"/></svg>
+            </span>
+          </div>
+
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">APR 20, MONDAY</div>
+              <div class="nav-title">Good morning, <em>Mira</em>.</div>
+              <div class="nav-sub">Lumen Finance · 4 new alerts</div>
+            </div>
+
+            <!-- Hero MRR of ASO: Visibility today -->
+            <div class="m-card highlight">
+              <div class="m-row">
+                <div>
+                  <div class="m-sub" style="color: rgba(255,255,255,0.7);">VISIBILITY · iOS US</div>
+                  <div class="m-val" style="color: white;">82</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="m-delta up" style="color: #6be08a;">+4 · 30d</div>
+                  <div class="m-sub" style="color: rgba(255,255,255,0.7); margin-top: 4px;">TOP 18% OF CAT</div>
+                </div>
+              </div>
+              <svg viewBox="0 0 200 40" style="width: 100%; height: 40px; margin-top: 10px;">
+                <path d="M 0 32 L 20 30 L 40 28 L 60 24 L 80 20 L 100 22 L 120 16 L 140 12 L 160 10 L 180 7 L 200 5" fill="none" stroke="white" stroke-width="1.5" />
+                <path d="M 0 32 L 20 30 L 40 28 L 60 24 L 80 20 L 100 22 L 120 16 L 140 12 L 160 10 L 180 7 L 200 5 L 200 40 L 0 40 Z" fill="white" opacity="0.15" />
+              </svg>
+            </div>
+
+            <!-- Quick stats row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 14px 10px;">
+              <div class="m-card" style="margin: 0; padding: 10px;">
+                <div class="m-sub">ASO SCORE</div>
+                <div class="m-val sm">78</div>
+                <div class="m-delta up">+2 this wk</div>
+              </div>
+              <div class="m-card" style="margin: 0; padding: 10px;">
+                <div class="m-sub">LLM SoV</div>
+                <div class="m-val sm">23%</div>
+                <div class="m-delta down">−6pt cat</div>
+              </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="m-section-head">
+              <h2>Needs your <em>attention</em></h2>
+              <span class="more">All</span>
+            </div>
+            <div class="m-card" style="padding: 0;">
+              <div class="alert-row">
+                <div class="ico warn">!</div>
+                <div class="alert-body">
+                  <div class="alert-title">Chase sync lag reviews spiking</div>
+                  <div class="alert-meta">REVIEWS+ <span class="time">· 9m</span></div>
+                </div>
+              </div>
+              <div class="alert-row">
+                <div class="ico ok">↑</div>
+                <div class="alert-body">
+                  <div class="alert-title">"envelope method app" → #1 on Claude</div>
+                  <div class="alert-meta">LLM TRACKER <span class="time">· 2h</span></div>
+                </div>
+              </div>
+              <div class="alert-row">
+                <div class="ico">◆</div>
+                <div class="alert-body">
+                  <div class="alert-title">Creative test B reached 98% conf</div>
+                  <div class="alert-meta">CREATIVE LAB <span class="time">· 4h</span></div>
+                </div>
+              </div>
+              <div class="alert-row">
+                <div class="ico dark">+</div>
+                <div class="alert-body">
+                  <div class="alert-title">3 new couples-money keywords to review</div>
+                  <div class="alert-meta">INTENT MAP <span class="time">· today</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Today
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              Data
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Reviews
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
+              Me
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">One screen, everything urgent. Glance during coffee, act from the subway.</div>
+    </div>
+
+    <!-- ============ SCREEN 2: LLM TRACKER ============ -->
+    <div class="phone-wrap">
+      <div class="phone-label"><span class="num">02</span> LLM TRACKER</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="right">
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 9h2V6H1v3zM4 9h2V4H4v5zM7 9h2V2H7v7zM10 9h2V0h-2v9z" fill="#0e0e0c"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3c1.1 0 2.1.4 2.9 1.1l-.7.7c-.6-.5-1.4-.8-2.2-.8s-1.6.3-2.2.8l-.7-.7C4.9 3.4 5.9 3 7 3zM7 5c.6 0 1.1.2 1.5.6l-.7.7c-.2-.2-.5-.3-.8-.3s-.6.1-.8.3l-.7-.7C5.9 5.2 6.4 5 7 5zM7 7c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5z" fill="#0e0e0c"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="#0e0e0c" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="#0e0e0c"/><rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="#0e0e0c"/></svg>
+            </span>
+          </div>
+
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">LLM TRACKER <span style="color: var(--accent); margin-left: 6px;">◆ NEW</span></div>
+              <div class="nav-title">Share of <em>voice</em></div>
+              <div class="nav-sub">147 prompts · 5 engines · live</div>
+            </div>
+
+            <!-- Big number -->
+            <div class="m-card" style="text-align: center; padding: 18px 14px;">
+              <div class="m-sub">SHARE OF VOICE · 30D</div>
+              <div style="font-family: var(--display); font-size: 56px; line-height: 1; letter-spacing: -0.03em; margin: 4px 0;">23<span style="font-size: 24px; color: var(--ink-3);">%</span></div>
+              <div class="m-delta down" style="font-size: 10px;">−6pt vs cat avg (29%)</div>
+              <svg viewBox="0 0 200 50" style="width: 100%; height: 48px; margin-top: 10px;">
+                <path d="M 0 30 L 20 28 L 40 32 L 60 30 L 80 27 L 100 25 L 120 28 L 140 22 L 160 20 L 180 18 L 200 15" fill="none" stroke="#1d3fd9" stroke-width="1.5" />
+                <circle cx="200" cy="15" r="3" fill="#1d3fd9" />
+              </svg>
+            </div>
+
+            <!-- Engine breakdown -->
+            <div class="m-section-head">
+              <h2>By <em>engine</em></h2>
+              <span class="more">Expand</span>
+            </div>
+            <div class="m-card" style="padding: 8px 0;">
+              <div class="engine-row">
+                <div class="engine-name">Claude</div>
+                <div class="m-bar"><div class="f" style="width: 62%; background: var(--accent);"></div></div>
+                <div class="engine-val">62%</div>
+              </div>
+              <div class="engine-row">
+                <div class="engine-name">Perplex.</div>
+                <div class="m-bar"><div class="f" style="width: 47%; background: var(--accent);"></div></div>
+                <div class="engine-val">47%</div>
+              </div>
+              <div class="engine-row">
+                <div class="engine-name">ChatGPT</div>
+                <div class="m-bar"><div class="f" style="width: 38%; background: var(--ink);"></div></div>
+                <div class="engine-val">38%</div>
+              </div>
+              <div class="engine-row">
+                <div class="engine-name">Gemini</div>
+                <div class="m-bar"><div class="f" style="width: 14%; background: var(--warn);"></div></div>
+                <div class="engine-val">14%</div>
+              </div>
+              <div class="engine-row">
+                <div class="engine-name">Copilot</div>
+                <div class="m-bar"><div class="f" style="width: 9%; background: var(--warn);"></div></div>
+                <div class="engine-val">9%</div>
+              </div>
+            </div>
+
+            <!-- Prompt spotlight -->
+            <div class="m-section-head">
+              <h2>Winning prompts</h2>
+              <span class="more">All 34</span>
+            </div>
+            <div class="m-card">
+              <div class="m-row" style="align-items: flex-start;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-family: var(--display); font-style: italic; font-size: 13px; line-height: 1.3; margin-bottom: 4px;">"envelope method app"</div>
+                  <div class="m-sub">DOMINANT · 81% Claude</div>
+                </div>
+                <span class="m-pill ok">#1</span>
+              </div>
+            </div>
+            <div class="m-card">
+              <div class="m-row" style="align-items: flex-start;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-family: var(--display); font-style: italic; font-size: 13px; line-height: 1.3; margin-bottom: 4px;">"budget app for couples"</div>
+                  <div class="m-sub">WEIGHTED · 62% avg</div>
+                </div>
+                <span class="m-pill acc">#2</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Today
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              Data
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Reviews
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
+              Me
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">The LLM Tracker — tuned for thumb-reach. Scroll, not tap.</div>
+    </div>
+
+    <!-- ============ SCREEN 3: KEYWORDS ============ -->
+    <div class="phone-wrap">
+      <div class="phone-label"><span class="num">03</span> KEYWORDS</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="right">
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 9h2V6H1v3zM4 9h2V4H4v5zM7 9h2V2H7v7zM10 9h2V0h-2v9z" fill="#0e0e0c"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3c1.1 0 2.1.4 2.9 1.1l-.7.7c-.6-.5-1.4-.8-2.2-.8s-1.6.3-2.2.8l-.7-.7C4.9 3.4 5.9 3 7 3zM7 5c.6 0 1.1.2 1.5.6l-.7.7c-.2-.2-.5-.3-.8-.3s-.6.1-.8.3l-.7-.7C5.9 5.2 6.4 5 7 5zM7 7c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5z" fill="#0e0e0c"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="#0e0e0c" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="#0e0e0c"/><rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="#0e0e0c"/></svg>
+            </span>
+          </div>
+
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">KEYWORDS · iOS US</div>
+              <div class="nav-title"><em>184</em> tracked</div>
+              <div class="nav-sub">41 in top 3 · 184 in top 10</div>
+            </div>
+
+            <!-- Filter pills -->
+            <div style="padding: 0 14px 12px; display: flex; gap: 6px; overflow-x: auto;">
+              <span class="m-pill dark">ALL 184</span>
+              <span class="m-pill" style="background: var(--paper-2); color: var(--ink-3);">MOVING</span>
+              <span class="m-pill" style="background: var(--paper-2); color: var(--ink-3);">TOP 3</span>
+              <span class="m-pill" style="background: var(--paper-2); color: var(--ink-3);">GAPS</span>
+            </div>
+
+            <div class="m-card" style="padding: 0;">
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">shared budget</div>
+                  <div class="kw-meta">VOL 74 · DIFF 38</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank" style="color: var(--accent);">#2</div>
+                  <div class="kw-delta up">↑ 3</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">couple finances</div>
+                  <div class="kw-meta">VOL 62 · DIFF 32</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank" style="color: var(--accent);">#1</div>
+                  <div class="kw-delta up">↑ 1</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">envelope budgeting</div>
+                  <div class="kw-meta">VOL 81 · DIFF 54</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank" style="color: var(--accent);">#1</div>
+                  <div class="kw-delta" style="color: var(--ink-3);">—</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">ynab alternative</div>
+                  <div class="kw-meta">VOL 58 · DIFF 41</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank">#17</div>
+                  <div class="kw-delta up">↑ 5</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">zero based budget</div>
+                  <div class="kw-meta">VOL 66 · DIFF 47</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank" style="color: var(--accent);">#3</div>
+                  <div class="kw-delta" style="color: var(--ink-3);">—</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">cancel subscriptions</div>
+                  <div class="kw-meta">VOL 71 · RISING</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank">#89</div>
+                  <div class="kw-delta up">↑ 12</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">debt payoff app</div>
+                  <div class="kw-meta">VOL 79 · DIFF 62</div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank">#44</div>
+                  <div class="kw-delta down">↓ 2</div>
+                </div>
+              </div>
+              <div class="kw-row">
+                <div>
+                  <div class="kw-name">his and hers budget</div>
+                  <div class="kw-meta">VOL 18 · <span style="color: var(--warn);">NOT RANKED</span></div>
+                </div>
+                <div style="text-align: right;">
+                  <div class="kw-rank" style="color: var(--ink-4);">—</div>
+                  <div class="kw-delta" style="color: var(--ink-3);">opp</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Today
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              Data
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Reviews
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
+              Me
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">184 keywords, rank-sorted. Pull-to-refresh, swipe-to-expand history.</div>
+    </div>
+
+    <!-- ============ SCREEN 4: REVIEWS+ ============ -->
+    <div class="phone-wrap">
+      <div class="phone-label"><span class="num">04</span> REVIEWS+</div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+
+          <div class="status-bar">
+            <span>9:41</span>
+            <span class="right">
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 9h2V6H1v3zM4 9h2V4H4v5zM7 9h2V2H7v7zM10 9h2V0h-2v9z" fill="#0e0e0c"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3c1.1 0 2.1.4 2.9 1.1l-.7.7c-.6-.5-1.4-.8-2.2-.8s-1.6.3-2.2.8l-.7-.7C4.9 3.4 5.9 3 7 3zM7 5c.6 0 1.1.2 1.5.6l-.7.7c-.2-.2-.5-.3-.8-.3s-.6.1-.8.3l-.7-.7C5.9 5.2 6.4 5 7 5zM7 7c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5z" fill="#0e0e0c"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="#0e0e0c" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="#0e0e0c"/><rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="#0e0e0c"/></svg>
+            </span>
+          </div>
+
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">REVIEWS+ <span style="color: var(--accent); margin-left: 6px;">◆ NEW</span></div>
+              <div class="nav-title">Today's <em>voices</em></div>
+              <div class="nav-sub">341 new · 82% positive</div>
+            </div>
+
+            <!-- Alert banner -->
+            <div class="m-card" style="background: var(--warn-wash); border-color: #e6b9ac; padding: 10px 12px;">
+              <div class="m-row">
+                <div class="ico warn" style="background: var(--warn); color: white;">!</div>
+                <div style="flex: 1; margin-left: 10px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--warn); line-height: 1.3;">Chase sync cluster ↑ 340%</div>
+                  <div style="font-family: var(--mono); font-size: 9px; color: var(--ink-3); margin-top: 2px; letter-spacing: 0.04em;">LINEAR LIN-2417 · −0.3★ RISK</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trending themes -->
+            <div class="m-section-head">
+              <h2>Trending <em>themes</em></h2>
+              <span class="more">All</span>
+            </div>
+
+            <div class="m-card" style="padding: 10px 12px;">
+              <div class="m-row" style="margin-bottom: 8px;">
+                <div style="font-size: 12px; font-weight: 600;">Chase sync lag</div>
+                <span class="m-pill warn">↑ 340%</span>
+              </div>
+              <div class="m-bar"><div class="f" style="width: 78%; background: var(--warn);"></div></div>
+            </div>
+
+            <div class="m-card" style="padding: 10px 12px;">
+              <div class="m-row" style="margin-bottom: 8px;">
+                <div style="font-size: 12px; font-weight: 600;">Subscription audit (feature req)</div>
+                <span class="m-pill ok">↑ 112%</span>
+              </div>
+              <div class="m-bar"><div class="f" style="width: 62%; background: var(--ok);"></div></div>
+            </div>
+
+            <div class="m-card" style="padding: 10px 12px;">
+              <div class="m-row" style="margin-bottom: 8px;">
+                <div style="font-size: 12px; font-weight: 600;">Dark mode love</div>
+                <span class="m-pill ok">↓ 90%</span>
+              </div>
+              <div class="m-bar"><div class="f" style="width: 28%; background: var(--ink-3);"></div></div>
+            </div>
+
+            <!-- Recent reviews -->
+            <div class="m-section-head">
+              <h2>Latest</h2>
+              <span class="more">Filter</span>
+            </div>
+
+            <div class="review-bubble">
+              <div class="rb-top">
+                <span class="stars">★★★★★</span>
+                <span class="m-pill ok">POSITIVE</span>
+              </div>
+              <div class="rb-text">"The envelope thing fixed something my marriage counselor couldn't. I'm not joking."</div>
+              <div class="rb-meta">APP STORE · @jordynl · 2h</div>
+            </div>
+
+            <div class="review-bubble">
+              <div class="rb-top">
+                <span class="stars">★★</span>
+                <span class="m-pill warn">CHASE SYNC</span>
+              </div>
+              <div class="rb-text">"Transactions take 3-4 days from Chase. By then I've overspent."</div>
+              <div class="rb-meta">PLAY STORE · @dmorris · 5h</div>
+            </div>
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+              Today
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+              Data
+            </div>
+            <div class="tab-item active">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Reviews
+            </div>
+            <div class="tab-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
+              Me
+            </div>
+          </div>
+
+          <button class="compose-fab">✎</button>
+        </div>
+      </div>
+      <div class="phone-caption">Rising themes → 1-tap to Linear. Reply straight from the notification.</div>
+    </div>
+
+    <!-- ============ SCREEN 5: LOCK SCREEN / PUSH ============ -->
+    <div class="phone-wrap">
+      <div class="phone-label"><span class="num">05</span> LOCK SCREEN · PUSH</div>
+      <div class="phone">
+        <div class="phone-screen" style="background: linear-gradient(175deg, #0e0e0c 0%, #1a1a18 40%, #2a2a28 100%); color: white;">
+          <div class="phone-dyn-island" style="background: #000;"></div>
+
+          <div class="status-bar" style="color: white;">
+            <span>9:41</span>
+            <span class="right">
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 9h2V6H1v3zM4 9h2V4H4v5zM7 9h2V2H7v7zM10 9h2V0h-2v9z" fill="white"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10"><path d="M7 3c1.1 0 2.1.4 2.9 1.1l-.7.7c-.6-.5-1.4-.8-2.2-.8s-1.6.3-2.2.8l-.7-.7C4.9 3.4 5.9 3 7 3zM7 5c.6 0 1.1.2 1.5.6l-.7.7c-.2-.2-.5-.3-.8-.3s-.6.1-.8.3l-.7-.7C5.9 5.2 6.4 5 7 5zM7 7c.3 0 .5.2.5.5s-.2.5-.5.5-.5-.2-.5-.5.2-.5.5-.5z" fill="white"/></svg>
+              <svg width="22" height="10" viewBox="0 0 22 10"><rect x="0.5" y="0.5" width="18" height="9" rx="2" stroke="white" fill="none"/><rect x="2" y="2" width="15" height="6" rx="1" fill="white"/><rect x="19" y="3.5" width="1.5" height="3" rx="0.5" fill="white"/></svg>
+            </span>
+          </div>
+
+          <div style="text-align: center; padding: 28px 20px 0;">
+            <div style="font-size: 11px; opacity: 0.65; letter-spacing: 0.1em; margin-bottom: 4px;">MONDAY, APR 20</div>
+            <div style="font-family: var(--display); font-size: 64px; line-height: 1; letter-spacing: -0.03em; font-weight: 400;">9:41</div>
+          </div>
+
+          <div style="padding: 24px 12px; display: flex; flex-direction: column; gap: 8px;">
+
+            <!-- Push notification 1 -->
+            <div style="background: rgba(58,58,54,0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 14px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start;">
+              <div style="width: 32px; height: 32px; background: white; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div style="width: 14px; height: 14px; background: var(--ink); border-radius: 50%; position: relative;"><div style="position: absolute; top: 3px; left: 3px; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;"></div></div>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                  <div style="font-size: 11px; font-weight: 600;">SURFACE</div>
+                  <div style="font-size: 10px; opacity: 0.6;">now</div>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px;">Chase sync lag reviews spiking</div>
+                <div style="font-size: 11px; opacity: 0.75; line-height: 1.35;">+340% this week · projected −0.3★ · Linear ticket opened</div>
+              </div>
+            </div>
+
+            <!-- Push notification 2 -->
+            <div style="background: rgba(58,58,54,0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 14px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start;">
+              <div style="width: 32px; height: 32px; background: white; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div style="width: 14px; height: 14px; background: var(--ink); border-radius: 50%; position: relative;"><div style="position: absolute; top: 3px; left: 3px; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;"></div></div>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                  <div style="font-size: 11px; font-weight: 600;">SURFACE</div>
+                  <div style="font-size: 10px; opacity: 0.6;">2h ago</div>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px;">"envelope method app" → #1 on Claude</div>
+                <div style="font-size: 11px; opacity: 0.75; line-height: 1.35;">SoV 81%. You're the top recommendation now.</div>
+              </div>
+            </div>
+
+            <!-- Push notification 3 -->
+            <div style="background: rgba(58,58,54,0.75); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 14px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start;">
+              <div style="width: 32px; height: 32px; background: white; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <div style="width: 14px; height: 14px; background: var(--ink); border-radius: 50%; position: relative;"><div style="position: absolute; top: 3px; left: 3px; width: 8px; height: 8px; background: var(--accent); border-radius: 50%;"></div></div>
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                  <div style="font-size: 11px; font-weight: 600;">SURFACE</div>
+                  <div style="font-size: 10px; opacity: 0.6;">4h ago</div>
+                </div>
+                <div style="font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px;">Variant B won · promote to 100%?</div>
+                <div style="font-size: 11px; opacity: 0.75; line-height: 1.35;">+3.4pt CVR, 98% confidence. Tap to confirm.</div>
+              </div>
+            </div>
+
+            <!-- Older notifications collapsed -->
+            <div style="background: rgba(58,58,54,0.55); border-radius: 14px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+              <div style="font-size: 11px; opacity: 0.75;">Earlier · Surface</div>
+              <div style="font-size: 11px; opacity: 0.55;">8 more</div>
+            </div>
+          </div>
+
+          <!-- flashlight / camera footer -->
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 28px 26px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.15); backdrop-filter: blur(20px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px;">⚡</div>
+            <div style="width: 120px; height: 4px; background: rgba(255,255,255,0.5); border-radius: 2px;"></div>
+            <div style="width: 38px; height: 38px; background: rgba(255,255,255,0.15); backdrop-filter: blur(20px); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px;">◉</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-caption">Push = the 20-second intervention. Tap once, promote the winner from lock screen.</div>
+    </div>
+
+  </div>
+
+  <!-- ============ FOOTER INFO ============ -->
+  <div class="footer-info">
+    <div class="fi-block">
+      <div class="fi-num">/ 01 · STACK</div>
+      <h4>SwiftUI native.</h4>
+      <p>iOS 18+, iPad-ready, Widgets + Live Activities for the Chase-sync-spike moments.</p>
+    </div>
+    <div class="fi-block">
+      <div class="fi-num">/ 02 · DATA</div>
+      <h4>Same API, new shape.</h4>
+      <p>Reuses the Surface Platform API. Delta-sync for offline. Last 24h always cached.</p>
+    </div>
+    <div class="fi-block">
+      <div class="fi-num">/ 03 · PUSH</div>
+      <h4>Intervention-grade.</h4>
+      <p>Critical alerts (rating risk, CVR winners) with actionable buttons from lock screen.</p>
+    </div>
+    <div class="fi-block">
+      <div class="fi-num">/ 04 · CHROME</div>
+      <h4>A companion, not a port.</h4>
+      <p>5 core flows, not 19. Desktop for edit, phone for triage.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

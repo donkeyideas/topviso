@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASO App Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter Tight', system-ui, sans-serif;
+  background: #e8e5de;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+/* ── CSS Variables ── */
+:root {
+  --paper: #f4f1ea;
+  --paper-2: #ebe7dc;
+  --paper-3: #e0dbce;
+  --card: #ffffff;
+  --card-2: #fafaf8;
+  --ink: #0e0e0c;
+  --ink-2: #3a3a36;
+  --ink-3: #72716a;
+  --ink-4: #a8a69b;
+  --line: #d8d3c4;
+  --line-soft: #e4e0d3;
+  --accent: #1d3fd9;
+  --accent-2: #0a1f8a;
+  --accent-wash: #e8ecfa;
+  --warn: #c43b1e;
+  --warn-wash: #f7e6df;
+  --ok: #1f6a3a;
+  --ok-wash: #e0efe3;
+  --gold: #b58300;
+  --font-display: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'Inter Tight', system-ui, sans-serif;
+}
+
+[data-theme="dark"] {
+  --paper: #141413;
+  --paper-2: #1c1c1a;
+  --paper-3: #252523;
+  --card: #1c1c1a;
+  --card-2: #222220;
+  --ink: #e8e6df;
+  --ink-2: #c5c3ba;
+  --ink-3: #8a8880;
+  --ink-4: #5a5850;
+  --line: #2e2e2a;
+  --line-soft: #262624;
+  --accent: #5b7aff;
+  --accent-2: #8ba2ff;
+  --accent-wash: #1a2040;
+  --warn: #ef6b4a;
+  --warn-wash: #2e1a14;
+  --ok: #3da35e;
+  --ok-wash: #142a1c;
+  --gold: #d4a020;
+}
+
+[data-theme="dark"] body { background: #0c0c0b; }
+[data-theme="dark"] .iphone-frame { border-color: #333; background: #000; }
+[data-theme="dark"] .iphone-notch { background: #000; }
+[data-theme="dark"] .status-bar { color: #fff; }
+[data-theme="dark"] .home-indicator { background: #555; }
+
+/* ── iPhone Frame ── */
+.iphone-frame {
+  width: 393px;
+  height: 852px;
+  border-radius: 50px;
+  border: 8px solid #1a1a1a;
+  background: #000;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 2px #333;
+}
+
+.iphone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--paper);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 42px;
+}
+
+/* ── Notch / Dynamic Island ── */
+.iphone-notch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 36px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 100;
+}
+
+/* ── Status Bar ── */
+.status-bar {
+  height: 54px;
+  padding: 16px 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 90;
+}
+.status-bar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+
+/* ── App Header ── */
+.app-header {
+  padding: 8px 20px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 80;
+}
+.app-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.menu-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 200;
+}
+.menu-btn .bar {
+  display: block;
+  width: 14px;
+  height: 1.5px;
+  background: var(--ink);
+  position: relative;
+}
+.menu-btn .bar::before,
+.menu-btn .bar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 14px;
+  height: 1.5px;
+  background: var(--ink);
+}
+.menu-btn .bar::before { top: -4px; }
+.menu-btn .bar::after { top: 4px; }
+
+.app-logo {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+.app-logo em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.theme-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+/* ── Floating Menu ── */
+.floating-menu-overlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 150;
+}
+.floating-menu-overlay.open { display: block; }
+
+.floating-menu {
+  position: absolute;
+  top: 96px;
+  left: 16px;
+  width: 200px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px;
+  z-index: 200;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  display: none;
+}
+.floating-menu.open { display: block; }
+
+[data-theme="dark"] .floating-menu { box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+
+.menu-app-info {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  margin-bottom: 4px;
+}
+.menu-app-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.menu-app-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.menu-app-platform {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+  margin-top: 2px;
+}
+
+.menu-item {
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.menu-item:hover { background: var(--paper-2); }
+.menu-item.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.menu-divider {
+  height: 1px;
+  background: var(--line-soft);
+  margin: 4px 0;
+}
+
+/* ── Content Area ── */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.content-area::-webkit-scrollbar { display: none; }
+
+.page { display: none; padding: 20px 20px 40px; }
+.page.active { display: block; }
+
+/* ── Page Title ── */
+.page-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+.page-title em {
+  font-style: italic;
+  color: var(--accent);
+}
+.page-sub {
+  font-size: 13px;
+  color: var(--ink-3);
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+/* ── KPI Strip ── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.kpi {
+  padding: 14px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.kpi:nth-child(odd) { border-right: 1px solid var(--line-soft); }
+.kpi:nth-last-child(-n+2) { border-bottom: none; }
+.kpi-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+}
+.kpi-delta {
+  font-size: 11px;
+  margin-top: 2px;
+}
+.kpi-delta.up { color: var(--ok); }
+.kpi-delta.down { color: var(--warn); }
+.kpi-delta.flat { color: var(--ink-4); }
+
+/* ── Card ── */
+.m-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.m-card-head {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.m-card-head h3 {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.m-card-tag {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.m-card-body { padding: 14px; }
+
+/* ── Section Header ── */
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+}
+.sec-num {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 4px;
+}
+.sec-h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ink);
+  letter-spacing: -0.015em;
+}
+.sec-h2 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* ── Score Ring ── */
+.score-ring {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  margin: 0 auto 10px;
+}
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.ring-bg { stroke: var(--paper-3); fill: none; stroke-width: 8; }
+.ring-fg { fill: none; stroke-width: 8; stroke-linecap: round; }
+.score-ring-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+.sr-num {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--ink);
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+.sr-label {
+  font-family: var(--font-sans);
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+/* ── Score Bar ── */
+.score-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.sb-label {
+  font-size: 12px;
+  color: var(--ink-2);
+  min-width: 72px;
+}
+.sb-track {
+  flex: 1;
+  height: 6px;
+  background: var(--paper-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sb-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.sb-val {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--ink);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Data Table ── */
+.m-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.m-table th {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--paper-2);
+  border-bottom: 1px solid var(--line);
+  font-weight: 500;
+}
+.m-table th.r { text-align: right; }
+.m-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink-2);
+}
+.m-table td.r {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.m-table .num {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+/* ── Pills ── */
+.pill {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.pill.ok { color: var(--ok); }
+.pill.warn { color: var(--warn); }
+.pill.accent { color: var(--accent); }
+.pill.muted { color: var(--ink-4); }
+.pill.gold { color: var(--gold); }
+
+/* Boxed pill variant */
+.pill-box {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 3px;
+  display: inline-block;
+}
+.pill-box.high { background: var(--warn-wash); color: var(--warn); }
+.pill-box.medium { background: var(--accent-wash); color: var(--accent); }
+.pill-box.low { background: var(--ok-wash); color: var(--ok); }
+
+/* ── Row Bar (engine bars) ── */
+.row-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rb-label {
+  font-size: 12px;
+  color: var(--ink-2);
+  min-width: 80px;
+}
+.rb-track {
+  flex: 1;
+  height: 6px;
+  background: var(--paper-3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rb-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+.rb-fill.accent { background: var(--accent); }
+.rb-fill.ok { background: var(--ok); }
+.rb-fill.warn { background: var(--warn); }
+.rb-fill.gold { background: var(--gold); }
+.rb-val {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ── Keyword Chips ── */
+.kw-chip {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  padding: 3px 7px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--card);
+  color: var(--ink-2);
+  margin: 2px 3px 2px 0;
+}
+.kw-chip.ours { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+.kw-chip.win { background: var(--ok-wash); color: var(--ok); border-color: #bcd9c1; }
+.kw-chip.miss { background: var(--warn-wash); color: var(--warn); border-color: #e0a79a; border-style: dashed; }
+
+/* ── Callout ── */
+.callout {
+  padding: 12px 14px;
+  background: var(--accent-wash);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  margin-top: 12px;
+}
+.callout-label {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.callout p {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.callout.warn-c { background: var(--warn-wash); border-color: var(--warn); }
+.callout.warn-c .callout-label { color: var(--warn); }
+.callout.ok-c { background: var(--ok-wash); border-color: var(--ok); }
+.callout.ok-c .callout-label { color: var(--ok); }
+
+/* ── Issue Row ── */
+.issue-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.issue-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--paper-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  flex-shrink: 0;
+}
+.issue-content { flex: 1; }
+.issue-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 2px;
+}
+.issue-desc {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+.issue-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+/* ── Comp Row ── */
+.comp-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.comp-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.comp-info { flex: 1; }
+.comp-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.comp-meta {
+  font-size: 10px;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.comp-val {
+  text-align: right;
+}
+
+/* ── Home Indicator ── */
+.home-indicator {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--paper);
+}
+.home-indicator-bar {
+  width: 134px;
+  height: 5px;
+  background: var(--ink);
+  border-radius: 3px;
+  opacity: 0.2;
+}
+
+/* ── Intent Cluster ── */
+.intent-cluster {
+  margin-bottom: 14px;
+}
+.ic-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.ic-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ic-track {
+  width: 60px;
+  height: 4px;
+  background: var(--paper-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ic-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.ic-pct {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
+/* ── Alert Item ── */
+.alert-item {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.alert-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.alert-tag {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.alert-date {
+  font-size: 10px;
+  color: var(--ink-4);
+}
+.alert-text {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+/* ── Citation Row ── */
+.cite-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.cite-rank {
+  font-family: var(--font-sans);
+  font-size: 9px;
+  color: var(--ink-4);
+  width: 16px;
+  letter-spacing: 0.1em;
+}
+.cite-info { flex: 1; }
+.cite-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cite-url {
+  font-size: 10px;
+  color: var(--ink-4);
+}
+.cite-count {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--accent);
+}
+</style>
+</head>
+<body>
+
+<div class="iphone-frame">
+  <div class="iphone-screen">
+    <div class="iphone-notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-bar-right">
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="4" width="3" height="8" rx="0.5" opacity="0.4"/><rect x="4.5" y="3" width="3" height="9" rx="0.5" opacity="0.6"/><rect x="9" y="1" width="3" height="11" rx="0.5" opacity="0.8"/><rect x="13.5" y="0" width="3" height="12" rx="0.5"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="none" stroke="currentColor" stroke-width="1"><path d="M7.5 3C9.5 3 11.3 3.8 12.6 5.1"/><path d="M7.5 0C10.3 0 12.8 1.1 14.6 2.9"/><path d="M7.5 6C8.6 6 9.6 6.4 10.4 7.1"/><circle cx="7.5" cy="10" r="1" fill="currentColor" stroke="none"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="currentColor"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1"/><rect x="21.5" y="4" width="2" height="4" rx="0.5" opacity="0.4"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="var(--ok)"/></svg>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div class="app-header-left">
+        <div class="menu-btn" onclick="toggleMenu()">
+          <span class="bar"></span>
+        </div>
+        <div class="app-logo"><em>Top Viso</em></div>
+      </div>
+      <div class="header-actions">
+        <div class="theme-toggle" onclick="toggleTheme()">
+          <svg id="icon-sun" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>
+          <svg id="icon-moon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M13.5 8.5a5.5 5.5 0 01-7-7 5.5 5.5 0 107 7z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Menu Overlay -->
+    <div class="floating-menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+
+    <!-- Floating Menu -->
+    <div class="floating-menu" id="floatingMenu">
+      <div class="menu-app-info">
+        <div class="menu-app-icon">A</div>
+        <div class="menu-app-name">ArguFight</div>
+        <div class="menu-app-platform">IOS -- APP STORE</div>
+      </div>
+      <div class="menu-item active" data-page="overview" onclick="switchPage('overview')">Overview</div>
+      <div class="menu-item" data-page="keywords" onclick="switchPage('keywords')">Keywords</div>
+      <div class="menu-item" data-page="llm" onclick="switchPage('llm')">LLM Discovery</div>
+      <div class="menu-item" data-page="conversion" onclick="switchPage('conversion')">Conversion</div>
+      <div class="menu-item" data-page="competitors" onclick="switchPage('competitors')">Competitors</div>
+      <div class="menu-divider"></div>
+      <div class="menu-item" data-page="" style="color:var(--ink-4);font-size:11px;cursor:default">Optimizer</div>
+      <div class="menu-item" data-page="" style="color:var(--ink-4);font-size:11px;cursor:default">Reviews</div>
+      <div class="menu-item" data-page="" style="color:var(--ink-4);font-size:11px;cursor:default">Creative Lab</div>
+      <div class="menu-item" data-page="" style="color:var(--ink-4);font-size:11px;cursor:default">Growth</div>
+      <div class="menu-item" data-page="" style="color:var(--ink-4);font-size:11px;cursor:default">Localization</div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- ════════ PAGE 1: OVERVIEW ════════ -->
+      <div class="page active" id="page-overview">
+        <h1 class="page-title">Every signal, one <em>command center</em>.</h1>
+        <p class="page-sub">Real-time health check across all discovery surfaces.</p>
+
+        <div class="kpi-strip">
+          <div class="kpi">
+            <div class="kpi-label">ASO SCORE</div>
+            <div class="kpi-value">72</div>
+            <div class="kpi-delta up">+4 vs last week</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">VISIBILITY</div>
+            <div class="kpi-value">64</div>
+            <div class="kpi-delta up">+2.1</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">KEYWORDS</div>
+            <div class="kpi-value">847</div>
+            <div class="kpi-delta flat">--</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">AVG RATING</div>
+            <div class="kpi-value">4.2</div>
+            <div class="kpi-delta down">-0.1</div>
+          </div>
+        </div>
+
+        <!-- Score Ring -->
+        <div class="m-card">
+          <div class="m-card-head">
+            <h3>ASO Health</h3>
+            <span class="m-card-tag">OVERALL</span>
+          </div>
+          <div class="m-card-body" style="text-align:center">
+            <div class="score-ring">
+              <svg viewBox="0 0 100 100">
+                <circle class="ring-bg" cx="50" cy="50" r="42"/>
+                <circle class="ring-fg" cx="50" cy="50" r="42" stroke="var(--accent)" stroke-dasharray="264" stroke-dashoffset="74"/>
+              </svg>
+              <div class="score-ring-inner">
+                <div class="sr-num">72</div>
+                <div class="sr-label">ASO SCORE</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:20px;margin-top:8px">
+              <div style="text-align:center">
+                <div style="font-family:var(--font-display);font-size:18px;color:var(--ink)">64</div>
+                <div style="font-size:9px;letter-spacing:0.1em;color:var(--ink-3);text-transform:uppercase">Visibility</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-family:var(--font-display);font-size:18px;color:var(--ink)">23%</div>
+                <div style="font-size:9px;letter-spacing:0.1em;color:var(--ink-3);text-transform:uppercase">LLM SoV</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-family:var(--font-display);font-size:18px;color:var(--ink)">45</div>
+                <div style="font-size:9px;letter-spacing:0.1em;color:var(--ink-3);text-transform:uppercase">Conversion</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Keywords -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">01</div>
+            <div class="sec-h2">Keyword <em>snapshot</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:0">
+            <table class="m-table">
+              <thead>
+                <tr><th>KEYWORD</th><th class="r">RANK</th><th class="r">VOL</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>debate app</td><td class="r"><span class="num">1</span></td><td class="r">2,400</td></tr>
+                <tr><td>argument tracker</td><td class="r"><span class="num">3</span></td><td class="r">1,800</td></tr>
+                <tr><td>discussion forum</td><td class="r"><span class="num">8</span></td><td class="r">5,200</td></tr>
+                <tr><td>opinion app</td><td class="r"><span class="num">12</span></td><td class="r">900</td></tr>
+                <tr><td>debate topics</td><td class="r"><span class="num">15</span></td><td class="r">3,100</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">02</div>
+            <div class="sec-h2">Top <em>recommendations</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="issue-row">
+              <div class="issue-num">1</div>
+              <div class="issue-content">
+                <div class="issue-title">Add more screenshots</div>
+                <div class="issue-desc">Only 3 screenshots detected. Apps with 8+ convert 25% better.</div>
+                <div class="issue-meta"><span class="pill-box high">HIGH</span></div>
+              </div>
+            </div>
+            <div class="issue-row">
+              <div class="issue-num">2</div>
+              <div class="issue-content">
+                <div class="issue-title">Improve subtitle keyword density</div>
+                <div class="issue-desc">Your subtitle misses 4 high-volume terms competitors use.</div>
+                <div class="issue-meta"><span class="pill-box high">HIGH</span></div>
+              </div>
+            </div>
+            <div class="issue-row" style="border-bottom:none">
+              <div class="issue-num">3</div>
+              <div class="issue-content">
+                <div class="issue-title">Request more reviews</div>
+                <div class="issue-desc">12 ratings vs competitor avg of 10K. Social proof is critical.</div>
+                <div class="issue-meta"><span class="pill-box medium">MEDIUM</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PAGE 2: KEYWORDS ════════ -->
+      <div class="page" id="page-keywords">
+        <h1 class="page-title">The words that <em>drive</em> discovery.</h1>
+        <p class="page-sub">Track rankings, volume, and intent across App Store and Play Store.</p>
+
+        <div class="kpi-strip">
+          <div class="kpi">
+            <div class="kpi-label">TRACKED</div>
+            <div class="kpi-value">847</div>
+            <div class="kpi-delta up">+12 new</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">TOP 10</div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-delta up">+3</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">AVG POSITION</div>
+            <div class="kpi-value">34</div>
+            <div class="kpi-delta up">-6 (better)</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">VISIBILITY</div>
+            <div class="kpi-value">64</div>
+            <div class="kpi-delta up">+2.1</div>
+          </div>
+        </div>
+
+        <!-- Rankings Table -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">01</div>
+            <div class="sec-h2">Keyword <em>rankings</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:0">
+            <table class="m-table">
+              <thead>
+                <tr><th>KEYWORD</th><th class="r">RANK</th><th class="r">VOL</th><th class="r">7D</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>debate app</td><td class="r"><span class="num">1</span></td><td class="r">2.4K</td><td class="r"><span class="pill ok">--</span></td></tr>
+                <tr><td>argument tracker</td><td class="r"><span class="num">3</span></td><td class="r">1.8K</td><td class="r"><span class="pill ok">+2</span></td></tr>
+                <tr><td>discussion forum</td><td class="r"><span class="num">8</span></td><td class="r">5.2K</td><td class="r"><span class="pill ok">+5</span></td></tr>
+                <tr><td>opinion poll</td><td class="r"><span class="num">12</span></td><td class="r">900</td><td class="r"><span class="pill warn">-3</span></td></tr>
+                <tr><td>debate topics</td><td class="r"><span class="num">15</span></td><td class="r">3.1K</td><td class="r"><span class="pill ok">+1</span></td></tr>
+                <tr><td>social debate</td><td class="r"><span class="num">22</span></td><td class="r">1.4K</td><td class="r"><span class="pill ok">+8</span></td></tr>
+                <tr><td>voting app</td><td class="r"><span class="num">45</span></td><td class="r">6.7K</td><td class="r"><span class="pill warn">-2</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Intent Clusters -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">02</div>
+            <div class="sec-h2">Intent <em>clusters</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body">
+            <div class="intent-cluster">
+              <div class="ic-name">Debate & Discussion</div>
+              <div class="ic-bar">
+                <div class="ic-track"><div class="ic-fill" style="width:78%"></div></div>
+                <div class="ic-pct">78% coverage</div>
+              </div>
+              <div>
+                <span class="kw-chip ours">debate app</span>
+                <span class="kw-chip ours">argument tracker</span>
+                <span class="kw-chip win">discussion forum</span>
+                <span class="kw-chip miss">debate club</span>
+              </div>
+            </div>
+            <div class="intent-cluster">
+              <div class="ic-name">Opinion & Polling</div>
+              <div class="ic-bar">
+                <div class="ic-track"><div class="ic-fill" style="width:42%"></div></div>
+                <div class="ic-pct">42% coverage</div>
+              </div>
+              <div>
+                <span class="kw-chip ours">opinion poll</span>
+                <span class="kw-chip miss">voting app</span>
+                <span class="kw-chip miss">poll maker</span>
+                <span class="kw-chip">survey tool</span>
+              </div>
+            </div>
+            <div class="intent-cluster" style="margin-bottom:0">
+              <div class="ic-name">Social Arguments</div>
+              <div class="ic-bar">
+                <div class="ic-track"><div class="ic-fill" style="width:35%"></div></div>
+                <div class="ic-pct">35% coverage</div>
+              </div>
+              <div>
+                <span class="kw-chip ours">social debate</span>
+                <span class="kw-chip miss">argue online</span>
+                <span class="kw-chip miss">hot takes app</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PAGE 3: LLM DISCOVERY ════════ -->
+      <div class="page" id="page-llm">
+        <h1 class="page-title">Your presence across <em>AI engines</em>.</h1>
+        <p class="page-sub">Track how ChatGPT, Claude, Gemini, Perplexity, and Copilot recommend your app.</p>
+
+        <div class="kpi-strip">
+          <div class="kpi">
+            <div class="kpi-label">SHARE OF VOICE</div>
+            <div class="kpi-value">23%</div>
+            <div class="kpi-delta up">+5%</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">ENGINES</div>
+            <div class="kpi-value">5</div>
+            <div class="kpi-delta flat">tracked</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">PROMPTS</div>
+            <div class="kpi-value">48</div>
+            <div class="kpi-delta up">+6 new</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">CITATIONS</div>
+            <div class="kpi-value">12</div>
+            <div class="kpi-delta up">+3</div>
+          </div>
+        </div>
+
+        <!-- Engine Breakdown -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">01</div>
+            <div class="sec-h2">Recommendation <em>rate</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body">
+            <div class="row-bar">
+              <div class="rb-label">Perplexity</div>
+              <div class="rb-track"><div class="rb-fill accent" style="width:42%"></div></div>
+              <div class="rb-val">42%</div>
+            </div>
+            <div class="row-bar">
+              <div class="rb-label">ChatGPT</div>
+              <div class="rb-track"><div class="rb-fill accent" style="width:34%"></div></div>
+              <div class="rb-val">34%</div>
+            </div>
+            <div class="row-bar">
+              <div class="rb-label">Claude</div>
+              <div class="rb-track"><div class="rb-fill accent" style="width:28%"></div></div>
+              <div class="rb-val">28%</div>
+            </div>
+            <div class="row-bar">
+              <div class="rb-label">Gemini</div>
+              <div class="rb-track"><div class="rb-fill accent" style="width:18%"></div></div>
+              <div class="rb-val">18%</div>
+            </div>
+            <div class="row-bar" style="margin-bottom:0">
+              <div class="rb-label">Copilot</div>
+              <div class="rb-track"><div class="rb-fill accent" style="width:12%"></div></div>
+              <div class="rb-val">12%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Citations -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">02</div>
+            <div class="sec-h2">Top <em>citation</em> sources</div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="cite-row">
+              <div class="cite-rank">01</div>
+              <div class="cite-info">
+                <div class="cite-name">App Store Listing</div>
+                <div class="cite-url">apps.apple.com</div>
+              </div>
+              <div class="cite-count">8</div>
+            </div>
+            <div class="cite-row">
+              <div class="cite-rank">02</div>
+              <div class="cite-info">
+                <div class="cite-name">Product Hunt Page</div>
+                <div class="cite-url">producthunt.com</div>
+              </div>
+              <div class="cite-count">5</div>
+            </div>
+            <div class="cite-row" style="border-bottom:none">
+              <div class="cite-rank">03</div>
+              <div class="cite-info">
+                <div class="cite-name">Reddit Thread</div>
+                <div class="cite-url">reddit.com/r/apps</div>
+              </div>
+              <div class="cite-count">3</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Discovery Gaps -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">03</div>
+            <div class="sec-h2">Discovery <em>gaps</em></div>
+          </div>
+        </div>
+        <div class="callout warn-c">
+          <div class="callout-label">MISSING FROM</div>
+          <p>Copilot never mentions your app. Consider creating structured data and a developer profile to improve coverage.</p>
+        </div>
+        <div class="callout ok-c" style="margin-top:8px">
+          <div class="callout-label">STRONG ON</div>
+          <p>Perplexity recommends you in 42% of debate-related queries -- your highest performing engine.</p>
+        </div>
+      </div>
+
+      <!-- ════════ PAGE 4: CONVERSION ════════ -->
+      <div class="page" id="page-conversion">
+        <h1 class="page-title">From impression to <em>install</em>.</h1>
+        <p class="page-sub">Audit your search result card and find exactly why users scroll past.</p>
+
+        <div class="kpi-strip">
+          <div class="kpi">
+            <div class="kpi-label">CONVERSION SCORE</div>
+            <div class="kpi-value">45</div>
+            <div class="kpi-delta down">needs work</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">ICON SCORE</div>
+            <div class="kpi-value">72</div>
+            <div class="kpi-delta flat">decent</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">TITLE SCORE</div>
+            <div class="kpi-value">85</div>
+            <div class="kpi-delta up">strong</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">SCREENSHOTS</div>
+            <div class="kpi-value">38</div>
+            <div class="kpi-delta down">weak</div>
+          </div>
+        </div>
+
+        <!-- Score Breakdown -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">01</div>
+            <div class="sec-h2">Score <em>breakdown</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body">
+            <div class="score-bar-row">
+              <div class="sb-label">Title</div>
+              <div class="sb-track"><div class="sb-fill" style="width:85%;background:var(--ok)"></div></div>
+              <div class="sb-val">85</div>
+            </div>
+            <div class="score-bar-row">
+              <div class="sb-label">Icon</div>
+              <div class="sb-track"><div class="sb-fill" style="width:72%;background:var(--ok)"></div></div>
+              <div class="sb-val">72</div>
+            </div>
+            <div class="score-bar-row">
+              <div class="sb-label">Subtitle</div>
+              <div class="sb-track"><div class="sb-fill" style="width:60%;background:#d97706"></div></div>
+              <div class="sb-val">60</div>
+            </div>
+            <div class="score-bar-row">
+              <div class="sb-label">Screenshots</div>
+              <div class="sb-track"><div class="sb-fill" style="width:38%;background:#ef4444"></div></div>
+              <div class="sb-val">38</div>
+            </div>
+            <div class="score-bar-row" style="margin-bottom:0">
+              <div class="sb-label">Rating</div>
+              <div class="sb-track"><div class="sb-fill" style="width:15%;background:#ef4444"></div></div>
+              <div class="sb-val">15</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Issues -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">02</div>
+            <div class="sec-h2">Issues <em>&amp; fixes</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="issue-row">
+              <div class="issue-num" style="background:var(--warn-wash);color:var(--warn)">!</div>
+              <div class="issue-content">
+                <div class="issue-title">Only 3 screenshots</div>
+                <div class="issue-desc">Search results show first 3 screenshots. You need 8+ with text captions to compete.</div>
+                <div class="issue-meta">
+                  <span class="pill-box high">HIGH</span>
+                  <span class="pill muted">SCREENSHOTS</span>
+                </div>
+              </div>
+            </div>
+            <div class="issue-row">
+              <div class="issue-num" style="background:var(--warn-wash);color:var(--warn)">!</div>
+              <div class="issue-content">
+                <div class="issue-title">Only 12 ratings</div>
+                <div class="issue-desc">Competitors avg 10K+ ratings. Low count signals untested app to users.</div>
+                <div class="issue-meta">
+                  <span class="pill-box high">HIGH</span>
+                  <span class="pill muted">RATING</span>
+                </div>
+              </div>
+            </div>
+            <div class="issue-row" style="border-bottom:none">
+              <div class="issue-num" style="background:var(--accent-wash);color:var(--accent)">i</div>
+              <div class="issue-content">
+                <div class="issue-title">Subtitle lacks hook</div>
+                <div class="issue-desc">Your subtitle is descriptive but not compelling. Add a benefit-driven phrase.</div>
+                <div class="issue-meta">
+                  <span class="pill-box medium">MEDIUM</span>
+                  <span class="pill muted">SUBTITLE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Playbook -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">03</div>
+            <div class="sec-h2">Conversion <em>playbook</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="issue-row">
+              <div class="issue-num" style="background:var(--ok-wash);color:var(--ok)">1</div>
+              <div class="issue-content">
+                <div class="issue-title">Design 5 more screenshots with captions</div>
+                <div class="issue-desc">Expected lift: +30% tap-through rate</div>
+                <div class="issue-meta"><span class="pill-box low">QUICK WIN</span></div>
+              </div>
+            </div>
+            <div class="issue-row">
+              <div class="issue-num" style="background:var(--ok-wash);color:var(--ok)">2</div>
+              <div class="issue-content">
+                <div class="issue-title">Run an in-app review prompt campaign</div>
+                <div class="issue-desc">Expected lift: +15% social proof signal</div>
+                <div class="issue-meta"><span class="pill-box medium">MODERATE</span></div>
+              </div>
+            </div>
+            <div class="issue-row" style="border-bottom:none">
+              <div class="issue-num" style="background:var(--ok-wash);color:var(--ok)">3</div>
+              <div class="issue-content">
+                <div class="issue-title">Rewrite subtitle with benefit-first hook</div>
+                <div class="issue-desc">Expected lift: +10% tap-through rate</div>
+                <div class="issue-meta"><span class="pill-box low">QUICK WIN</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PAGE 5: COMPETITORS ════════ -->
+      <div class="page" id="page-competitors">
+        <h1 class="page-title">Know your <em>battlefield</em>.</h1>
+        <p class="page-sub">Auto-detected competitors tracked across rankings, ratings, and store changes.</p>
+
+        <div class="kpi-strip">
+          <div class="kpi">
+            <div class="kpi-label">TRACKED</div>
+            <div class="kpi-value">8</div>
+            <div class="kpi-delta flat">competitors</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">HIGH THREATS</div>
+            <div class="kpi-value" style="color:var(--warn)">3</div>
+            <div class="kpi-delta down">+1 new</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">KEYWORD GAPS</div>
+            <div class="kpi-value">24</div>
+            <div class="kpi-delta up">opportunities</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">CATEGORY</div>
+            <div class="kpi-value">#12</div>
+            <div class="kpi-delta up">+3</div>
+          </div>
+        </div>
+
+        <!-- Head to Head -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">01</div>
+            <div class="sec-h2">Head to <em>head</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="comp-row">
+              <div class="comp-icon" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">D</div>
+              <div class="comp-info">
+                <div class="comp-name">DebateHub</div>
+                <div class="comp-meta">4.8 -- 10.2K ratings -- 142 kw overlap</div>
+              </div>
+              <div class="comp-val"><span class="pill warn">HIGH</span></div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-icon" style="background:linear-gradient(135deg,#f39c12,#e67e22)">P</div>
+              <div class="comp-info">
+                <div class="comp-name">PollParty</div>
+                <div class="comp-meta">4.5 -- 14.3K ratings -- 98 kw overlap</div>
+              </div>
+              <div class="comp-val"><span class="pill warn">HIGH</span></div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-icon" style="background:linear-gradient(135deg,#2ecc71,#27ae60)">T</div>
+              <div class="comp-info">
+                <div class="comp-name">TalkItOut</div>
+                <div class="comp-meta">4.7 -- 40.1K ratings -- 87 kw overlap</div>
+              </div>
+              <div class="comp-val"><span class="pill warn">HIGH</span></div>
+            </div>
+            <div class="comp-row">
+              <div class="comp-icon" style="background:linear-gradient(135deg,#9b59b6,#8e44ad)">O</div>
+              <div class="comp-info">
+                <div class="comp-name">OpinionX</div>
+                <div class="comp-meta">4.1 -- 3.2K ratings -- 64 kw overlap</div>
+              </div>
+              <div class="comp-val"><span class="pill accent">MED</span></div>
+            </div>
+            <div class="comp-row" style="border-bottom:none">
+              <div class="comp-icon" style="background:linear-gradient(135deg,#3498db,#2980b9)">S</div>
+              <div class="comp-info">
+                <div class="comp-name">SpeakUp</div>
+                <div class="comp-meta">3.9 -- 1.8K ratings -- 45 kw overlap</div>
+              </div>
+              <div class="comp-val"><span class="pill muted">LOW</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Keyword Gaps -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">02</div>
+            <div class="sec-h2">Keyword <em>gaps</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-head">
+            <h3>They rank, you don't</h3>
+            <span class="m-card-tag">24 GAPS</span>
+          </div>
+          <div class="m-card-body">
+            <span class="kw-chip miss">debate club</span>
+            <span class="kw-chip miss">argue online</span>
+            <span class="kw-chip miss">hot takes</span>
+            <span class="kw-chip miss">poll maker</span>
+            <span class="kw-chip miss">voting app</span>
+            <span class="kw-chip miss">would you rather</span>
+            <span class="kw-chip miss">unpopular opinions</span>
+            <span class="kw-chip miss">fact check app</span>
+            <span class="kw-chip miss">this or that</span>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="sec-head">
+          <div>
+            <div class="sec-num">03</div>
+            <div class="sec-h2">Recent <em>moves</em></div>
+          </div>
+        </div>
+        <div class="m-card">
+          <div class="m-card-body" style="padding:10px 14px">
+            <div class="alert-item">
+              <div class="alert-meta">
+                <span class="alert-tag" style="color:var(--warn)">THREAT</span>
+                <span class="alert-date">2 days ago</span>
+              </div>
+              <div class="alert-text">DebateHub updated their title and gained 3 new Top 10 keywords including "argument app" and "debate game".</div>
+            </div>
+            <div class="alert-item" style="border-bottom:none">
+              <div class="alert-meta">
+                <span class="alert-tag" style="color:var(--accent)">CHANGE</span>
+                <span class="alert-date">5 days ago</span>
+              </div>
+              <div class="alert-text">PollParty added 4 new screenshots with text overlays and their conversion rate likely increased.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout warn-c" style="margin-bottom:20px">
+          <div class="callout-label">MARKET SATURATION</div>
+          <p>The "debate app" category is moderately competitive with 3 established players. Focus on niche keywords to build initial traction.</p>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+
+    <!-- Home Indicator -->
+    <div class="home-indicator">
+      <div class="home-indicator-bar"></div>
+    </div>
+
+  </div><!-- /iphone-screen -->
+</div><!-- /iphone-frame -->
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  html.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.getElementById('icon-sun').style.display = isDark ? 'block' : 'none';
+  document.getElementById('icon-moon').style.display = isDark ? 'none' : 'block';
+}
+
+function toggleMenu() {
+  const menu = document.getElementById('floatingMenu');
+  const overlay = document.getElementById('menuOverlay');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+
+function switchPage(page) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  // Show target page
+  document.getElementById('page-' + page).classList.add('active');
+  // Update menu active state
+  document.querySelectorAll('.menu-item[data-page]').forEach(item => {
+    item.classList.toggle('active', item.getAttribute('data-page') === page);
+  });
+  // Close menu
+  document.getElementById('floatingMenu').classList.remove('open');
+  document.getElementById('menuOverlay').classList.remove('open');
+  // Scroll to top
+  document.querySelector('.content-area').scrollTop = 0;
+}
+</script>
+</body>
+</html>

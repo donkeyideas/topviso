@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Top Viso",
+    "slug": "topviso-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "topviso",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f8f7f4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.topviso.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#f8f7f4"
+      },
+      "package": "com.topviso.mobile"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "./plugins/disable-strict-concurrency"
+    ]
+  }
+}
