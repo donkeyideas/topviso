@@ -11,7 +11,7 @@ export default async function ChurnRetentionPage() {
 
   const { data: orgs } = await supabase
     .from('organizations')
-    .select('id, name, plan_tier, created_at, trial_ends_at')
+    .select('id, name, plan_tier, created_at, trial_ends_at, stripe_subscription_id')
     .order('created_at', { ascending: false })
 
   const [healthMap, { data: members }] = await Promise.all([
@@ -37,7 +37,7 @@ export default async function ChurnRetentionPage() {
   const onTrial = (orgs ?? []).filter(o => o.trial_ends_at && new Date(o.trial_ends_at) >= now)
   const paid = (orgs ?? []).filter(o => o.plan_tier !== 'solo')
 
-  // At-risk: health < 50
+  // At-risk: health < 50 OR subscription cancelling
   const atRiskOrgs = (orgs ?? [])
     .map(o => {
       const h = healthMap[o.id]
@@ -45,9 +45,10 @@ export default async function ChurnRetentionPage() {
       const churn = h?.churnRisk ?? 0
       const lastSeen = h?.lastActivityAt
       const arr = (PLAN_PRICES[o.plan_tier] ?? 0) * 12
-      return { ...o, health, churn, lastSeen, arr }
+      const cancelling = h?.riskFactors?.includes('Subscription cancelling') ?? false
+      return { ...o, health, churn, lastSeen, arr, cancelling }
     })
-    .filter(o => o.health < 50)
+    .filter(o => o.health < 50 || o.cancelling)
     .sort((a, b) => a.health - b.health)
 
   const atRiskMrr = atRiskOrgs.reduce((s, o) => s + (PLAN_PRICES[o.plan_tier] ?? 0), 0)
@@ -85,11 +86,19 @@ export default async function ChurnRetentionPage() {
     return h && h.riskFactors.some(f => f.toLowerCase().includes('solo') || f.toLowerCase().includes('free'))
   }).length
 
+  const cancellingCount = (orgs ?? []).filter(o => {
+    const h = healthMap[o.id]
+    return h?.riskFactors?.includes('Subscription cancelling')
+  }).length
+
+  if (cancellingCount > 0 && total > 0) {
+    churnReasons.push({ reason: 'Subscription cancelling', sub: 'ACTIVE CANCEL', pct: Math.round((cancellingCount / total) * 100), color: '#c43b1e' })
+  }
   if (neverActivated > 0 && total > 0) {
     churnReasons.push({ reason: 'Never activated', sub: 'NO APPS LINKED', pct: Math.round((neverActivated / total) * 100), color: 'var(--color-ink)' })
   }
   if (priceObjection > 0 && total > 0) {
-    churnReasons.push({ reason: 'Trial expired (no conversion)', sub: 'PRICE / FIT', pct: Math.round((priceObjection / total) * 100), color: '#c43b1e' })
+    churnReasons.push({ reason: 'Trial expired (no conversion)', sub: 'PRICE / FIT', pct: Math.round((priceObjection / total) * 100), color: '#b58300' })
   }
   churnReasons.sort((a, b) => b.pct - a.pct)
 
@@ -140,7 +149,7 @@ export default async function ChurnRetentionPage() {
 
         {/* ── §02 AT-RISK PIPELINE ── */}
         <SectionHead number="§02" title={<>At-risk <em>pipeline</em></>} />
-        <AdminCard title={<>At-risk <em>pipeline</em></>} tag={`HEALTH < 50 · ${atRiskOrgs.length} ACCTS`}>
+        <AdminCard title={<>At-risk <em>pipeline</em></>} tag={`HEALTH < 50 OR CANCELLING · ${atRiskOrgs.length} ACCTS`}>
           {atRiskOrgs.length === 0 ? (
             <EmptyMetric message="No at-risk accounts" hint="Accounts with health < 50 will appear here." />
           ) : (
@@ -162,8 +171,11 @@ export default async function ChurnRetentionPage() {
                     ? `${Math.max(0, Math.floor((now.getTime() - new Date(o.lastSeen).getTime()) / 86_400_000))}d ago`
                     : '—'
                   return (
-                    <tr key={o.id}>
-                      <td><strong>{o.name ?? o.id.slice(0, 8)}</strong></td>
+                    <tr key={o.id} style={o.cancelling ? { background: 'var(--color-warn-wash)' } : undefined}>
+                      <td>
+                        <strong>{o.name ?? o.id.slice(0, 8)}</strong>
+                        {o.cancelling && <span style={{ marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 9, color: '#c43b1e', fontWeight: 700, letterSpacing: '0.08em' }}>CANCELLING</span>}
+                      </td>
                       <td className="tn">${o.arr.toLocaleString()}</td>
                       <td className="tn">
                         <span style={{
