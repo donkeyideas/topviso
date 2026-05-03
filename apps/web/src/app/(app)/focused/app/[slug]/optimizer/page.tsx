@@ -202,18 +202,12 @@ export default function OptimizerPage() {
     if (!hasData) return null
 
     // Score each goal area — higher score = weaker area = should prioritize
-    const scores: Record<string, number> = {
-      'visibility': 0,
-      'keyword-opportunities': 0,
-      'competitive-edge': 0,
-      'conversion': 0,
-      'balanced': 0,
-    }
+    const scores = { visibility: 0, 'keyword-opportunities': 0, 'competitive-edge': 0, conversion: 0, balanced: 0 }
 
     // Low visibility score → suggest visibility
     const visScore = (visibilityData && !Array.isArray(visibilityData)) ? visibilityData.overallScore : null
-    if (visScore != null && visScore < 40) scores['visibility'] += 3
-    else if (visScore != null && visScore < 60) scores['visibility'] += 1
+    if (visScore != null && visScore < 40) scores.visibility += 3
+    else if (visScore != null && visScore < 60) scores.visibility += 1
 
     // Many unranked or low-rank keywords → suggest keyword opportunities
     if (trackedKws.length > 0) {
@@ -236,8 +230,8 @@ export default function OptimizerPage() {
     if (reviewsData) {
       const rating = reviewsData.averageRating
       const reviewCount = reviewsData.realReviewCount
-      if ((rating != null && rating < 3.5) || (reviewCount != null && reviewCount < 50)) scores['conversion'] += 3
-      else if ((rating != null && rating < 4.0) || (reviewCount != null && reviewCount < 200)) scores['conversion'] += 1
+      if ((rating != null && rating < 3.5) || (reviewCount != null && reviewCount < 50)) scores.conversion += 3
+      else if ((rating != null && rating < 4.0) || (reviewCount != null && reviewCount < 200)) scores.conversion += 1
     }
 
     // Find highest-scoring goal

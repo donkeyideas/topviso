@@ -201,17 +201,11 @@ export default function OptimizerPage() {
     const hasData = visibilityData || competitorsData || reviewsData || trackedKws.length > 0
     if (!hasData) return null
 
-    const scores: Record<string, number> = {
-      'visibility': 0,
-      'keyword-opportunities': 0,
-      'competitive-edge': 0,
-      'conversion': 0,
-      'balanced': 0,
-    }
+    const scores = { visibility: 0, 'keyword-opportunities': 0, 'competitive-edge': 0, conversion: 0, balanced: 0 }
 
     const visScore = (visibilityData && !Array.isArray(visibilityData)) ? visibilityData.overallScore : null
-    if (visScore != null && visScore < 40) scores['visibility'] += 3
-    else if (visScore != null && visScore < 60) scores['visibility'] += 1
+    if (visScore != null && visScore < 40) scores.visibility += 3
+    else if (visScore != null && visScore < 60) scores.visibility += 1
 
     if (trackedKws.length > 0) {
       const unranked = trackedKws.filter(k => !k.rank || k.rank > 50).length
@@ -231,8 +225,8 @@ export default function OptimizerPage() {
     if (reviewsData) {
       const rating = reviewsData.averageRating
       const reviewCount = reviewsData.realReviewCount
-      if ((rating != null && rating < 3.5) || (reviewCount != null && reviewCount < 50)) scores['conversion'] += 3
-      else if ((rating != null && rating < 4.0) || (reviewCount != null && reviewCount < 200)) scores['conversion'] += 1
+      if ((rating != null && rating < 3.5) || (reviewCount != null && reviewCount < 50)) scores.conversion += 3
+      else if ((rating != null && rating < 4.0) || (reviewCount != null && reviewCount < 200)) scores.conversion += 1
     }
 
     let best = 'balanced'
