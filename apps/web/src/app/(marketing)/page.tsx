@@ -6,6 +6,7 @@ import { ProblemSection } from "@/components/marketing/ProblemSection";
 import { Features } from "@/components/marketing/Features";
 import { Testimonials } from "@/components/marketing/Testimonials";
 import { Comparison } from "@/components/marketing/Comparison";
+import { CompetitorPricingTable } from "@/components/marketing/CompetitorPricingTable";
 import { Pricing } from "@/components/marketing/Pricing";
 import { FinalCta } from "@/components/marketing/FinalCta";
 import { Footer } from "@/components/marketing/Footer";
@@ -37,6 +38,7 @@ export default async function HomePage() {
       <Features />
       <Testimonials />
       <Comparison />
+      <CompetitorPricingTable />
       <Pricing plans={plans} />
       <FinalCta />
       <Footer />
