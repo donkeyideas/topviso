@@ -332,7 +332,7 @@ export async function POST(req: NextRequest) {
 
 ${appContext}
 
-${buildGoalDirective(goal, 'title')}
+${buildGoalDirective(goal, 'title', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 
@@ -370,7 +370,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'subtitle')}
+${buildGoalDirective(goal, 'subtitle', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 
@@ -394,7 +394,16 @@ QUALITY:
 - Include secondary keywords NOT already in the title
 - Communicate the core value proposition clearly
 - Each of the 5 options MUST take a different angle or highlight different features
-${app.platform === 'ios' ? '- Maximize keyword density within 30 characters' : '- Use the full 80 characters to describe key features and benefits with natural keyword inclusion'}
+${app.platform === 'ios'
+  ? `- iOS subtitle = ONLY 30 characters. Every single character must earn its place.
+- Lead with the strongest keyword phrase (2-3 words max)
+- Use "&" or "|" separators to squeeze in a second keyword if possible
+- Drop articles (a, the), prepositions (for, with), and filler words unless essential for meaning
+- Front-load the highest-volume keyword — Apple weights the beginning of the subtitle
+- Think compact keyword phrases: "Live Scores & Stats" not "Get Live Scores and Statistics"
+- Prefer short, punchy words over long ones — "Chat & Meet" beats "Communication Platform"
+- If a keyword doesn't fit, save it for the keywords field instead — don't sacrifice readability`
+  : '- Use the full 80 characters to describe key features and benefits with natural keyword inclusion'}
 
 Return a JSON object: {"subtitles": [{"subtitle": "...", "charCount": N, "reasoning": "why this ${subLabel} works"}]}
 Only return the JSON object, no other text.`
@@ -407,7 +416,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'description')}
+${buildGoalDirective(goal, 'description', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 
@@ -434,6 +443,13 @@ QUALITY:
 - Naturally weave tracked keywords throughout (aim for 3-5% keyword density)
 - Use short paragraphs, feature bullets with clear benefits, and social proof
 - Write for HUMANS first, algorithms second
+${app.platform === 'ios' ? `
+iOS-SPECIFIC STRATEGY:
+- Apple does NOT index the description for search — so focus on CONVERSION and LLM DISCOVERABILITY, not keyword stuffing
+- The promotional text (170 chars) IS updateable without a new app version — make it timely, seasonal, or event-driven
+- Lead the promotional text with your strongest hook: a new feature, a seasonal angle, or a compelling stat
+- In the full description, write entity-rich sentences that AI assistants (ChatGPT, Siri, etc.) can quote when recommending apps
+- Structure the description so each paragraph covers one clear feature/benefit — LLMs excerpt by paragraph` : ''}
 
 Return a JSON object: {"shortDescription": "${app.platform === 'ios' ? 'promotional text, max 170 chars' : 'short description, max 80 chars'}", "fullDescription": "full description, max 4000 chars", "keywordsUsed": ["keywords", "naturally", "included"]}
 Only return the JSON object, no other text.`
@@ -445,7 +461,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'keywords')}
+${buildGoalDirective(goal, 'keywords', app.platform)}
 
 CHARACTER LIMIT (STRICT — Apple enforced):
 - EXACTLY 100 characters or fewer. Count every character including commas. This is a HARD limit.
@@ -460,10 +476,22 @@ STORE POLICY COMPLIANCE (MANDATORY — violations cause rejection/warning):
 
 OPTIMIZATION:
 - Use singular forms only (Apple matches plurals automatically)
-- Do NOT duplicate any word already in the app title or subtitle
+- Do NOT duplicate any word already in the app title or subtitle — Apple combines words across title, subtitle, and keywords field automatically
 - Prioritize high-volume, low-competition terms
-- Group related terms together for compound matching
-- Include common misspellings if space allows
+
+COMPOUND MATCHING STRATEGY (THIS IS THE KEY TO iOS KEYWORD OPTIMIZATION):
+Apple's algorithm creates compound phrases by combining adjacent keywords separated by commas.
+Example: "score,live,football,stream,nfl" matches searches for "live score", "football score", "live football", "nfl stream", "live stream", etc.
+- Place keywords that form natural 2-3 word search phrases ADJACENT to each other
+- Think about what users actually type in App Store search and reverse-engineer the word order
+- A single well-ordered keyword list can match 20-40+ search phrases through compounding
+- Put your highest-priority compound pairs next to each other
+- Test adjacency: for each comma-separated pair, ask "would someone search for these two words together?"
+
+COVERAGE:
+- Include common misspellings and alternate spellings if space allows (e.g., "color" and "colour")
+- Include both abbreviated and full forms if relevant (e.g., "stats" alongside longer terms)
+- Cover related concepts users might search for (synonyms, adjacent features)
 - Every character is precious — fill as close to 100 as possible without going over
 
 Return a JSON object: {"keywordField": "comma,separated,keywords,no,spaces", "charCount": N, "reasoning": "keyword strategy explanation"}
@@ -3165,13 +3193,16 @@ const LLM_OPTIMIZATION_DIRECTIVE = `LLM DISCOVERABILITY (CRITICAL — AI assista
 - Avoid vague superlatives — instead state concrete capabilities ("processes 10K photos", "supports 50+ formats")
 - Front-load the most important differentiator — LLMs often excerpt only the first 1-2 sentences`
 
-function buildGoalDirective(goal: string | undefined, field: string): string {
+function buildGoalDirective(goal: string | undefined, field: string, platform?: string): string {
+  const isIOS = platform === 'ios'
   const directives: Record<string, string> = {
     'balanced': `OPTIMIZATION GOAL — BALANCED:
 - Balance keyword density with natural readability
 - Include high-volume keywords while maintaining human appeal
 - Aim for good conversion copy AND search discoverability
-- Structure content for both store algorithm AND user comprehension`,
+- Structure content for both store algorithm AND user comprehension${isIOS && (field === 'subtitle' || field === 'keywords') ? `
+- iOS fields have extreme character limits — prioritize the HIGHEST-IMPACT keywords first
+- Use the keywords field to capture terms that won't fit in title/subtitle` : ''}`,
 
     'visibility': `OPTIMIZATION GOAL — MAXIMIZE VISIBILITY & RANKINGS:
 - PRIORITIZE keyword density — pack as many relevant keywords as possible
@@ -3179,7 +3210,9 @@ function buildGoalDirective(goal: string | undefined, field: string): string {
 - Use exact-match keyword phrases where possible (not just individual words)
 - Target keyword combinations that compound discoverability
 - Every word should earn its place via search volume — minimize filler words
-- Aim for maximum algorithmic signal within character limits`,
+- Aim for maximum algorithmic signal within character limits${isIOS ? `
+- iOS STRATEGY: Title (30 chars) + Subtitle (30 chars) + Keywords field (100 chars) = your TOTAL search index. Plan keyword distribution across ALL three fields — don't waste overlap
+- Put your #1 keyword phrase in the title, #2 in subtitle, everything else in the keywords field` : ''}`,
 
     'keyword-opportunities': `OPTIMIZATION GOAL — KEYWORD OPPORTUNITIES:
 - Focus on UNTAPPED keywords the app does NOT currently rank for
@@ -3187,7 +3220,8 @@ function buildGoalDirective(goal: string | undefined, field: string): string {
 - Include emerging/trending search terms in this category
 - Avoid keywords the app already dominates — focus on NEW territory
 - Prioritize keywords where competitors rank but this app does not
-- Look for adjacent categories and cross-category keyword opportunities`,
+- Look for adjacent categories and cross-category keyword opportunities${isIOS ? `
+- iOS TIP: The keywords field (100 chars) is your best lever for new keyword territory — use it to target terms you can't fit in title/subtitle` : ''}`,
 
     'conversion': `OPTIMIZATION GOAL — CONVERSION & DOWNLOADS:
 - PRIORITIZE persuasive copy that drives installs
@@ -3196,7 +3230,8 @@ function buildGoalDirective(goal: string | undefined, field: string): string {
 - Include social proof signals (numbers, achievements) where truthful
 - Address user pain points directly and show the solution
 - Write for emotional impact — make the reader WANT to download
-- First 3 lines must hook the reader before they scroll past`,
+- First 3 lines must hook the reader before they scroll past${isIOS ? `
+- iOS: Subtitle appears directly under the app title in search results — make it a compelling mini-tagline that converts browsers to tappers` : ''}`,
 
     'competitive-edge': `OPTIMIZATION GOAL — COMPETITIVE DIFFERENTIATION:
 - Emphasize what makes this app UNIQUE vs competitors

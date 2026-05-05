@@ -148,7 +148,7 @@ export default function OptimizerPage() {
     return llmTrackData.optimizationTips ?? []
   }, [llmTrackData])
 
-  // Score a single field
+  // Score a single field — scales keyword expectations by field capacity
   const scoreField = useCallback((value: string, limit: number): number => {
     if (!value) return 0
     let s = 25 // has content
@@ -158,7 +158,12 @@ export default function OptimizerPage() {
     if (trackedKws.length > 0) {
       const lower = value.toLowerCase()
       const matches = trackedKws.filter(k => lower.includes(k.keyword.toLowerCase())).length
-      s += Math.round(Math.min(25, (matches / Math.max(1, trackedKws.length)) * 100))
+      // Scale expected keyword matches by field capacity:
+      // A 30-char subtitle can realistically fit 2-3 keywords,
+      // while a 4000-char description can fit many more.
+      // Use ~1 keyword per 15 chars as the reasonable expectation.
+      const expectedMatches = Math.max(1, Math.min(trackedKws.length, Math.ceil(limit / 15)))
+      s += Math.round(Math.min(25, (matches / expectedMatches) * 25))
     } else {
       s += 15
     }
@@ -173,8 +178,8 @@ export default function OptimizerPage() {
     ]
     if (isIOS) {
       scores.push(
-        { label: 'Keywords field', score: scoreField(curKeywords, limits.keywords), weight: 20 },
-        { label: 'Promo text', score: scoreField(curPromo, limits.promo), weight: 10 },
+        { label: 'Keywords field', score: scoreField(curKeywords, limits.keywords), weight: 25 },
+        { label: 'Promo text', score: scoreField(curPromo, limits.promo), weight: 5 },
         { label: 'Description', score: scoreField(curDesc, limits.description), weight: 20 },
       )
     } else {
