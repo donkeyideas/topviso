@@ -13,8 +13,8 @@ export const config = {
      * - _next/image (image optimization)
      * - favicon.ico (favicon)
      * - public files (images, etc.)
-     * - API routes handled separately
+     * - api/billing/webhook (Stripe webhook — no auth cookies, must not be intercepted)
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|api/billing/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
