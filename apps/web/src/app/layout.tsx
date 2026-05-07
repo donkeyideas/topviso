@@ -3,12 +3,16 @@ import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.topviso.com'),
   title: 'Top Viso — The full map of how your app gets found',
   description:
     'Track your app across App Store, Play Store, ChatGPT, Claude, Gemini, Perplexity, and Copilot. The only app store optimization platform built for the AI era.',
   icons: {
     icon: '/favicon.ico',
     apple: '/apple-icon.png',
+  },
+  alternates: {
+    canonical: '/',
   },
 }
 
