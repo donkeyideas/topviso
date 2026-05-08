@@ -8,6 +8,7 @@ import { FeatureImportanceBars } from '@/components/admin/charts/FeatureImportan
 import { UsageHeatmap } from '@/components/admin/charts/UsageHeatmap'
 import { EngagementTrajectoryChart } from '@/components/admin/charts/EngagementTrajectoryChart'
 import { EmptyMetric } from '@/components/admin/EmptyMetric'
+import { Customer360Actions } from './Customer360Actions'
 import {
   PLAN_PRICES,
   computeOrgHealth,
@@ -55,6 +56,14 @@ export default async function Customer360Page({
     : { data: [] }
   const profileMap: Record<string, { full_name: string | null; created_at: string }> = {}
   for (const p of profiles ?? []) profileMap[p.id] = { full_name: p.full_name, created_at: p.created_at }
+
+  // keyword_limit not in generated types — query raw
+  const { data: kwRow } = await supabase
+    .from('organizations')
+    .select('keyword_limit' as string)
+    .eq('id', id)
+    .maybeSingle() as { data: { keyword_limit?: number } | null }
+  const keywordLimit = kwRow?.keyword_limit ?? 50
 
   const orgName = org?.name ?? 'Unknown'
   const initials = orgName.slice(0, 2).toUpperCase()
@@ -238,10 +247,27 @@ export default async function Customer360Page({
               <span>LAST SEEN <strong>{lastSeen}</strong></span>
             </div>
           </div>
-          <div className="c360-actions">
-            <button className="btn-ghost">Edit</button>
-            <button className="btn-ghost">Export</button>
-          </div>
+          <Customer360Actions org={{
+            id: orgId,
+            name: orgName,
+            plan_tier: planTier,
+            app_limit: org?.app_limit ?? 1,
+            keyword_limit: keywordLimit,
+            seat_limit: org?.seat_limit ?? 1,
+            trial_ends_at: org?.trial_ends_at ?? null,
+            members: (members ?? []).map(m => ({
+              user_id: m.user_id,
+              role: m.role,
+              full_name: profileMap[m.user_id]?.full_name ?? null,
+              joined: profileMap[m.user_id]?.created_at ?? '',
+            })),
+            apps: (apps ?? []).map(a => ({
+              name: a.name,
+              platform: a.platform,
+              category: a.category,
+              added: a.created_at,
+            })),
+          }} />
         </div>
 
         {/* ── KPI STRIP ── */}
