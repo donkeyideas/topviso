@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { BillingModal } from '@/components/billing/BillingModal'
+
+type SyncAppStatus = 'pending' | 'syncing' | 'done' | 'error'
+interface SyncItem { id: string; name: string; icon_url: string | null; status: SyncAppStatus }
 
 interface App {
   id: string
@@ -51,6 +54,8 @@ export default function AppPickerPage() {
   const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null)
   const [perAppAnalysis, setPerAppAnalysis] = useState<Record<string, AppAnalysisData>>({})
   const [syncing, setSyncing] = useState(false)
+  const [syncItems, setSyncItems] = useState<SyncItem[]>([])
+  const [showSyncModal, setShowSyncModal] = useState(false)
   const [filter, setFilter] = useState<'all' | 'ios' | 'android'>('all')
   const [showBilling, setShowBilling] = useState(false)
 
@@ -75,22 +80,33 @@ export default function AppPickerPage() {
     setPerAppAnalysis(aMap)
   }
 
-  async function syncAllApps() {
+  const syncAllApps = useCallback(async () => {
+    if (apps.length === 0) return
     setSyncing(true)
-    try {
-      await Promise.all(apps.map(a =>
-        fetch(`/api/generate`, {
+    const items: SyncItem[] = apps.map(a => ({ id: a.id, name: a.name, icon_url: a.icon_url, status: 'pending' as SyncAppStatus }))
+    setSyncItems(items)
+    setShowSyncModal(true)
+
+    const update = (id: string, status: SyncAppStatus) =>
+      setSyncItems(prev => prev.map(it => it.id === id ? { ...it, status } : it))
+
+    await Promise.all(apps.map(async (a) => {
+      update(a.id, 'syncing')
+      try {
+        const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'sync', appId: a.id }),
         })
-      ))
-      await fetchAnalysis(apps)
-    } catch (err) {
-      console.error('Sync failed:', err)
-    }
+        update(a.id, res.ok ? 'done' : 'error')
+      } catch {
+        update(a.id, 'error')
+      }
+    }))
+
+    await fetchAnalysis(apps)
     setSyncing(false)
-  }
+  }, [apps])
 
   async function confirmRemove() {
     if (!removeTarget) return
@@ -277,6 +293,71 @@ export default function AppPickerPage() {
             }
           }}
         />
+      )}
+
+      {/* Sync progress modal */}
+      {showSyncModal && (
+        <div
+          className="gen-modal-backdrop"
+          onClick={!syncing ? () => setShowSyncModal(false) : undefined}
+        >
+          <div className="gen-modal" onClick={(e) => e.stopPropagation()} style={{ minWidth: 380, maxWidth: 480 }}>
+            <div className="gen-modal-icon">
+              {syncing ? (
+                <div className="gen-spinner" />
+              ) : syncItems.some(it => it.status === 'error') ? (
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="18" stroke="var(--color-warn)" strokeWidth="2" />
+                  <path d="M14 14l12 12M26 14L14 26" stroke="var(--color-warn)" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              ) : (
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                  <circle cx="20" cy="20" r="18" stroke="var(--color-ok)" strokeWidth="2" />
+                  <path d="M12 20l6 6 10-12" stroke="var(--color-ok)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+            <h3 className="gen-modal-title">
+              {syncing
+                ? `Syncing ${syncItems.filter(it => it.status === 'done').length}/${syncItems.length} apps`
+                : syncItems.some(it => it.status === 'error') ? 'Sync completed with errors' : 'All apps synced!'}
+            </h3>
+            <div style={{ width: '100%', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {syncItems.map(it => (
+                <div key={it.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
+                  borderBottom: '1px solid var(--color-line-soft, rgba(0,0,0,0.06))',
+                  opacity: it.status === 'pending' ? 0.4 : 1, transition: 'opacity 0.3s',
+                }}>
+                  <div style={{ width: 20, textAlign: 'center', flexShrink: 0 }}>
+                    {it.status === 'syncing' && <div className="gen-spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />}
+                    {it.status === 'done' && <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="var(--color-ok)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    {it.status === 'error' && <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4L4 12" stroke="var(--color-warn)" strokeWidth="2" strokeLinecap="round"/></svg>}
+                    {it.status === 'pending' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-ink-4)', margin: '0 auto' }} />}
+                  </div>
+                  {it.icon_url ? (
+                    <img src={it.icon_url} alt="" width={28} height={28} style={{ borderRadius: 6, flexShrink: 0 }} referrerPolicy="no-referrer" crossOrigin="anonymous" />
+                  ) : (
+                    <div style={{ width: 28, height: 28, borderRadius: 6, background: 'var(--color-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
+                      {it.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.name}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '0.08em', color: 'var(--color-ink-3)', marginTop: 2 }}>
+                      {it.status === 'syncing' ? 'SYNCING...' : it.status === 'done' ? 'COMPLETE' : it.status === 'error' ? 'FAILED' : 'WAITING'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {!syncing && (
+              <button className="btn ghost" onClick={() => setShowSyncModal(false)} style={{ marginTop: 20, alignSelf: 'center' }}>
+                Close
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Remove confirmation modal */}
