@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Modal } from 'react-native'
+import { Feather } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../lib/theme'
 import { useAppData } from '../lib/useAppData'
@@ -12,7 +13,7 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
   const { colors, isDark, toggle } = useTheme()
   const insets = useSafeAreaInsets()
   const { app } = useAppData()
-  const { sync, syncing } = useSync(app?.id)
+  const { sync, syncing, phase, currentStep, steps, dismiss } = useSync(app?.id)
 
   return (
     <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.paper, borderBottomColor: colors.line }]}>
@@ -48,11 +49,54 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
           onPress={toggle}
           activeOpacity={0.7}
         >
-          <Text style={[styles.themeIcon, { color: colors.ink3 }]}>
-            {isDark ? '\u2600' : '\u263E'}
-          </Text>
+          <Feather name={isDark ? 'sun' : 'moon'} size={15} color={colors.ink3} />
         </TouchableOpacity>
       </View>
+
+      {/* Sync progress modal */}
+      <Modal visible={phase !== 'idle'} transparent animationType="fade">
+        <View style={styles.backdrop}>
+          <View style={[styles.modal, { backgroundColor: colors.card }]}>
+            {phase === 'done' ? (
+              <View style={[styles.checkCircle, { borderColor: '#1f6a3a' }]}>
+                <Text style={styles.checkMark}>{'✓'}</Text>
+              </View>
+            ) : (
+              <ActivityIndicator size="large" color={colors.accent} />
+            )}
+            <Text style={[styles.modalTitle, { color: colors.ink }]}>
+              {phase === 'done' ? 'Sync complete' : 'Syncing data'}
+            </Text>
+            <View style={styles.stepList}>
+              {steps.map((step, i) => (
+                <View key={i} style={styles.stepRow}>
+                  <View style={[
+                    styles.stepDot,
+                    {
+                      backgroundColor:
+                        i < currentStep ? '#1f6a3a'
+                        : i === currentStep ? colors.accent
+                        : colors.line,
+                    },
+                  ]} />
+                  <Text style={[
+                    styles.stepText,
+                    {
+                      color: i <= currentStep ? colors.ink : colors.ink4,
+                      fontFamily: i === currentStep ? 'InterTight_600SemiBold' : 'InterTight_400Regular',
+                    },
+                  ]}>{step}</Text>
+                </View>
+              ))}
+            </View>
+            {phase === 'done' && (
+              <TouchableOpacity style={[styles.dismissBtn, { borderColor: colors.line }]} onPress={dismiss}>
+                <Text style={[styles.dismissText, { color: colors.ink3 }]}>Close</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
@@ -68,5 +112,16 @@ const styles = StyleSheet.create({
   syncBtn: { paddingHorizontal: 14, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', minWidth: 56 },
   syncText: { color: '#fff', fontSize: 12, fontFamily: 'InterTight_600SemiBold', letterSpacing: 0.3 },
   themeBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-  themeIcon: { fontSize: 16 },
+  // Modal
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 32 },
+  modal: { width: '100%', maxWidth: 320, borderRadius: 16, padding: 28, alignItems: 'center' },
+  checkCircle: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  checkMark: { fontSize: 24, color: '#1f6a3a' },
+  modalTitle: { fontSize: 18, fontFamily: 'InterTight_600SemiBold', marginTop: 16, marginBottom: 20 },
+  stepList: { width: '100%', gap: 10 },
+  stepRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepDot: { width: 6, height: 6, borderRadius: 3 },
+  stepText: { fontSize: 13 },
+  dismissBtn: { marginTop: 20, paddingVertical: 10, paddingHorizontal: 24, borderRadius: 8, borderWidth: 1 },
+  dismissText: { fontSize: 13, fontFamily: 'InterTight_500Medium' },
 })

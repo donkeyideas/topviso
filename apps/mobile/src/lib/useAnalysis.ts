@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabase'
+import { useSyncListener } from './useSync'
 
 export function useAnalysis<T = Record<string, unknown>>(
   appId: string | null | undefined,
@@ -37,6 +38,9 @@ export function useAnalysis<T = Record<string, unknown>>(
     setLoading(true)
     refetch()
   }, [refetch])
+
+  // Re-fetch when Sync button is pressed
+  useSyncListener(refetch)
 
   return { data, loading, refetch }
 }

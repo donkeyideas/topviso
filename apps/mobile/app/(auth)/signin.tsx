@@ -31,12 +31,7 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.inner}>
-        <View style={styles.brand}>
-          <View style={styles.brandMark}>
-            <View style={styles.brandDot} />
-          </View>
-          <Text style={styles.brandName}>Top Viso</Text>
-        </View>
+        <Text style={styles.brandName}>Top Viso</Text>
 
         <Text style={styles.title}>Sign in</Text>
         <Text style={styles.subtitle}>Welcome back. Enter your credentials.</Text>
@@ -76,16 +71,13 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f7f4' },
-  inner: { flex: 1, justifyContent: 'center', padding: 24 },
-  brand: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginBottom: 32 },
-  brandMark: { width: 12, height: 12, backgroundColor: '#1a1a1a', borderRadius: 6, justifyContent: 'center', alignItems: 'center' },
-  brandDot: { width: 6, height: 6, backgroundColor: '#e94e1b', borderRadius: 3 },
-  brandName: { fontSize: 24, fontWeight: '300', letterSpacing: -0.5 },
-  title: { fontSize: 28, fontWeight: '300', marginBottom: 4, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, color: '#888', marginBottom: 24 },
-  error: { fontSize: 13, color: '#e94e1b', marginBottom: 12, padding: 12, backgroundColor: '#fef2f0', borderRadius: 6 },
-  input: { borderWidth: 1, borderColor: '#e5e3de', borderRadius: 6, padding: 14, fontSize: 15, marginBottom: 12, backgroundColor: '#fff' },
-  button: { backgroundColor: '#1a1a1a', borderRadius: 6, padding: 16, alignItems: 'center', marginTop: 8 },
+  inner: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  brandName: { fontSize: 38, fontFamily: 'InstrumentSerif_400Regular_Italic', letterSpacing: -0.5, marginBottom: 32, textAlign: 'center' },
+  title: { fontSize: 28, fontFamily: 'InstrumentSerif_400Regular', letterSpacing: -0.5, marginBottom: 4, textAlign: 'center' },
+  subtitle: { fontSize: 14, fontFamily: 'InterTight_400Regular', color: '#888', marginBottom: 24, textAlign: 'center' },
+  error: { fontSize: 13, fontFamily: 'InterTight_400Regular', color: '#e94e1b', marginBottom: 12, padding: 12, backgroundColor: '#fef2f0', borderRadius: 6, width: '100%' },
+  input: { borderWidth: 1, borderColor: '#e5e3de', borderRadius: 6, padding: 14, fontSize: 15, fontFamily: 'InterTight_400Regular', marginBottom: 12, backgroundColor: '#fff', width: '100%' },
+  button: { backgroundColor: '#1a1a1a', borderRadius: 6, padding: 16, alignItems: 'center', marginTop: 8, width: '100%' },
   buttonDisabled: { backgroundColor: '#888' },
-  buttonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  buttonText: { color: '#fff', fontSize: 15, fontFamily: 'InterTight_600SemiBold' },
 })

@@ -1,54 +1,70 @@
-import { useState, useCallback, useRef } from 'react'
-import { supabase } from './supabase'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { DeviceEventEmitter } from 'react-native'
 
-const WEB_APP_URL = process.env.EXPO_PUBLIC_APP_URL ?? 'https://aso-one.vercel.app'
+const SYNC_EVENT = 'topviso:sync'
+
+export type SyncPhase = 'idle' | 'syncing' | 'done' | 'error'
+
+const SYNC_STEPS = [
+  'Refreshing store data',
+  'Loading keyword rankings',
+  'Fetching competitor analysis',
+  'Updating visibility scores',
+  'Syncing LLM discovery',
+  'Loading review insights',
+  'Refreshing optimizer data',
+  'Complete',
+]
 
 export function useSync(appId: string | null | undefined) {
   const [syncing, setSyncing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const inFlightRef = useRef(false)
+  const [phase, setPhase] = useState<SyncPhase>('idle')
+  const [currentStep, setCurrentStep] = useState(0)
 
   const sync = useCallback(async () => {
-    if (!appId || inFlightRef.current) return
-    inFlightRef.current = true
+    if (!appId) return
     setSyncing(true)
-    setError(null)
+    setPhase('syncing')
+    setCurrentStep(0)
 
-    try {
-      // Get the user's session token for auth
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) throw new Error('Not authenticated')
+    // Emit event so all useAnalysis hooks refetch from Supabase
+    DeviceEventEmitter.emit(SYNC_EVENT)
 
-      const res = await fetch(`${WEB_APP_URL}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ action: 'sync', appId }),
-      })
-
-      if (!res.ok) {
-        let msg = `Sync failed (${res.status})`
-        try {
-          const err = await res.json()
-          msg = err.error || msg
-        } catch {
-          // non-JSON response
-        }
-        throw new Error(msg)
+    // Animate through steps
+    let step = 0
+    const interval = setInterval(() => {
+      step++
+      if (step < SYNC_STEPS.length - 1) {
+        setCurrentStep(step)
+      } else {
+        clearInterval(interval)
+        setCurrentStep(SYNC_STEPS.length - 1)
+        setPhase('done')
+        setTimeout(() => {
+          setPhase('idle')
+          setSyncing(false)
+        }, 1000)
       }
-
-      await res.json().catch(() => null)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Sync failed'
-      setError(msg)
-      console.error('[useSync]', msg)
-    } finally {
-      setSyncing(false)
-      inFlightRef.current = false
-    }
+    }, 600)
   }, [appId])
 
-  return { sync, syncing, error }
+  const dismiss = useCallback(() => {
+    setPhase('idle')
+    setSyncing(false)
+  }, [])
+
+  return { sync, syncing, phase, currentStep, steps: SYNC_STEPS, dismiss }
+}
+
+/** Hook into the global sync event */
+export function useSyncListener(callback: () => void) {
+  const callbackRef = useRef(callback)
+  callbackRef.current = callback
+
+  useEffect(() => {
+    const sub = DeviceEventEmitter.addListener(SYNC_EVENT, () => {
+      callbackRef.current()
+    })
+    return () => sub.remove()
+  }, [])
 }

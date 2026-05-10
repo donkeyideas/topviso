@@ -64,6 +64,13 @@ export default function SettingsPage() {
   const [savingMode, setSavingMode] = useState(false)
   const [modeMsg, setModeMsg] = useState<string | null>(null)
 
+  // Appearance
+  const [darkMode, setDarkMode] = useState(false)
+
+  useEffect(() => {
+    setDarkMode(document.documentElement.getAttribute('data-theme') === 'dark')
+  }, [])
+
   useEffect(() => {
     async function load() {
       const supabase = getSupabaseBrowserClient()
@@ -313,9 +320,58 @@ export default function SettingsPage() {
           />
         )}
 
-        {/* § 05 Dashboard */}
+        {/* § 05 Appearance */}
         <section>
-          <div className="section-head"><div className="section-head-left"><span className="section-num">§ 05</span><h2>Dashboard</h2></div></div>
+          <div className="section-head"><div className="section-head-left"><span className="section-num">§ 05</span><h2>Appearance</h2></div></div>
+          <div className="card"><div className="card-body">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 480 }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>Dark mode</div>
+                <p style={{ fontSize: 12, color: 'var(--color-ink-3)', marginTop: 2 }}>Switch between light and dark theme.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !darkMode
+                  setDarkMode(next)
+                  if (next) {
+                    document.documentElement.setAttribute('data-theme', 'dark')
+                    localStorage.setItem('theme', 'dark')
+                  } else {
+                    document.documentElement.removeAttribute('data-theme')
+                    localStorage.setItem('theme', 'light')
+                  }
+                }}
+                style={{
+                  position: 'relative',
+                  width: 44,
+                  height: 24,
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: darkMode ? 'var(--color-accent, #1d3fd9)' : 'var(--color-line)',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: 2,
+                  left: darkMode ? 22 : 2,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: 'white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+          </div></div>
+        </section>
+
+        {/* § 06 Dashboard */}
+        <section>
+          <div className="section-head"><div className="section-head-left"><span className="section-num">§ 06</span><h2>Dashboard</h2></div></div>
           <div className="card"><div className="card-body">
             <p style={{ fontSize: 13, color: 'var(--color-ink-3)', marginBottom: 16 }}>Choose your dashboard experience. Changes take effect immediately.</p>
             <div style={{ display: 'flex', gap: 12, maxWidth: 560, marginBottom: 16 }}>
