@@ -44,3 +44,13 @@ jobs:
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+
+      - name: Submit to App Store
+        if: github.event.inputs.profile == 'production'
+        run: eas submit --platform ios --latest --non-interactive
+        env:
+          EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
+          ASC_API_KEY_ID: ${{ secrets.APPLE_ASC_KEY_ID }}
+          ASC_API_KEY_ISSUER_ID: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.APPLE_ASC_KEY_P8_BASE64 }}
