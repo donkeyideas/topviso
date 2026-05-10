@@ -24,7 +24,7 @@ export function useApp(appId: string | null) {
     if (!appId) { setLoading(false); return }
 
     try {
-      const res = await fetch(`/api/app-data?appId=${encodeURIComponent(appId)}`, { cache: 'no-store' })
+      const res = await fetch(`/api/app-data?appId=${encodeURIComponent(appId)}`)
       if (!res.ok) {
         setApp(null)
         setLoading(false)

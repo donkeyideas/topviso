@@ -42,6 +42,7 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Read slug from URL so sidebar always reflects the app being viewed
   const urlAppSlug = pathname.match(/^\/app\/([^/]+)/)?.[1]
@@ -199,8 +200,29 @@ export function Sidebar({
     router.push(`/app/${appId}/${currentSubPage}`)
   }
 
+  // Close drawer on navigation
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [pathname])
+
   return (
-    <aside className="sidebar">
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        className="mobile-menu-btn"
+        onClick={() => setDrawerOpen(true)}
+        aria-label="Open menu"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+      </button>
+
+      {/* Mobile backdrop */}
+      <div
+        className={`sidebar-backdrop${drawerOpen ? ' sidebar-open' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+      />
+
+      <aside className={`sidebar${drawerOpen ? ' sidebar-open' : ''}`}>
       {/* Brand */}
       <div className="brand-block">
         <div className="brand-dash">
@@ -345,5 +367,6 @@ export function Sidebar({
         </div>
       </div>
     </aside>
+    </>
   )
 }

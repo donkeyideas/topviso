@@ -9,20 +9,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Get user profile
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', user!.id)
-    .single()
-
-  // Get user's org, then first app — so global pages keep the full sidebar
-  const { data: membership } = await supabase
-    .from('organization_members')
-    .select('organization_id')
-    .eq('user_id', user!.id)
-    .limit(1)
-    .single()
+  // Fetch profile and membership in parallel (both only need user.id)
+  const [{ data: profile }, { data: membership }] = await Promise.all([
+    supabase.from('profiles').select('full_name').eq('id', user!.id).single(),
+    supabase.from('organization_members').select('organization_id').eq('user_id', user!.id).limit(1).single(),
+  ])
 
   let app: { id: string; name: string; icon_url: string | null } | null = null
   if (membership) {

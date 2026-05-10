@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
-import { useAnalysis } from '@/hooks/useAnalysis'
+import { useMultiAnalysis } from '@/hooks/useMultiAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import type { OptimizeTitleData, OptimizeSubtitleData, OptimizeDescriptionData, OptimizeKeywordsFieldData, KeywordsData, LlmTrackData, LlmTrackItem, LlmOptimizationTip, CompetitorsData, VisibilityData, ReviewsAnalysisData } from '@/lib/analysis-types'
 import { asArray } from '@/lib/analysis-types'
@@ -71,22 +71,37 @@ export default function OptimizerPage() {
       .catch(err => console.error('[optimizer] Failed to fetch snapshot:', err))
   }, [slug])
 
-  // Analysis data
-  const { data: titleData, refetch: refetchTitle } = useAnalysis<OptimizeTitleData>(slug, 'optimize-title')
-  const { data: subtitleData, refetch: refetchSubtitle } = useAnalysis<OptimizeSubtitleData>(slug, 'optimize-subtitle')
-  const { data: descData, refetch: refetchDesc } = useAnalysis<OptimizeDescriptionData>(slug, 'optimize-description')
-  const { data: kwFieldData, refetch: refetchKw } = useAnalysis<OptimizeKeywordsFieldData>(slug, 'optimize-keywords-field')
-  const { data: keywordsData } = useAnalysis<KeywordsData>(slug, 'keywords')
-  const { data: llmTrackData, refetch: refetchLlm } = useAnalysis<LlmTrackData>(slug, 'llm-track')
-  const { data: competitorsData } = useAnalysis<CompetitorsData>(slug, 'competitors')
-  const { data: visibilityData } = useAnalysis<VisibilityData>(slug, 'visibility')
-  const { data: reviewsData } = useAnalysis<ReviewsAnalysisData>(slug, 'reviews-analysis')
-  const { generate: genLlm, generating: g5 } = useGenerate(slug, 'llm-track', { onSuccess: refetchLlm })
+  // Analysis data (single batched request)
+  type OptimizerAnalysis = {
+    'optimize-title': OptimizeTitleData
+    'optimize-subtitle': OptimizeSubtitleData
+    'optimize-description': OptimizeDescriptionData
+    'optimize-keywords-field': OptimizeKeywordsFieldData
+    keywords: KeywordsData
+    'llm-track': LlmTrackData
+    competitors: CompetitorsData
+    visibility: VisibilityData
+    'reviews-analysis': ReviewsAnalysisData
+  }
+  const optimizerTypes = ['optimize-title', 'optimize-subtitle', 'optimize-description', 'optimize-keywords-field', 'keywords', 'llm-track', 'competitors', 'visibility', 'reviews-analysis']
+  const { data: allData, refetch: refetchAll } = useMultiAnalysis<OptimizerAnalysis>(slug, optimizerTypes)
 
-  const { generate: genTitle, generating: g1 } = useGenerate(slug, 'optimize-title', { onSuccess: refetchTitle })
-  const { generate: genSubtitle, generating: g2 } = useGenerate(slug, 'optimize-subtitle', { onSuccess: refetchSubtitle })
-  const { generate: genDesc, generating: g3 } = useGenerate(slug, 'optimize-description', { onSuccess: refetchDesc })
-  const { generate: genKw, generating: g4 } = useGenerate(slug, 'optimize-keywords-field', { onSuccess: refetchKw })
+  const titleData = (allData['optimize-title'] ?? null) as OptimizeTitleData | null
+  const subtitleData = (allData['optimize-subtitle'] ?? null) as OptimizeSubtitleData | null
+  const descData = (allData['optimize-description'] ?? null) as OptimizeDescriptionData | null
+  const kwFieldData = (allData['optimize-keywords-field'] ?? null) as OptimizeKeywordsFieldData | null
+  const keywordsData = (allData.keywords ?? null) as KeywordsData | null
+  const llmTrackData = (allData['llm-track'] ?? null) as LlmTrackData | null
+  const competitorsData = (allData.competitors ?? null) as CompetitorsData | null
+  const visibilityData = (allData.visibility ?? null) as VisibilityData | null
+  const reviewsData = (allData['reviews-analysis'] ?? null) as ReviewsAnalysisData | null
+
+  const { generate: genLlm, generating: g5 } = useGenerate(slug, 'llm-track', { onSuccess: refetchAll })
+
+  const { generate: genTitle, generating: g1 } = useGenerate(slug, 'optimize-title', { onSuccess: refetchAll })
+  const { generate: genSubtitle, generating: g2 } = useGenerate(slug, 'optimize-subtitle', { onSuccess: refetchAll })
+  const { generate: genDesc, generating: g3 } = useGenerate(slug, 'optimize-description', { onSuccess: refetchAll })
+  const { generate: genKw, generating: g4 } = useGenerate(slug, 'optimize-keywords-field', { onSuccess: refetchAll })
 
   const isGenerating = g1 || g2 || g3 || g4
 

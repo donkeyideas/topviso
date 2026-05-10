@@ -22,7 +22,7 @@ const asoItems = [
 
 export function Comparison() {
   return (
-    <section className="border-b border-line" style={{ padding: "100px 32px" }}>
+    <section className="mkt-section border-b border-line" style={{ padding: "100px 32px" }}>
       {/* Section header */}
       <div className="mx-auto mb-16 text-center" style={{ maxWidth: "900px" }}>
         <div className="sec-kicker">HEAD TO HEAD</div>
@@ -30,7 +30,7 @@ export function Comparison() {
           Why teams are <em>switching</em> from legacy tools.
         </h2>
         <p
-          className="mx-auto text-ink-3"
+          className="mkt-text-lg mx-auto text-ink-3"
           style={{ fontSize: "19px", maxWidth: "640px", lineHeight: "1.45" }}
         >
           We respect what AppTweak and Sensor Tower built. But the world changed,
@@ -40,7 +40,7 @@ export function Comparison() {
 
       {/* VS Grid */}
       <div
-        className="mx-auto grid gap-6"
+        className="mkt-grid-2 mx-auto grid gap-6"
         style={{ maxWidth: "1100px", gridTemplateColumns: "1fr 1fr" }}
       >
         {/* Legacy card */}

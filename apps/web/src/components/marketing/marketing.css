@@ -666,19 +666,91 @@
 
 /* Responsive */
 @media (max-width: 1100px) {
-  .hero-h1 {
-    font-size: 56px;
-  }
-  .sec-h2 {
-    font-size: 40px;
-  }
-  .stat-strip {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .problem-pct {
-    font-size: 120px;
-  }
-  .final-cta-h2 {
-    font-size: 44px;
-  }
+  .hero-h1 { font-size: 56px; }
+  .sec-h2 { font-size: 40px; }
+  .stat-strip { grid-template-columns: repeat(2, 1fr); }
+  .problem-pct { font-size: 120px; }
+  .final-cta-h2 { font-size: 44px; }
+}
+
+/* ── Tablet ── */
+@media (max-width: 768px) {
+  .hero-section { padding: 48px 20px 40px; }
+  .hero-h1 { font-size: 38px; letter-spacing: -0.03em; }
+  .hero-lede { font-size: 17px; margin-bottom: 28px; }
+  .badge-launch { margin-bottom: 20px; }
+  .sec-h2 { font-size: 28px; }
+  .stat-strip { grid-template-columns: 1fr 1fr; padding: 24px 20px; margin: 32px -20px 0; }
+  .stat-n { font-size: 36px; }
+  .stat-n em { font-size: 40px; }
+  .stat-strip .stat { padding: 10px 12px; }
+  .problem-stat-card { padding: 32px 24px; }
+  .problem-pct { font-size: 80px; }
+  .feature-card { padding: 28px 24px; min-height: auto; }
+  .feat-metric { font-size: 32px; }
+  .price-card { padding: 28px 24px; }
+  .price-card-hl { transform: none; }
+  .price-amt { font-size: 56px; }
+  .vs-card { padding: 28px 24px; }
+  .testim-card { padding: 24px 20px; }
+  .final-cta-section { padding: 60px 20px; }
+  .final-cta-h2 { font-size: 32px; }
+  .nav-sticky { padding: 12px 16px; }
+  .btn-xl { padding: 14px 24px; font-size: 15px; }
+  .btn-lg { padding: 12px 20px; font-size: 14px; }
+  .marquee-logo { font-size: 20px; }
+  .marquee-track { gap: 40px; }
+
+  /* Inline-style grid overrides */
+  .mkt-section { padding: 48px 20px !important; }
+  .mkt-grid-3 { grid-template-columns: 1fr !important; }
+  .mkt-grid-2 { grid-template-columns: 1fr !important; }
+  .mkt-grid-5 { grid-template-columns: 1fr 1fr !important; gap: 20px !important; }
+  .mkt-heading-lg { font-size: 28px !important; }
+  .mkt-heading-md { font-size: 22px !important; }
+  .mkt-text-lg { font-size: 16px !important; }
+  .mkt-footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+  .mkt-footer { padding: 40px 20px 28px !important; }
+}
+
+/* ── Phone ── */
+@media (max-width: 480px) {
+  .hero-section { padding: 32px 16px 28px; }
+  .hero-h1 { font-size: 28px; margin-bottom: 16px; }
+  .hero-lede { font-size: 15px; margin-bottom: 20px; }
+  .hero-proof { flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .sec-h2 { font-size: 24px; }
+  .stat-strip { grid-template-columns: 1fr; }
+  .stat-strip .stat { border-right: none; border-bottom: 1px solid #2a2a28; }
+  .stat-strip .stat:last-child { border-bottom: none; }
+  .stat-n { font-size: 32px; }
+  .stat-n em { font-size: 36px; }
+  .problem-pct { font-size: 60px; }
+  .problem-stat-card { padding: 24px 20px; }
+  .feature-card { padding: 24px 20px; }
+  .feat-metric { font-size: 28px; }
+  .price-amt { font-size: 44px; }
+  .final-cta-section { padding: 40px 16px; }
+  .final-cta-h2 { font-size: 26px; }
+  .nav-sticky { padding: 10px 12px; }
+  .btn { padding: 8px 14px; font-size: 13px; }
+  .btn-xl { padding: 12px 20px; font-size: 14px; width: 100%; justify-content: center; }
+  .btn-lg { padding: 10px 18px; font-size: 13px; }
+  .ann-bar { font-size: 10px; padding: 8px 12px; gap: 8px; }
+  .marquee-logo { font-size: 16px; }
+
+  /* Inline-style grid overrides */
+  .mkt-section { padding: 32px 16px !important; }
+  .mkt-grid-3 { grid-template-columns: 1fr !important; }
+  .mkt-grid-2 { grid-template-columns: 1fr !important; }
+  .mkt-grid-5 { grid-template-columns: 1fr !important; }
+  .mkt-heading-lg { font-size: 24px !important; }
+  .mkt-heading-md { font-size: 20px !important; }
+  .mkt-text-lg { font-size: 15px !important; }
+  .mkt-footer-grid { grid-template-columns: 1fr !important; }
+  .mkt-footer { padding: 28px 16px 20px !important; }
+
+  /* Mobile nav */
+  .nav-auth .btn-ghost { display: none; }
+  .mobile-menu { max-height: 70vh; overflow-y: auto; }
 }

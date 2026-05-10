@@ -303,3 +303,12 @@ body > iframe[src*="js.stripe.com"],
 body > div[data-stripe] {
   display: none !important;
 }
+
+/* ============================================================
+   Global Mobile Resets
+   ============================================================ */
+@media (max-width: 768px) {
+  html { font-size: 15px; }
+  img, video { max-width: 100%; height: auto; }
+  body { overflow-x: hidden; }
+}

@@ -34,13 +34,13 @@ const legalLinks = [
 export function Footer() {
   return (
     <footer
-      className="border-t border-line bg-paper"
+      className="mkt-footer border-t border-line bg-paper"
       style={{ padding: "60px 32px 40px" }}
     >
       <div className="mx-auto" style={{ maxWidth: "1400px" }}>
         {/* Footer grid */}
         <div
-          className="mb-10 grid gap-12"
+          className="mkt-footer-grid mb-10 grid gap-12"
           style={{ gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr" }}
         >
           {/* Brand column */}

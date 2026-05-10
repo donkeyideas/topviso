@@ -1,8 +1,8 @@
 export function ProblemSection() {
   return (
-    <section className="border-b border-line" style={{ padding: "100px 32px" }}>
+    <section className="mkt-section border-b border-line" style={{ padding: "100px 32px" }}>
       <div
-        className="mx-auto grid items-center gap-10"
+        className="mkt-grid-2 mx-auto grid items-center gap-10"
         style={{ maxWidth: "1100px", gridTemplateColumns: "1fr 1fr" }}
       >
         {/* Left: stat card */}
@@ -25,7 +25,7 @@ export function ProblemSection() {
         {/* Right: text */}
         <div>
           <h3
-            className="mb-5 font-extrabold leading-[1.05]"
+            className="mkt-heading-lg mb-5 font-extrabold leading-[1.05]"
             style={{ fontSize: "44px", letterSpacing: "-0.03em" }}
           >
             Every other tool stopped at{" "}

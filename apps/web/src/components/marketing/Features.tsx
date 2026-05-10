@@ -1,6 +1,6 @@
 export function Features() {
   return (
-    <section className="border-b border-line" style={{ padding: "100px 32px" }}>
+    <section className="mkt-section border-b border-line" style={{ padding: "100px 32px" }}>
       {/* Section header */}
       <div className="sec-head mx-auto mb-16 text-center" style={{ maxWidth: "900px" }}>
         <div className="sec-kicker">EVERYTHING YOU NEED</div>
@@ -10,7 +10,7 @@ export function Features() {
           Every metric that matters.
         </h2>
         <p
-          className="mx-auto text-ink-3"
+          className="mkt-text-lg mx-auto text-ink-3"
           style={{ fontSize: "19px", maxWidth: "640px", lineHeight: "1.45" }}
         >
           We built everything AppTweak and Sensor Tower offer, then added the
@@ -21,7 +21,7 @@ export function Features() {
 
       {/* Feature grid */}
       <div
-        className="mx-auto grid gap-5"
+        className="mkt-grid-3 mx-auto grid gap-5"
         style={{ maxWidth: "1280px", gridTemplateColumns: "repeat(3, 1fr)" }}
       >
         {/* Card 1: LLM Discovery (highlighted) */}

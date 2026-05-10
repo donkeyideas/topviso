@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
-import { useAnalysis } from '@/hooks/useAnalysis'
+import { useMultiAnalysis } from '@/hooks/useMultiAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
@@ -42,18 +42,31 @@ export default function Overview2Page() {
   const { app: appData, loading: appLoading } = useApp(slug)
   const appName = appData?.name ?? ''
 
-  // --- Data fetching (8 analysis types) ---
-  const { data: visibilityData, refetch: refetchVis } = useAnalysis<VisibilityData>(slug, 'visibility')
-  const { data: keywordsRaw, refetch: refetchKw } = useAnalysis<KeywordsData>(slug, 'keywords')
-  const { data: overviewData, refetch: refetchOverview } = useAnalysis<OverviewData>(slug, 'overview')
-  const { data: competitorsRaw, refetch: refetchComp } = useAnalysis<CompetitorsData>(slug, 'competitors')
-  const { data: llmTrackRaw, refetch: refetchLlm } = useAnalysis<LlmTrackData>(slug, 'llm-track')
-  const { data: recsRaw, refetch: refetchRecs } = useAnalysis<RecommendationsData>(slug, 'recommendations')
-  const { data: storeIntelData, refetch: refetchIntel } = useAnalysis<StoreIntelData>(slug, 'store-intel')
-  const { data: reviewsData, refetch: refetchReviews } = useAnalysis<ReviewsAnalysisData>(slug, 'reviews-analysis')
+  // --- Data fetching (single batched request for all 8 analysis types) ---
+  type AllAnalysis = {
+    visibility: VisibilityData
+    keywords: KeywordsData
+    overview: OverviewData
+    competitors: CompetitorsData
+    'llm-track': LlmTrackData
+    recommendations: RecommendationsData
+    'store-intel': StoreIntelData
+    'reviews-analysis': ReviewsAnalysisData
+  }
+  const analysisTypes = ['visibility', 'keywords', 'overview', 'competitors', 'llm-track', 'recommendations', 'store-intel', 'reviews-analysis']
+  const { data: allData, refetch: refetchAll } = useMultiAnalysis<AllAnalysis>(slug, analysisTypes)
+
+  const visibilityData = (allData.visibility ?? null) as VisibilityData | null
+  const keywordsRaw = (allData.keywords ?? null) as KeywordsData | null
+  const overviewData = (allData.overview ?? null) as OverviewData | null
+  const competitorsRaw = (allData.competitors ?? null) as CompetitorsData | null
+  const llmTrackRaw = (allData['llm-track'] ?? null) as LlmTrackData | null
+  const recsRaw = (allData.recommendations ?? null) as RecommendationsData | null
+  const storeIntelData = (allData['store-intel'] ?? null) as StoreIntelData | null
+  const reviewsData = (allData['reviews-analysis'] ?? null) as ReviewsAnalysisData | null
 
   const { generate: syncAll, generating } = useGenerate(slug, 'sync', {
-    onSuccess: () => { refetchVis(); refetchKw(); refetchRecs(); refetchOverview(); refetchComp(); refetchLlm(); refetchIntel(); refetchReviews() },
+    onSuccess: () => { refetchAll() },
   })
 
   // --- Data normalization ---

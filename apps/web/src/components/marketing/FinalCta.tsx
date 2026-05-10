@@ -8,7 +8,7 @@ export function FinalCta() {
           are searching.
         </h2>
         <p
-          className="mx-auto mb-11"
+          className="mkt-text-lg mx-auto mb-11"
           style={{
             fontSize: "22px",
             color: "var(--color-paper-3)",

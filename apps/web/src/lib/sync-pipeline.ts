@@ -369,6 +369,15 @@ async function writeAnalysisResults(
   const now = new Date().toISOString()
 
   // keywords → analysis_results (enriched with volume, CPC, difficulty from heuristics)
+  // IMPORTANT: Merge with existing keywords so sync doesn't destroy data from Generate Keywords
+  const { data: existingKwAnalysis } = await supabase
+    .from('analysis_results')
+    .select('result')
+    .eq('app_id', app.id)
+    .eq('analysis_type', 'keywords')
+    .maybeSingle()
+  const existingKeywords: Array<Record<string, unknown>> = Array.isArray(existingKwAnalysis?.result) ? existingKwAnalysis.result : []
+
   // Compute real delta7d from keyword_ranks_daily history
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -398,15 +407,16 @@ async function writeAnalysisResults(
     }
   }
 
-  const keywordsResult = data.rankings.map((r) => {
+  // Build fresh entries from sync rankings
+  const syncKeywordsMap = new Map<string, Record<string, unknown>>()
+  for (const r of data.rankings) {
     const metrics = estimateKeywordMetrics(r.keyword)
     const kwId = kwIdMap.get(r.keyword.toLowerCase())
     const oldRank = kwId ? oldRanks.get(kwId) : undefined
-    // delta7d: positive = improved (rank number went down), negative = dropped
     const delta7d = (oldRank != null && r.position != null)
       ? oldRank - r.position
       : 0
-    return {
+    syncKeywordsMap.set(r.keyword.toLowerCase(), {
       keyword: r.keyword,
       intent: metrics.intent,
       difficulty: metrics.difficulty,
@@ -417,8 +427,19 @@ async function writeAnalysisResults(
       country: r.country,
       delta7d,
       isEstimate: { volume: true, cpc: true, difficulty: true },
-    }
-  })
+    })
+  }
+
+  // Merge: update existing keywords with fresh rank data, keep ones not in this sync
+  const mergedMap = new Map<string, Record<string, unknown>>()
+  for (const kw of existingKeywords) {
+    const key = String(kw.keyword ?? '').toLowerCase()
+    if (key) mergedMap.set(key, kw)
+  }
+  for (const [key, freshKw] of syncKeywordsMap) {
+    mergedMap.set(key, freshKw) // overwrite with fresh data
+  }
+  const keywordsResult = Array.from(mergedMap.values())
   await upsertAnalysis(supabase, app.id, orgId, 'keywords', keywordsResult)
 
   // competitors → analysis_results (enriched with real store data)

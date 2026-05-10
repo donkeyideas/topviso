@@ -76,7 +76,7 @@ const useCases = [
 export function Testimonials() {
   return (
     <section
-      className="border-b border-line"
+      className="mkt-section border-b border-line"
       style={{
         padding: "100px 32px",
         background: "linear-gradient(180deg, var(--color-paper) 0%, var(--color-paper-2) 100%)",
@@ -89,7 +89,7 @@ export function Testimonials() {
           Stop <em>guessing</em>. Start measuring.
         </h2>
         <p
-          className="mx-auto text-ink-3"
+          className="mkt-text-lg mx-auto text-ink-3"
           style={{ fontSize: "19px", maxWidth: "640px", lineHeight: "1.45" }}
         >
           From indie devs tracking a single launch to agencies managing portfolios
@@ -99,7 +99,7 @@ export function Testimonials() {
 
       {/* Use case grid */}
       <div
-        className="mx-auto grid gap-5"
+        className="mkt-grid-3 mx-auto grid gap-5"
         style={{ maxWidth: "1280px", gridTemplateColumns: "repeat(3, 1fr)" }}
       >
         {useCases.map((t) => (

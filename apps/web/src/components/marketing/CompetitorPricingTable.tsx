@@ -54,7 +54,7 @@ const rows: { feature: string; values: string[] }[] = [
 
 export function CompetitorPricingTable() {
   return (
-    <section className="border-b border-line" style={{ padding: "100px 32px" }}>
+    <section className="mkt-section border-b border-line" style={{ padding: "100px 32px" }}>
       {/* Header */}
       <div className="mx-auto mb-16 text-center" style={{ maxWidth: "900px" }}>
         <div className="sec-kicker">FEATURE &amp; PRICING COMPARISON</div>
@@ -62,7 +62,7 @@ export function CompetitorPricingTable() {
           See exactly what you <em>get</em>.
         </h2>
         <p
-          className="mx-auto text-ink-3"
+          className="mkt-text-lg mx-auto text-ink-3"
           style={{ fontSize: "19px", maxWidth: "640px", lineHeight: "1.45" }}
         >
           Feature-by-feature. No asterisks, no &ldquo;contact sales&rdquo; walls.

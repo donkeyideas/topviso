@@ -10,7 +10,7 @@ export function useAnalysis<T>(appId: string | null, analysisType: string) {
     if (!appId) { setLoading(false); return }
 
     try {
-      const res = await fetch(`/api/analysis?appId=${encodeURIComponent(appId)}&type=${encodeURIComponent(analysisType)}`, { cache: 'no-store' })
+      const res = await fetch(`/api/analysis?appId=${encodeURIComponent(appId)}&type=${encodeURIComponent(analysisType)}`)
       if (!res.ok) {
         console.error(`[useAnalysis] HTTP ${res.status} fetching ${analysisType}`)
         setData(null)

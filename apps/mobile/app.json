@@ -31,8 +31,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": ""
-      }
+        "projectId": "97ea3390-795a-4a3f-a4c9-eba5ca572db9"
+      },
+      "router": {}
     },
     "owner": "donkeyideas"
   }

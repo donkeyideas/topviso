@@ -19,7 +19,7 @@ export function Pricing({ plans }: PricingProps) {
   const entAnnual = enterprise.priceMonthly * 10
 
   return (
-    <section className="border-b border-line" style={{ padding: "100px 32px" }}>
+    <section className="mkt-section border-b border-line" style={{ padding: "100px 32px" }}>
       {/* Section header */}
       <div className="mx-auto mb-16 text-center" style={{ maxWidth: "900px" }}>
         <div className="sec-kicker">TRANSPARENT PRICING</div>
@@ -27,7 +27,7 @@ export function Pricing({ plans }: PricingProps) {
           Pay for <em>scale</em>, not for features.
         </h2>
         <p
-          className="mx-auto text-ink-3"
+          className="mkt-text-lg mx-auto text-ink-3"
           style={{ fontSize: "19px", maxWidth: "640px", lineHeight: "1.45" }}
         >
           Every plan includes all 10 modules. Every plan includes LLM tracking.
@@ -37,7 +37,7 @@ export function Pricing({ plans }: PricingProps) {
 
       {/* Pricing grid */}
       <div
-        className="mx-auto grid items-start gap-5"
+        className="mkt-grid-3 mx-auto grid items-start gap-5"
         style={{ maxWidth: "1200px", gridTemplateColumns: "repeat(3, 1fr)" }}
       >
         {/* Solo */}

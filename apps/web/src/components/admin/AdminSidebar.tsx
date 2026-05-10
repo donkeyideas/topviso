@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 interface NavItem {
   label: string
@@ -87,6 +88,12 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ userName, userInitials }: AdminSidebarProps) {
   const pathname = usePathname()
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // Close drawer on navigation
+  useEffect(() => {
+    setDrawerOpen(false)
+  }, [pathname])
 
   const isActive = (href: string) => {
     if (href === '/admin') return pathname === '/admin'
@@ -94,7 +101,23 @@ export function AdminSidebar({ userName, userInitials }: AdminSidebarProps) {
   }
 
   return (
-    <aside className="sidebar">
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        className="admin-menu-btn"
+        onClick={() => setDrawerOpen(true)}
+        aria-label="Open admin menu"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+      </button>
+
+      {/* Mobile backdrop */}
+      <div
+        className={`admin-sidebar-backdrop${drawerOpen ? ' admin-sidebar-open' : ''}`}
+        onClick={() => setDrawerOpen(false)}
+      />
+
+      <aside className={`sidebar${drawerOpen ? ' admin-sidebar-open' : ''}`}>
       <div className="sb-brand">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <div style={{ width: 26, height: 26, borderRadius: 6, background: '#fff', border: '1px solid var(--color-line)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -169,5 +192,6 @@ export function AdminSidebar({ userName, userInitials }: AdminSidebarProps) {
         </Link>
       </div>
     </aside>
+    </>
   )
 }
