@@ -16,14 +16,10 @@ function withDisableStrictConcurrency(config) {
       }
 
       const snippet = `
-    # Fix expo-modules-core Swift strict concurrency errors (Xcode 16+)
+    # Disable Swift strict concurrency for all pods (Xcode 16+)
     installer.pods_project.targets.each do |target|
-      if target.name == 'ExpoModulesCore'
-        target.build_configurations.each do |config|
-          config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
-          config.build_settings['OTHER_SWIFT_FLAGS'] ||= '$(inherited)'
-          config.build_settings['OTHER_SWIFT_FLAGS'] += ' -Xfrontend -strict-concurrency=minimal'
-        end
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'
       end
     end`
 
