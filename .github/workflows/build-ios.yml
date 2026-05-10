@@ -79,6 +79,9 @@ jobs:
       - name: Run EAS local build
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_APP_URL: https://topviso.com
         run: |
           mkdir -p build
           eas build \
