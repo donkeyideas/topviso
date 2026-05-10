@@ -335,7 +335,7 @@ ${appContext}
 ${buildGoalDirective(goal, 'title', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
-
+${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
 CHARACTER LIMIT (STRICT — THIS IS THE MOST IMPORTANT RULE):
 - Each title MUST be EXACTLY 30 characters or fewer. Not 31, not 35. MAXIMUM 30.
 - Count EVERY character including spaces, punctuation, and symbols BEFORE returning.
@@ -343,6 +343,7 @@ CHARACTER LIMIT (STRICT — THIS IS THE MOST IMPORTANT RULE):
 
 STORE POLICY COMPLIANCE (MANDATORY — violations cause rejection/warning):
 - NEVER use trademarked names of other apps or companies (e.g., Netflix, Disney+, YouTube, Hulu, etc.)
+- NEVER use third-party sports league names (NBA, NFL, NHL, MLB, FIFA, NCAA, etc.) or team/player names unless you own the rights
 - BANNED performance keywords: "best", "#1", "top", "leading", "popular", "award-winning" (unless verifiable)
 - BANNED promotional/price keywords: "free", "ad-free", "no ads", "ad free", "discount", "sale", "deal", "offer", "cashback", "limited time"
 - BANNED call-to-actions: "download now", "install now", "play now", "try now", "update now", "get it now"
@@ -373,7 +374,7 @@ ${appContext}
 ${buildGoalDirective(goal, 'subtitle', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
-
+${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
 CHARACTER LIMIT (STRICT — THIS IS THE MOST IMPORTANT RULE):
 - Each ${subLabel} MUST be EXACTLY ${subLimit} characters or fewer. Not ${subLimit + 1}, not ${subLimit + 5}. MAXIMUM ${subLimit}.
 - Count EVERY character including spaces, punctuation, and symbols BEFORE returning.
@@ -381,6 +382,7 @@ CHARACTER LIMIT (STRICT — THIS IS THE MOST IMPORTANT RULE):
 
 STORE POLICY COMPLIANCE (MANDATORY — violations cause rejection/warning):
 - NEVER use trademarked names of competing apps or companies
+- NEVER use third-party sports league names (NBA, NFL, NHL, MLB, FIFA, NCAA, etc.) or team/player names unless you own the rights
 - BANNED performance keywords: "best", "#1", "top", "leading", "popular", "award-winning" (unless verifiable)
 - BANNED promotional/price keywords: "free", "ad-free", "no ads", "ad free", "discount", "sale", "deal", "offer", "cashback", "limited time"
 - BANNED call-to-actions: "download now", "install now", "play now", "try now", "update now", "get it now"
@@ -419,7 +421,7 @@ ${appContext}
 ${buildGoalDirective(goal, 'description', app.platform)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
-
+${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
 PLATFORM: ${app.platform === 'ios' ? 'iOS App Store' : 'Google Play Store'}
 
 CHARACTER LIMITS (STRICT):
@@ -428,6 +430,7 @@ CHARACTER LIMITS (STRICT):
 
 STORE POLICY COMPLIANCE (MANDATORY — violations cause rejection/warning):
 - NEVER mention competing apps by name or use trademarked names
+- NEVER use third-party sports league names (NBA, NFL, NHL, MLB, FIFA, NCAA, etc.) or team/player names unless you own the rights
 - BANNED performance keywords: "best", "#1", "top", "leading", "popular", "award-winning" (unless verifiable)
 - BANNED promotional/price keywords: "free", "ad-free", "no ads", "ad free", "discount", "sale", "deal", "offer", "cashback", "limited time"
 - BANNED call-to-actions in description: "download now", "install now", "play now", "try now"
@@ -462,17 +465,19 @@ Only return the JSON object, no other text.`
 ${appContext}
 
 ${buildGoalDirective(goal, 'keywords', app.platform)}
-
+${buildAppleComplianceDirective(app.platform as string)}
 CHARACTER LIMIT (STRICT — Apple enforced):
 - EXACTLY 100 characters or fewer. Count every character including commas. This is a HARD limit.
 - Comma-separated, NO spaces after commas
 
 STORE POLICY COMPLIANCE (MANDATORY — violations cause rejection/warning):
 - NEVER include trademarked competitor app names or brand names
+- NEVER include third-party sports league names (NBA, NFL, NHL, MLB, FIFA, NCAA, UFC, WWE, etc.) or team/player names — Apple WILL reject for Guideline 4.1(a) Copycats
 - Do NOT include the app's own name (Apple indexes it automatically)
 - Do NOT include category names (Apple indexes them automatically)
 - BANNED keywords: "app", "free", "ad-free", "no ads", "new", "best", "#1", "top", "popular", "discount", "sale", "deal"
 - Do NOT use common stop words (wasted characters)
+- Use GENERIC sport/activity terms instead of league names: "basketball", "football", "soccer", "hockey" NOT "nba", "nfl", "fifa", "nhl"
 
 OPTIMIZATION:
 - Use singular forms only (Apple matches plurals automatically)
@@ -481,7 +486,7 @@ OPTIMIZATION:
 
 COMPOUND MATCHING STRATEGY (THIS IS THE KEY TO iOS KEYWORD OPTIMIZATION):
 Apple's algorithm creates compound phrases by combining adjacent keywords separated by commas.
-Example: "score,live,football,stream,nfl" matches searches for "live score", "football score", "live football", "nfl stream", "live stream", etc.
+Example: "score,live,basketball,stat,tracker" matches searches for "live score", "basketball score", "live basketball", "stat tracker", etc.
 - Place keywords that form natural 2-3 word search phrases ADJACENT to each other
 - Think about what users actually type in App Store search and reverse-engineer the word order
 - A single well-ordered keyword list can match 20-40+ search phrases through compounding
@@ -2899,14 +2904,25 @@ ${metricsBlock}
 
 The app "${app.name}" is in the "${snapshot?.title ? 'store' : app.category ?? 'unknown'}" category on ${app.platform === 'android' ? 'Google Play' : 'iOS App Store'}.
 
-Based on the image metrics above and ASO best practices for this category, score the feature graphic on these 6 categories (each 0-100):
+Based on the image metrics above and ASO best practices for this category, score the feature graphic on these 7 categories (each 0-100):
 
-1. COMPOSITION & LAYOUT (weight: 20%): Visual hierarchy, balance, use of space. Consider: edge density ${metrics?.edgeDensity ?? 'unknown'}/100 indicates visual complexity. Ideal is 30-60 (not too sparse, not too cluttered).
-2. TEXT READABILITY (weight: 20%): Text overlay is ${metrics?.hasTextOverlay ? 'detected' : 'minimal/none'}. Contrast ${metrics?.contrast ?? 'unknown'}/100. Good text needs contrast > 50 and brightness balance.
-3. COLOR & CONTRAST (weight: 15%): Overall contrast ${metrics?.contrast ?? 'unknown'}/100, saturation ${metrics?.saturation ?? 'unknown'}/100. Dominant colors tell if it's eye-catching or dull. Ideal saturation 40-80.
-4. BRAND IDENTITY (weight: 15%): Professional quality, color consistency, memorable design. Low color cluster count suggests clean branding.
-5. CALL-TO-ACTION STRENGTH (weight: 15%): Does the image communicate the app's value? Text overlay presence helps. Score based on whether the metrics suggest clear messaging.
-6. TECHNICAL QUALITY (weight: 15%): Dimensions ${metrics?.width ?? '?'}x${metrics?.height ?? '?'}. Google Play requires 1024x500. Correct aspect ratio: ${metrics?.isCorrectAspectRatio ?? 'unknown'}.
+1. COMPOSITION & LAYOUT (weight: 18%): Visual hierarchy, balance, use of space. Consider: edge density ${metrics?.edgeDensity ?? 'unknown'}/100 indicates visual complexity. Ideal is 30-60 (not too sparse, not too cluttered).
+2. TEXT READABILITY (weight: 18%): Text overlay is ${metrics?.hasTextOverlay ? 'detected' : 'minimal/none'}. Contrast ${metrics?.contrast ?? 'unknown'}/100. Good text needs contrast > 50 and brightness balance.
+3. COLOR & CONTRAST (weight: 14%): Overall contrast ${metrics?.contrast ?? 'unknown'}/100, saturation ${metrics?.saturation ?? 'unknown'}/100. Dominant colors tell if it's eye-catching or dull. Ideal saturation 40-80.
+4. BRAND IDENTITY (weight: 14%): Professional quality, color consistency, memorable design. Low color cluster count suggests clean branding.
+5. CALL-TO-ACTION STRENGTH (weight: 14%): Does the image communicate the app's value? Text overlay presence helps. Score based on whether the metrics suggest clear messaging.
+6. TECHNICAL QUALITY (weight: 12%): Dimensions ${metrics?.width ?? '?'}x${metrics?.height ?? '?'}. ${app.platform === 'android' ? 'Google Play requires 1024x500.' : 'iOS requires specific screenshot sizes per device.'} Correct aspect ratio: ${metrics?.isCorrectAspectRatio ?? 'unknown'}.
+7. STORE COMPLIANCE (weight: 10%): ${app.platform === 'ios' ? `Apple Guideline 2.3.10 compliance:
+   - Screenshots MUST show iOS-style status bar (not Android status bar, not a generic bar)
+   - Must NOT display non-iOS device frames (no Android phones, no desktop browsers)
+   - Must NOT show third-party brand logos, team logos, or league logos unless authorized (Guideline 4.1a)
+   - Must NOT contain misleading content about third-party platforms
+   - Score 0 if Android status bar or non-iOS elements are visible
+   - Score 100 if screenshot clearly shows iOS UI patterns and no compliance issues` : `Google Play compliance:
+   - Must show actual app UI accurately
+   - Must NOT contain misleading content
+   - Must NOT impersonate other apps or brands
+   - Must NOT show iOS-specific UI elements (iOS status bar, iOS navigation) that mislead users`}
 
 For each category provide:
 - score (0-100) based on the measured metrics
@@ -2917,20 +2933,23 @@ Also provide:
 - 3-5 overall strengths
 - 3-5 overall weaknesses
 - 4-6 prioritized recommendations with title, detail, priority (high/medium/low), and expectedImpact
+- complianceIssues: array of specific store guideline violations found (empty if compliant)
 
 Return JSON:
 {
   "categories": [
-    {"name": "Composition & Layout", "score": 0, "weight": 20, "findings": ["..."], "suggestions": ["..."]},
-    {"name": "Text Readability", "score": 0, "weight": 20, "findings": ["..."], "suggestions": ["..."]},
-    {"name": "Color & Contrast", "score": 0, "weight": 15, "findings": ["..."], "suggestions": ["..."]},
-    {"name": "Brand Identity", "score": 0, "weight": 15, "findings": ["..."], "suggestions": ["..."]},
-    {"name": "Call-to-Action Strength", "score": 0, "weight": 15, "findings": ["..."], "suggestions": ["..."]},
-    {"name": "Technical Quality", "score": 0, "weight": 15, "findings": ["..."], "suggestions": ["..."]}
+    {"name": "Composition & Layout", "score": 0, "weight": 18, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Text Readability", "score": 0, "weight": 18, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Color & Contrast", "score": 0, "weight": 14, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Brand Identity", "score": 0, "weight": 14, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Call-to-Action Strength", "score": 0, "weight": 14, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Technical Quality", "score": 0, "weight": 12, "findings": ["..."], "suggestions": ["..."]},
+    {"name": "Store Compliance", "score": 0, "weight": 10, "findings": ["..."], "suggestions": ["..."]}
   ],
   "strengths": ["..."],
   "weaknesses": ["..."],
   "recommendations": [{"title": "...", "detail": "...", "priority": "high", "expectedImpact": "..."}],
+  "complianceIssues": ["specific violation descriptions if any"],
   "summary": "2-3 sentence overall assessment"
 }
 Only return the JSON object, no other text.`
@@ -3192,6 +3211,50 @@ const LLM_OPTIMIZATION_DIRECTIVE = `LLM DISCOVERABILITY (CRITICAL — AI assista
 - Include use-case scenarios ("ideal for [persona] who needs [outcome]") — this matches how users prompt LLMs
 - Avoid vague superlatives — instead state concrete capabilities ("processes 10K photos", "supports 50+ formats")
 - Front-load the most important differentiator — LLMs often excerpt only the first 1-2 sentences`
+
+function buildAppleComplianceDirective(platform: string): string {
+  if (platform !== 'ios') return ''
+  return `
+APPLE APP STORE GUIDELINE COMPLIANCE (CRITICAL — violations cause IMMEDIATE REJECTION):
+
+Guideline 4.1(a) — COPYCATS (most common rejection reason):
+- NEVER reference third-party brand names, team names, league names, player names, or organizations you do not own
+- Examples of BANNED terms (unless the developer owns the rights): NBA, NFL, NHL, MLB, FIFA, Premier League, La Liga, NCAA, UFC, WWE, specific team names (Lakers, Yankees, etc.), player names (LeBron, Messi, etc.), TV show names, movie names, music artist names
+- Instead use GENERIC descriptors: "basketball scores", "football stats", "live sports", "league standings", "team tracker"
+- If the app aggregates third-party content (scores, news, stats), describe the FUNCTION not the SOURCE: "Live scores & stats" NOT "NBA Live Scores"
+- Even if the current title/metadata uses these terms, you MUST replace them with compliant alternatives
+
+Guideline 2.3.7 & 2.3.10 — ACCURATE METADATA:
+- NEVER reference other platforms (Android, Google Play, Windows, etc.) in iOS metadata
+- NEVER mention features/content not available on iOS
+- Do NOT use non-iOS status bar imagery or Android-style UI in any creative guidance
+- Metadata must accurately reflect what the iOS app ACTUALLY does
+- Do NOT reference other apps by name unless it's an official integration you own
+
+Guideline 2.3.1 — HIDDEN/UNDOCUMENTED FEATURES:
+- Only describe features that are actually present in the app
+
+SAFE ALTERNATIVES for sports/entertainment apps:
+- Instead of "NBA Scores" → "Basketball Scores & Stats"
+- Instead of "NFL Live" → "Football Live Scores"
+- Instead of "Premier League" → "Soccer League Tracker"
+- Instead of "Netflix Alternative" → "Streaming Guide"
+- Instead of team names → "Your favorite teams"
+- Instead of player names → "Player stats & rankings"
+- Instead of league names → "Major league coverage" or "Pro basketball"
+`
+}
+
+function buildGooglePlayComplianceDirective(platform: string): string {
+  if (platform !== 'android') return ''
+  return `
+GOOGLE PLAY POLICY COMPLIANCE:
+- Do NOT impersonate or reference other apps/brands in a misleading way
+- Generic sports/entertainment terms are generally safer on Google Play than iOS
+- Still avoid using competitor app names or trademarked brands you don't own
+- Do NOT use misleading keywords that imply official affiliation with leagues/teams unless authorized
+`
+}
 
 function buildGoalDirective(goal: string | undefined, field: string, platform?: string): string {
   const isIOS = platform === 'ios'

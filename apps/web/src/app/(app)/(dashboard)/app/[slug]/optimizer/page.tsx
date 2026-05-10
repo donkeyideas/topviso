@@ -265,6 +265,43 @@ export default function OptimizerPage() {
     return '#22c55e'
   }
 
+  // Compliance scanner — checks generated metadata for Apple/Google violations
+  const complianceIssues = useMemo(() => {
+    const issues: { field: string; term: string; rule: string }[] = []
+    const bannedLeagues = ['nba', 'nfl', 'nhl', 'mlb', 'fifa', 'uefa', 'ncaa', 'ufc', 'wwe', 'premier league', 'la liga', 'bundesliga', 'serie a', 'mls', 'wnba', 'xfl']
+    const bannedTerms = ['download now', 'install now', 'play now', '#1', 'best app', 'award-winning', 'app of the year', "editor's choice"]
+    const platformTerms = isIOS ? ['android', 'google play', 'play store', 'apk'] : ['ios', 'app store', 'iphone', 'ipad']
+
+    const fields = [
+      { name: 'Title', value: curTitle },
+      { name: 'Subtitle', value: curSubtitle },
+      { name: 'Keywords', value: curKeywords },
+      { name: 'Promo text', value: curPromo },
+      { name: 'Description', value: curDesc },
+    ]
+
+    for (const f of fields) {
+      if (!f.value) continue
+      const lower = f.value.toLowerCase()
+      for (const term of bannedLeagues) {
+        if (lower.includes(term)) {
+          issues.push({ field: f.name, term, rule: isIOS ? 'Apple Guideline 4.1(a) — third-party sports league/brand reference' : 'Potential trademark issue' })
+        }
+      }
+      for (const term of bannedTerms) {
+        if (lower.includes(term)) {
+          issues.push({ field: f.name, term, rule: 'Banned promotional/claim keyword' })
+        }
+      }
+      for (const term of platformTerms) {
+        if (lower.includes(term)) {
+          issues.push({ field: f.name, term, rule: isIOS ? 'Apple Guideline 2.3.10 — references other platform' : 'References competing platform' })
+        }
+      }
+    }
+    return issues
+  }, [curTitle, curSubtitle, curKeywords, curPromo, curDesc, isIOS])
+
   // Sequential generation to avoid DeepSeek rate limits dropping requests
   async function handleFullRewrite() {
     const params = { goal: selectedGoal }
@@ -313,6 +350,36 @@ export default function OptimizerPage() {
       />
 
       <div className="content">
+        {/* Compliance warning banner */}
+        {complianceIssues.length > 0 && (
+          <div style={{ marginBottom: 20, padding: '16px 20px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.06)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="#ef4444" strokeWidth="1.5" strokeLinejoin="round"/><path d="M8 6v3M8 11.5v.5" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              <strong style={{ fontSize: 13, color: '#ef4444' }}>
+                {isIOS ? 'Apple Review Compliance Issues' : 'Store Policy Issues'} ({complianceIssues.length})
+              </strong>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--color-ink-2)', marginBottom: 10 }}>
+              {isIOS ? 'These issues will cause Apple to reject your app. Re-generate metadata to fix them automatically.' : 'These issues may cause rejection. Re-generate metadata to fix them.'}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {complianceIssues.slice(0, 5).map((issue, i) => (
+                <div key={i} style={{ fontSize: 12, display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, padding: '2px 6px', borderRadius: 3, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', whiteSpace: 'nowrap' }}>{issue.field}</span>
+                  <span style={{ color: 'var(--color-ink-2)' }}>
+                    &ldquo;<strong>{issue.term}</strong>&rdquo; — {issue.rule}
+                  </span>
+                </div>
+              ))}
+              {complianceIssues.length > 5 && (
+                <div style={{ fontSize: 11, color: 'var(--color-ink-3)', fontStyle: 'italic' }}>
+                  + {complianceIssues.length - 5} more issues
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Optimization Goal selector */}
         <section>
           <div style={{ marginBottom: 6 }}>
