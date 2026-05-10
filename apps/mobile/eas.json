@@ -19,20 +19,21 @@
     },
     "production": {
       "autoIncrement": true,
-      "ios": {
-        "image": "macos-ventura-13.6-xcode-15.2"
-      },
       "android": {
         "buildType": "app-bundle",
         "credentialsSource": "local"
+      },
+      "ios": {
+        "credentialsSource": "remote"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "ascApiKeyIssuerId": "APPLE_ASC_ISSUER_ID",
-        "ascApiKeyId": "APPLE_ASC_KEY_ID"
+        "ascApiKeyPath": "./asc-api-key.p8",
+        "ascApiKeyId": "G9TKVH647D",
+        "ascApiKeyIssuerId": "ede1275a-348c-4a53-8b1b-be92ad5798a1"
       },
       "android": {
         "track": "internal"
