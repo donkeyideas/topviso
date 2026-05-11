@@ -2,8 +2,9 @@ import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
 export const metadata = {
-  title: "Delete Account — Top Viso",
-  description: "Request deletion of your Top Viso account and associated data.",
+  title: "Delete Account — Top Viso by Donkey Ideas",
+  description:
+    "Request deletion of your Top Viso account and associated data. Top Viso is developed by Donkey Ideas LLC.",
 };
 
 export default function DeleteAccountPage() {
@@ -28,10 +29,34 @@ export default function DeleteAccountPage() {
             </p>
           </div>
 
+          {/* App identification */}
+          <div
+            className="mb-10"
+            style={{
+              padding: "16px 20px",
+              backgroundColor: "rgba(0,0,0,0.03)",
+              borderRadius: "8px",
+              border: "1px solid rgba(0,0,0,0.06)",
+            }}
+          >
+            <p className="text-ink-2" style={{ fontSize: "14px", lineHeight: "1.7" }}>
+              <strong>Company:</strong> Top Viso
+              <br />
+              <strong>Developer:</strong> Donkey Ideas (DONKEY IDEAS LLC)
+              <br />
+              <strong>Package:</strong> com.topviso.mobile
+              <br />
+              <strong>Contact:</strong>{" "}
+              <a href="mailto:info@donkeyideas.com" className="text-accent underline">info@donkeyideas.com</a>
+              <br />
+              <strong>Available on:</strong> Google Play Store &amp; Apple App Store
+            </p>
+          </div>
+
           {/* Instructions */}
           <div className="mb-10">
             <p className="text-ink-2" style={{ fontSize: "15px", lineHeight: "1.75" }}>
-              If you would like to permanently delete your Top Viso account and all associated data,
+              If you would like to permanently delete your Top Viso account, published by Donkey Ideas LLC,
               you can do so by following the steps below. Please note that this action is irreversible
               and all your data will be permanently removed from our systems.
             </p>
@@ -112,10 +137,10 @@ export default function DeleteAccountPage() {
               Need help?
             </h2>
             <p className="text-ink-2" style={{ fontSize: "15px", lineHeight: "1.75" }}>
-              If you are unable to access your account or need assistance with deletion, contact us
-              at{" "}
-              <a href="mailto:support@topviso.com" className="text-accent underline">
-                support@topviso.com
+              If you are unable to access your account or need assistance with deletion, contact
+              Donkey Ideas LLC (the developer of Top Viso) at{" "}
+              <a href="mailto:info@donkeyideas.com" className="text-accent underline">
+                info@donkeyideas.com
               </a>{" "}
               with the subject line &quot;Account Deletion Request&quot; and we will process your
               request within 5 business days.
