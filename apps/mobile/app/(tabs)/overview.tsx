@@ -8,6 +8,15 @@ import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { ScoreBar } from '../../src/components/ScoreBar'
 import { Pill } from '../../src/components/Pill'
+import { SortableHeader } from '../../src/components/SortableHeader'
+import { useSortable } from '../../src/hooks/useSortable'
+
+const kwColumns = [
+  { label: 'KEYWORD', key: 'keyword', flex: 1 },
+  { label: 'RANK', key: 'rank', width: 50, align: 'right' as const },
+  { label: 'VOL', key: 'volume', width: 50, align: 'right' as const },
+  { label: 'Δ 7D', key: 'delta7d', width: 40, align: 'right' as const },
+]
 
 export default function OverviewScreen() {
   const { colors } = useTheme()
@@ -40,6 +49,8 @@ export default function OverviewScreen() {
 
   // Top keywords sorted by volume
   const topKw = [...keywords].sort((a, b) => Number(b.volume ?? 0) - Number(a.volume ?? 0)).slice(0, 8)
+
+  const { sorted: sortedTopKw, sort: kwSort, toggle: kwToggle } = useSortable(topKw)
 
   // LLM data
   const llmResults = Array.isArray(llmData?.results) ? llmData.results as Array<Record<string, unknown>> : []
@@ -138,13 +149,8 @@ export default function OverviewScreen() {
               </Card>
               {/* Top Keywords table */}
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>KEYWORD</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>RANK</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>VOL</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 40, textAlign: 'right' }]}>Δ 7D</Text>
-                </View>
-                {topKw.slice(0, 5).map((kw, i) => {
+                <SortableHeader columns={kwColumns} sort={kwSort} onSort={kwToggle} />
+                {sortedTopKw.slice(0, 5).map((kw, i) => {
                   const change = Number(kw.delta7d ?? 0)
                   return (
                     <View key={i} style={[styles.tableRow, { borderBottomColor: colors.lineSoft }]}>

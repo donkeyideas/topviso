@@ -8,6 +8,15 @@ import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { Pill } from '../../src/components/Pill'
 import { ScoreBar } from '../../src/components/ScoreBar'
+import { SortableHeader } from '../../src/components/SortableHeader'
+import { useSortable } from '../../src/hooks/useSortable'
+
+const perfColumns = [
+  { label: 'MARKET', key: 'market', flex: 1 },
+  { label: 'DL', key: 'estimatedDownloads', width: 50, align: 'right' as const },
+  { label: 'KW', key: 'keywordsCovered', width: 40, align: 'right' as const },
+  { label: 'STATUS', key: 'status', width: 50, align: 'right' as const },
+]
 
 export default function LocalizationScreen() {
   const { colors } = useTheme()
@@ -26,6 +35,8 @@ export default function LocalizationScreen() {
   const performance = Array.isArray(data?.marketPerformance) ? data.marketPerformance as Array<Record<string, unknown>> : []
   const localized = localizations.length
   const topOpp = opportunities.length > 0 ? Number(opportunities[0]?.opportunityScore ?? 0) : 0
+
+  const { sorted: sortedPerf, sort: perfSort, toggle: perfToggle } = useSortable(performance)
 
   return (
     <ScrollView
@@ -122,13 +133,8 @@ export default function LocalizationScreen() {
             <>
               <SectionHead num="03" title="Market" accent="performance" />
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>MARKET</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>DL</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 40, textAlign: 'right' }]}>KW</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>STATUS</Text>
-                </View>
-                {performance.slice(0, 8).map((p, i) => (
+                <SortableHeader columns={perfColumns} sort={perfSort} onSort={perfToggle} />
+                {sortedPerf.slice(0, 8).map((p, i) => (
                   <View key={i} style={[styles.tableRow, { borderBottomColor: colors.lineSoft }]}>
                     <Text style={[styles.td, { color: colors.ink2, flex: 1 }]} numberOfLines={1}>{String(p.market ?? p.locale ?? '')}</Text>
                     <Text style={[styles.td, { color: colors.ink2, width: 50, textAlign: 'right' }]}>{String(p.estimatedDownloads ?? '--')}</Text>

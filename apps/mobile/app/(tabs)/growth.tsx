@@ -7,6 +7,22 @@ import { KpiStrip } from '../../src/components/KpiStrip'
 import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { Pill } from '../../src/components/Pill'
+import { SortableHeader } from '../../src/components/SortableHeader'
+import { useSortable } from '../../src/hooks/useSortable'
+
+const trafficColumns = [
+  { label: 'KEYWORD', key: 'keyword', flex: 1 },
+  { label: 'RANK', key: 'rank', width: 40, align: 'right' as const },
+  { label: 'VOL', key: 'volume', width: 50, align: 'right' as const },
+  { label: 'TRAFFIC', key: 'estimatedTraffic', width: 50, align: 'right' as const },
+  { label: 'TREND', key: 'trend', width: 44, align: 'right' as const },
+]
+
+const versionColumns = [
+  { label: 'VER', key: 'version', width: 50 },
+  { label: 'CHANGES', key: 'changes', flex: 1 },
+  { label: 'IMPACT', key: 'asoImpact', width: 50, align: 'right' as const },
+]
 
 export default function GrowthScreen() {
   const { colors } = useTheme()
@@ -34,6 +50,9 @@ export default function GrowthScreen() {
   const metadataTests = Array.isArray(data?.metadataTests) ? data.metadataTests as Array<Record<string, unknown>> : []
   const updateFrequency = String(data?.updateFrequency ?? '')
   const releaseNotesTips = Array.isArray(data?.releaseNotesTips) ? data.releaseNotesTips as string[] : []
+
+  const { sorted: sortedTraffic, sort: trafficSort, toggle: trafficToggle } = useSortable(kwVisibility)
+  const { sorted: sortedVersions, sort: verSort, toggle: verToggle } = useSortable(versionHistory)
 
   return (
     <ScrollView
@@ -112,14 +131,8 @@ export default function GrowthScreen() {
                 </View>
               )}
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>KEYWORD</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 40, textAlign: 'right' }]}>RANK</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>VOL</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>TRAFFIC</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 44, textAlign: 'right' }]}>TREND</Text>
-                </View>
-                {kwVisibility.slice(0, 10).map((kw, i) => (
+                <SortableHeader columns={trafficColumns} sort={trafficSort} onSort={trafficToggle} />
+                {sortedTraffic.slice(0, 10).map((kw, i) => (
                   <View key={i} style={[styles.tableRow, { borderBottomColor: colors.lineSoft }]}>
                     <Text style={[styles.td, { color: colors.ink2, flex: 1 }]} numberOfLines={1}>{String(kw.keyword ?? '')}</Text>
                     <Text style={[styles.tdNum, { color: colors.ink, width: 40 }]}>{kw.rank != null ? String(kw.rank) : '--'}</Text>
@@ -164,12 +177,8 @@ export default function GrowthScreen() {
             <>
               <SectionHead num="05" title="Version" accent="timeline" />
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50 }]}>VER</Text>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>CHANGES</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>IMPACT</Text>
-                </View>
-                {versionHistory.slice(0, 8).map((v, i) => {
+                <SortableHeader columns={versionColumns} sort={verSort} onSort={verToggle} />
+                {sortedVersions.slice(0, 8).map((v, i) => {
                   const impact = String(v.asoImpact ?? '').toLowerCase()
                   const changes = Array.isArray(v.changes) ? (v.changes as string[]).join(', ') : String(v.changes ?? '')
                   return (

@@ -8,6 +8,22 @@ import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { ScoreBar } from '../../src/components/ScoreBar'
 import { Pill } from '../../src/components/Pill'
+import { SortableHeader } from '../../src/components/SortableHeader'
+import { useSortable } from '../../src/hooks/useSortable'
+
+const kwColumns = [
+  { label: 'KEYWORD', key: 'keyword', flex: 1 },
+  { label: 'RANK', key: 'rank', width: 38, align: 'right' as const },
+  { label: 'VOL', key: 'volume', width: 44, align: 'right' as const },
+  { label: 'DIFF', key: 'difficulty', width: 32, align: 'right' as const },
+  { label: 'Δ 7D', key: 'delta7d', width: 36, align: 'right' as const },
+]
+
+const suggestedColumns = [
+  { label: 'KEYWORD', key: 'keyword', flex: 1 },
+  { label: 'INTENT', key: 'intent', width: 40, align: 'right' as const },
+  { label: 'REL', key: 'relevance', width: 36, align: 'right' as const },
+]
 
 export default function KeywordsScreen() {
   const { colors } = useTheme()
@@ -48,6 +64,9 @@ export default function KeywordsScreen() {
     .sort((a, b) => Number(b.relevance ?? 0) - Number(a.relevance ?? 0))
     .slice(0, 6)
 
+  const { sorted: sortedKw, sort: kwSort, toggle: kwToggle } = useSortable(keywords)
+  const { sorted: sortedSuggested, sort: sugSort, toggle: sugToggle } = useSortable(suggestedKw)
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.paper }]}
@@ -77,14 +96,8 @@ export default function KeywordsScreen() {
             <>
               <SectionHead num="01" title="Keyword" accent="intelligence" />
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>KEYWORD</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 38, textAlign: 'right' }]}>RANK</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 44, textAlign: 'right' }]}>VOL</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 32, textAlign: 'right' }]}>DIFF</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 36, textAlign: 'right' }]}>Δ 7D</Text>
-                </View>
-                {keywords.slice(0, 15).map((kw, i) => {
+                <SortableHeader columns={kwColumns} sort={kwSort} onSort={kwToggle} />
+                {sortedKw.slice(0, 15).map((kw, i) => {
                   const change = Number(kw.delta7d ?? kw.change7d ?? kw.rankChange ?? 0)
                   const diff = Number(kw.difficulty ?? 0)
                   return (
@@ -159,12 +172,8 @@ export default function KeywordsScreen() {
             <>
               <SectionHead num="03" title="Suggested" accent="keywords" />
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>KEYWORD</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 40, textAlign: 'right' }]}>INTENT</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 36, textAlign: 'right' }]}>REL</Text>
-                </View>
-                {suggestedKw.map((kw, i) => (
+                <SortableHeader columns={suggestedColumns} sort={sugSort} onSort={sugToggle} />
+                {sortedSuggested.map((kw, i) => (
                   <View key={i} style={[styles.tableRow, { borderBottomColor: colors.lineSoft }]}>
                     <Text style={[styles.td, { color: colors.ink2, flex: 1 }]} numberOfLines={1}>{String(kw.keyword ?? '')}</Text>
                     <View style={{ width: 40, alignItems: 'flex-end' }}>
@@ -227,8 +236,6 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 28, fontFamily: 'InstrumentSerif_400Regular', letterSpacing: -0.5, lineHeight: 33, marginBottom: 6 },
   titleAccent: { fontFamily: 'InstrumentSerif_400Regular_Italic' },
   pageSub: { fontSize: 13, fontFamily: 'InterTight_400Regular', lineHeight: 18, marginBottom: 20 },
-  tableHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 8 },
-  th: { fontSize: 9, letterSpacing: 1.2, textTransform: 'uppercase', fontFamily: 'InterTight_500Medium' },
   tableRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1 },
   td: { fontSize: 12, fontFamily: 'InterTight_400Regular' },
   tdNum: { fontSize: 14, fontFamily: 'InstrumentSerif_400Regular', textAlign: 'right' },

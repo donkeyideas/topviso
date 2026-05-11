@@ -7,6 +7,15 @@ import { KpiStrip } from '../../src/components/KpiStrip'
 import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { Pill } from '../../src/components/Pill'
+import { SortableHeader } from '../../src/components/SortableHeader'
+import { useSortable } from '../../src/hooks/useSortable'
+
+const compColumns = [
+  { label: 'APP', key: 'name', flex: 1 },
+  { label: 'RATING', key: 'rating', width: 50, align: 'right' as const },
+  { label: 'KW', key: 'overlapCount', width: 42, align: 'right' as const },
+  { label: 'THREAT', key: 'threatLevel', width: 50, align: 'right' as const },
+]
 
 export default function CompetitorsScreen() {
   const { colors } = useTheme()
@@ -28,6 +37,8 @@ export default function CompetitorsScreen() {
   const sharedKeywords = Array.isArray(data?.sharedKeywords) ? data.sharedKeywords as Array<Record<string, unknown>> : []
   const highThreats = competitors.filter(c => String(c.threatLevel ?? c.threat ?? '').toLowerCase() === 'high').length
   const gapCount = Number(data?.totalGaps ?? keywordGaps.length)
+
+  const { sorted: sortedComps, sort: compSort, toggle: compToggle } = useSortable(competitors)
 
   return (
     <ScrollView
@@ -58,12 +69,7 @@ export default function CompetitorsScreen() {
             <>
               <SectionHead num="01" title="Head to" accent="head" />
               <Card noPadding>
-                <View style={[styles.tableHeader, { backgroundColor: colors.paper2 }]}>
-                  <Text style={[styles.th, { color: colors.ink3, flex: 1 }]}>APP</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>RATING</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 42, textAlign: 'right' }]}>KW</Text>
-                  <Text style={[styles.th, { color: colors.ink3, width: 50, textAlign: 'right' }]}>THREAT</Text>
-                </View>
+                <SortableHeader columns={compColumns} sort={compSort} onSort={compToggle} />
                 {/* Your app row */}
                 <View style={[styles.tableRow, { borderBottomColor: colors.accent, borderBottomWidth: 2 }]}>
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -83,7 +89,7 @@ export default function CompetitorsScreen() {
                   <Text style={[styles.tdNum, { color: colors.ink, width: 42 }]}>--</Text>
                   <View style={{ width: 50, alignItems: 'flex-end' }}><Pill text="YOU" variant="accent" /></View>
                 </View>
-                {competitors.slice(0, 8).map((comp, i) => {
+                {sortedComps.slice(0, 8).map((comp, i) => {
                   const threat = String(comp.threatLevel ?? comp.threat ?? 'medium').toLowerCase()
                   const rating = Number(comp.rating ?? 0)
                   const overlap = Number(comp.overlapCount ?? comp.sharedKeywords ?? 0)
