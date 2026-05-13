@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
@@ -54,7 +54,7 @@ export default function Overview2Page() {
     'reviews-analysis': ReviewsAnalysisData
   }
   const analysisTypes = ['visibility', 'keywords', 'overview', 'competitors', 'llm-track', 'recommendations', 'store-intel', 'reviews-analysis']
-  const { data: allData, refetch: refetchAll } = useMultiAnalysis<AllAnalysis>(slug, analysisTypes)
+  const { data: allData, refetch: refetchAll, lastUpdated } = useMultiAnalysis<AllAnalysis>(slug, analysisTypes)
 
   const visibilityData = (allData.visibility ?? null) as VisibilityData | null
   const keywordsRaw = (allData.keywords ?? null) as KeywordsData | null
@@ -68,6 +68,18 @@ export default function Overview2Page() {
   const { generate: syncAll, generating } = useGenerate(slug, 'sync', {
     onSuccess: () => { refetchAll() },
   })
+
+  // --- Auto-sync if data is stale (>4 hours old) ---
+  const autoSyncRan = useRef(false)
+  useEffect(() => {
+    if (autoSyncRan.current || generating || !lastUpdated) return
+    const ageMs = Date.now() - new Date(lastUpdated).getTime()
+    const FOUR_HOURS = 4 * 60 * 60 * 1000
+    if (ageMs > FOUR_HOURS) {
+      autoSyncRan.current = true
+      syncAll()
+    }
+  }, [lastUpdated, generating, syncAll])
 
   // --- Data normalization ---
   const keywords = asArray(keywordsRaw) as KeywordItem[]

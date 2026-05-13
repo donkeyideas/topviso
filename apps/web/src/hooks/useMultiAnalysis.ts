@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 
 /**
  * Fetches multiple analysis types in a single API call.
- * Returns a record keyed by analysis type.
+ * Returns a record keyed by analysis type, plus the oldest updated_at timestamp.
  */
 export function useMultiAnalysis<T extends Record<string, unknown>>(
   appId: string | null,
@@ -12,6 +12,7 @@ export function useMultiAnalysis<T extends Record<string, unknown>>(
 ) {
   const [data, setData] = useState<Partial<T>>({})
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const typesKey = types.join(',')
   // Keep a stable ref to avoid re-creating refetch on every render
   const typesRef = useRef(typesKey)
@@ -31,12 +32,17 @@ export function useMultiAnalysis<T extends Record<string, unknown>>(
         return
       }
       const json = await res.json()
-      const rows = (json.data ?? []) as Array<{ analysis_type: string; result: unknown }>
+      const rows = (json.data ?? []) as Array<{ analysis_type: string; result: unknown; updated_at?: string }>
       const map: Record<string, unknown> = {}
+      let oldest: string | null = null
       for (const r of rows) {
         map[r.analysis_type] = r.result
+        if (r.updated_at) {
+          if (!oldest || r.updated_at < oldest) oldest = r.updated_at
+        }
       }
       setData(map as Partial<T>)
+      setLastUpdated(oldest)
     } catch (err) {
       console.error('[useMultiAnalysis] Error:', err)
       setData({})
@@ -50,5 +56,5 @@ export function useMultiAnalysis<T extends Record<string, unknown>>(
     refetch()
   }, [refetch])
 
-  return { data, loading, refetch }
+  return { data, loading, refetch, lastUpdated }
 }

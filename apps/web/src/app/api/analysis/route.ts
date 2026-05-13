@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const typeList = types.split(',').map(t => t.trim()).filter(Boolean)
     const { data, error } = await supabase
       .from('analysis_results')
-      .select('app_id, analysis_type, result')
+      .select('app_id, analysis_type, result, updated_at')
       .eq('app_id', appId)
       .in('analysis_type', typeList)
 
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   // All analysis for this app
   const { data, error } = await supabase
     .from('analysis_results')
-    .select('app_id, analysis_type, result')
+    .select('app_id, analysis_type, result, updated_at')
     .eq('app_id', appId)
 
   if (error) {

@@ -678,6 +678,21 @@ function LlmReadinessCard({ results, tips, onSync, syncing }: { results: LlmTrac
   )
 }
 
+/* ── Strip markdown artifacts from AI output ── */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/#{1,6}\s+/g, '')          // ### headings
+    .replace(/\*\*(.+?)\*\*/g, '$1')    // **bold**
+    .replace(/\*(.+?)\*/g, '$1')        // *italic*
+    .replace(/__(.+?)__/g, '$1')        // __bold__
+    .replace(/_(.+?)_/g, '$1')          // _italic_
+    .replace(/^[-*+]\s+/gm, '• ')       // - bullet → •
+    .replace(/^---+$/gm, '')            // --- horizontal rules
+    .replace(/`([^`]+)`/g, '$1')        // `inline code`
+    .replace(/\n{3,}/g, '\n\n')         // collapse excess newlines
+    .trim()
+}
+
 /* ── FieldCard sub-component ── */
 
 function FieldCard({
@@ -709,14 +724,15 @@ function FieldCard({
   mono?: boolean | undefined
   multiline?: boolean | undefined
 }) {
-  const len = value.length
+  const clean = useMemo(() => stripMarkdown(value), [value])
+  const len = clean.length
   const overLimit = len > limit
   const [copied, setCopied] = useState(false)
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleCopy = useCallback(() => {
-    if (!value) return
-    navigator.clipboard.writeText(value).then(() => {
+    if (!clean) return
+    navigator.clipboard.writeText(clean).then(() => {
       setCopied(true)
       if (copyTimeout.current) clearTimeout(copyTimeout.current)
       copyTimeout.current = setTimeout(() => setCopied(false), 1500)
@@ -772,7 +788,7 @@ function FieldCard({
               wordBreak: mono ? 'break-all' : undefined,
               ...(multiline ? { maxHeight: 140, overflow: 'hidden', position: 'relative' as const } : {}),
             }}>
-              {value}
+              {clean}
               {multiline && (
                 <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 40, background: 'linear-gradient(180deg, transparent, var(--color-paper-2))' }} />
               )}
