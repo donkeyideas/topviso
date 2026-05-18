@@ -10,6 +10,8 @@ import type { LlmTrackData, LlmTrackItem, LlmCitation, LlmPromptRow, LlmOptimiza
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
 import { DiscoveryFlowMap } from '@/components/dashboard/DiscoveryFlowMap'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useGenerateContext } from '@/contexts/GenerateContext'
 import { useMemo, useState, useCallback, useRef } from 'react'
 
@@ -68,6 +70,7 @@ export default function LLMDiscoveryPage() {
 
   /* ── Sync All (LLM poll + discovery map) ── */
   const [syncingAll, setSyncingAll] = useState(false)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const { startGeneration, endGeneration } = useGenerateContext()
   const syncRef = useRef(false)
 
@@ -202,7 +205,11 @@ export default function LLMDiscoveryPage() {
         {/* § Recommendation rate by engine */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ {String(++sectionNum).padStart(2, '0')}</span><h2>Recommendation rate <em>by engine</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ {String(++sectionNum).padStart(2, '0')}</span>
+              <h2>Recommendation rate <em>by engine</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             {hasResults && <div className="section-sub">Prompt: &quot;{prompt || 'best app in this category'}&quot;</div>}
           </div>
           {hasResults ? (
@@ -442,6 +449,8 @@ export default function LLMDiscoveryPage() {
           )}
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES['llm-discovery']} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

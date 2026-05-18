@@ -7,6 +7,9 @@ import { PageHero } from '@/components/dashboard/PageHero'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import type { StrategyData } from '@/lib/analysis-types'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useState } from 'react'
 
 export default function StrategyPage() {
   const params = useParams()
@@ -16,6 +19,7 @@ export default function StrategyPage() {
 
   const { data: analysis, refetch } = useAnalysis<StrategyData>(slug, 'strategy')
   const { generate, generating } = useGenerate(slug, 'strategy', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   const goals = analysis?.goals ?? []
   const weeks = analysis?.weeks ?? []
@@ -80,7 +84,11 @@ export default function StrategyPage() {
         {/* § 01 Strategy goals */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Strategy <em>goals</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Strategy <em>goals</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
           </div>
           {hasGoals ? (
             <div className="grid-3">
@@ -186,6 +194,8 @@ export default function StrategyPage() {
           </section>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.strategy} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

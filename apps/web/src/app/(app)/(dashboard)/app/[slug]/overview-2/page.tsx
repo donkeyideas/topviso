@@ -10,6 +10,8 @@ import { useGenerate } from '@/hooks/useGenerate'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
 import { ScoreRing } from '@/components/dashboard/charts/ScoreRing'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import type {
   VisibilityData,
   KeywordsData,
@@ -182,6 +184,7 @@ export default function Overview2Page() {
   }), [])
 
   const [recFilter, setRecFilter] = useState<string | null>(null)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const filteredRecs = recFilter ? recommendations.filter(r => r.impact === recFilter) : recommendations
   const { sorted: sortedRecs, sortKey: rSortKey, sortDir: rSortDir, toggle: rToggle } = useTableSort(filteredRecs, recAccessors)
 
@@ -268,6 +271,7 @@ export default function Overview2Page() {
             <div className="section-head-left">
               <span className="section-num">§ 01</span>
               <h2>Visibility & <em>distribution</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
             </div>
           </div>
 
@@ -949,6 +953,8 @@ export default function Overview2Page() {
         </section>
 
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.overview} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

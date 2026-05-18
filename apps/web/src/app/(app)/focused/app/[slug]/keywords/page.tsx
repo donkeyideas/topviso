@@ -16,6 +16,8 @@ import type {
 import { asArray } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState } from 'react'
 
 type Tab = 'rankings' | 'visibility' | 'intent' | 'audiences'
@@ -61,6 +63,7 @@ export default function KeywordsV2Page() {
   const appName = appData?.name ?? ''
 
   const [activeTab, setActiveTab] = useState<Tab>('rankings')
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   // --- Data fetching (all 4 at top level for instant tab switching) ---
   const { data: kwAnalysis, refetch: refetchKw } = useAnalysis<KeywordsData>(slug, 'keywords')
@@ -82,7 +85,11 @@ export default function KeywordsV2Page() {
     volume: (kw: (typeof keywords)[0]) => kw.volume ?? 0,
     difficulty: (kw: (typeof keywords)[0]) => kw.difficulty,
     delta7d: (kw: (typeof keywords)[0]) => kw.delta7d ?? 0,
-    kei: (kw: (typeof keywords)[0]) => kw.kei ?? '',
+    kei: (kw: (typeof keywords)[0]) => {
+      if (kw.kei == null || kw.kei === '') return null
+      const n = Number(kw.kei)
+      return isNaN(n) ? null : n
+    },
     topCompetitor: (kw: (typeof keywords)[0]) => kw.topCompetitor ?? '',
     relevance: (kw: (typeof keywords)[0]) => kw.relevance,
     intent: (kw: (typeof keywords)[0]) => kw.intent,
@@ -183,7 +190,11 @@ export default function KeywordsV2Page() {
           <>
             <section>
               <div className="section-head">
-                <div className="section-head-left"><span className="section-num">&sect; 01</span><h2>Keyword <em>intelligence</em></h2></div>
+                <div className="section-head-left">
+                  <span className="section-num">&sect; 01</span>
+                  <h2>Keyword <em>intelligence</em></h2>
+                  <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+                </div>
                 <div className="chip-row">
                   <span className="chip on">{appData?.platform === 'ios' ? 'App Store' : 'Play Store'} &middot; US</span>
                 </div>
@@ -727,6 +738,8 @@ export default function KeywordsV2Page() {
           </>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.keywords} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

@@ -7,6 +7,8 @@ import { PageHero } from '@/components/dashboard/PageHero'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import type { MarketIntelData } from '@/lib/analysis-types'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useState } from 'react'
 
 // Deterministic color from name
@@ -66,6 +68,7 @@ export default function MarketIntelPage() {
   const appName = appData?.name ?? ''
   const { data: analysis, refetch } = useAnalysis<MarketIntelData>(slug, 'market-intel')
   const { generate, generating } = useGenerate(slug, 'market-intel', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   const leaderboard = analysis?.categoryLeaderboard ?? []
   const competitors = analysis?.competitors ?? []
@@ -134,7 +137,11 @@ export default function MarketIntelPage() {
         {/* 01 Category Leaderboard — REAL DATA */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">&sect; 01</span><h2>Category <em>leaderboard</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">&sect; 01</span>
+              <h2>Category <em>leaderboard</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="pill ok" style={{ fontSize: 9, letterSpacing: 1 }}>REAL DATA</span>
               <div className="section-sub" style={{ margin: 0 }}>Top apps in your category from the store.</div>
@@ -291,6 +298,8 @@ export default function MarketIntelPage() {
           </section>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES['market-intel']} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

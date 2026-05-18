@@ -9,6 +9,8 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { LlmTrackData, LlmTrackItem, LlmCitation, LlmPromptRow } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState } from 'react'
 
 const posRank = (p: string) => p === '1st' ? 4 : p === '2nd' ? 3 : p === '3rd' ? 2 : 1
@@ -23,6 +25,7 @@ export default function LLMTrackerPage() {
   const { generate, generating } = useGenerate(appId, 'llm-track', { onSuccess: refetch })
 
   const [prompt, setPrompt] = useState('')
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const [filter, setFilter] = useState<'all' | 'winning' | 'losing'>('all')
 
   const rawResults = analysis
@@ -150,7 +153,11 @@ export default function LLMTrackerPage() {
         {/* § 01 Recommendation rate by engine */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Recommendation rate <em>by engine</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Recommendation rate <em>by engine</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             {hasResults && <div className="section-sub">Prompt: &quot;{prompt || 'best app in this category'}&quot;</div>}
           </div>
           {hasResults ? (
@@ -265,6 +272,8 @@ export default function LLMTrackerPage() {
           )}
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES['llm-discovery']} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

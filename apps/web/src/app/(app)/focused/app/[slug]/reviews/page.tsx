@@ -9,6 +9,8 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { ReviewsAnalysisData } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState, useCallback } from 'react'
 
 type ComplaintTheme = { theme: string; frequency: string; suggestedFix: string; example: string }
@@ -21,6 +23,7 @@ export default function ReviewsPage() {
   const { data: analysis, refetch } = useAnalysis<ReviewsAnalysisData>(slug, 'reviews-analysis')
   const { generate, generating } = useGenerate(slug, 'reviews-analysis', { onSuccess: refetch })
   const [activeTopic, setActiveTopic] = useState<string | null>(null)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const complaintAccessors = useMemo(() => ({
     theme: (t: ComplaintTheme) => t.theme,
     frequency: (t: ComplaintTheme) => t.frequency,
@@ -115,7 +118,11 @@ export default function ReviewsPage() {
         {/* § 01 Topic intelligence */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Topic <em>intelligence</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Topic <em>intelligence</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             <div className="section-sub">{activeTopic ? `Filtering by "${activeTopic}" — click again to clear.` : 'Click any topic to filter the review feed below.'}</div>
           </div>
           <div className="card">
@@ -252,6 +259,8 @@ export default function ReviewsPage() {
           </div>
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.reviews} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

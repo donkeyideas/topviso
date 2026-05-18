@@ -9,7 +9,9 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { GrowthInsightsData, UpdateImpactData, VersionHistoryItem } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useMemo, useState } from 'react'
 
 type KwVis = NonNullable<GrowthInsightsData['keywordVisibility']>[number]
 
@@ -75,6 +77,8 @@ export default function GrowthPage() {
   const { app: appData, loading: appLoading } = useApp(slug)
   const appName = appData?.name ?? ''
   const isIOS = appData?.platform === 'ios'
+
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   // Growth Insights
   const { data: growthAnalysis, refetch: refetchGrowth } = useAnalysis<GrowthInsightsData>(slug, 'growth-insights')
@@ -186,7 +190,11 @@ export default function GrowthPage() {
         {/* § Install Trend — REAL DATA */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">&sect; {String(++sectionNum).padStart(2, '0')}</span><h2>Install <em>trend</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">&sect; {String(++sectionNum).padStart(2, '0')}</span>
+              <h2>Install <em>trend</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="pill ok" style={{ fontSize: 9, letterSpacing: 1 }}>REAL DATA</span>
               <div className="section-sub" style={{ margin: 0 }}>Weekly install estimates from store data.</div>
@@ -491,6 +499,8 @@ export default function GrowthPage() {
           </div></div>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.growth} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

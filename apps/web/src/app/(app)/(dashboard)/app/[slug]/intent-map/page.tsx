@@ -9,7 +9,9 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { IntentMapData, IntentKeyword } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useMemo, useState } from 'react'
 
 type Gap = IntentMapData['gaps'][number]
 
@@ -26,6 +28,7 @@ export default function IntentMapPage() {
   const appName = appData?.name ?? ''
   const { data: analysis, refetch } = useAnalysis<IntentMapData>(appId, 'intent-map')
   const { generate, generating } = useGenerate(appId, 'intent-map', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   const clusters = analysis?.clusters ?? []
   const hasClusters = clusters.length > 0
@@ -106,7 +109,11 @@ export default function IntentMapPage() {
         {/* § 01 Intent coverage map */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Intent coverage <em>map</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Intent coverage <em>map</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
           </div>
           <div className="grid-2">
             <div className="card">
@@ -169,6 +176,8 @@ export default function IntentMapPage() {
           </div>
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.intent} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

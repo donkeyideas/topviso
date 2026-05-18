@@ -9,7 +9,9 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { VisibilityData } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useMemo, useState } from 'react'
 
 type KwBreakdown = { keyword: string; position: number | null; volume: number; weight: number; contributionPct: number }
 
@@ -20,6 +22,7 @@ export default function VisibilityPage() {
   const appName = appData?.name ?? ''
   const { data: analysis, refetch } = useAnalysis<VisibilityData>(slug, 'visibility')
   const { generate, generating } = useGenerate(slug, 'visibility', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const kwAccessors = useMemo(() => ({
     keyword: (kw: KwBreakdown) => kw.keyword,
     position: (kw: KwBreakdown) => kw.position ?? 9999,
@@ -104,6 +107,7 @@ export default function VisibilityPage() {
             <div className="section-head-left">
               <span className="section-num">§ 01</span>
               <h2>Ranking <em>distribution</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
             </div>
           </div>
 
@@ -329,6 +333,8 @@ export default function VisibilityPage() {
           )}
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.visibility} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

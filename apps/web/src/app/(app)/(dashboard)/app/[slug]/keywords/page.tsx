@@ -10,7 +10,8 @@ import type { KeywordsData } from '@/lib/analysis-types'
 import { asArray } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { KeywordGlossaryModal } from '@/components/dashboard/KeywordGlossaryModal'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState } from 'react'
 
 export default function KeywordsPage() {
@@ -92,21 +93,7 @@ export default function KeywordsPage() {
             <div className="section-head-left">
               <span className="section-num">§ 01</span>
               <h2>Keyword <em>intelligence</em></h2>
-              <button
-                type="button"
-                onClick={() => setGlossaryOpen(true)}
-                aria-label="What do these terms mean?"
-                title="What do these terms mean?"
-                className="chip"
-                style={{
-                  fontSize: 11,
-                  padding: '4px 10px',
-                  cursor: 'pointer',
-                  alignSelf: 'center',
-                }}
-              >
-                ? What do these mean
-              </button>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
             </div>
             <div className="chip-row">
               <span className="chip on">{appData?.platform === 'ios' ? 'App Store' : 'Play Store'} · US</span>
@@ -257,7 +244,7 @@ export default function KeywordsPage() {
         </section>
       </div>
 
-      {glossaryOpen && <KeywordGlossaryModal onClose={() => setGlossaryOpen(false)} />}
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.keywords} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

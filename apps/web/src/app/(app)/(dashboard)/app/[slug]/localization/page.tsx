@@ -9,7 +9,9 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { LocalizationData, MarketOpportunity, MarketPerformance } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useMemo, useState } from 'react'
 
 type Loc = LocalizationData['localizations'][number]
 
@@ -33,6 +35,7 @@ export default function LocalizationPage() {
 
   const { data: analysis, refetch } = useAnalysis<LocalizationData>(slug, 'localization')
   const { generate, generating } = useGenerate(slug, 'localization', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   // Localization table sort
   const locAccessors = useMemo(() => ({
@@ -128,7 +131,11 @@ export default function LocalizationPage() {
         {/* § 01 Market opportunity matrix */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Market <em>opportunity matrix</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Market <em>opportunity matrix</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
           </div>
           {hasOpps ? (
             <div className="card">
@@ -279,6 +286,8 @@ export default function LocalizationPage() {
           )}
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.localization} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

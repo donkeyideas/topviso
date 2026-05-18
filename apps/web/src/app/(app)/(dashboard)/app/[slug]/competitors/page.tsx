@@ -10,13 +10,16 @@ import type { CompetitorsData, OverviewData, KeywordsData, CompetitorAlert } fro
 import { asArray } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
+import { useMemo, useState } from 'react'
 
 export default function CompetitorsPage() {
   const params = useParams()
   const slug = params.slug as string
   const { app: appData, loading: appLoading } = useApp(slug)
   const appName = appData?.name ?? ''
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const { data: analysis, refetch } = useAnalysis<CompetitorsData>(slug, 'competitors')
   const { data: overviewData } = useAnalysis<OverviewData>(slug, 'overview')
   const { data: keywordsData } = useAnalysis<KeywordsData>(slug, 'keywords')
@@ -99,7 +102,11 @@ export default function CompetitorsPage() {
         {/* § 01 Head-to-head matrix */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Head-to-head <em>matrix</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Head-to-head <em>matrix</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
           </div>
           <div className="card">
             <table className="data-table">
@@ -283,6 +290,8 @@ export default function CompetitorsPage() {
           )}
         </section>
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.competitors} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

@@ -9,6 +9,8 @@ import { useGenerate } from '@/hooks/useGenerate'
 import type { StoreIntelData } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState } from 'react'
 
 type AlgoFactor = { factor: string; weight: string; currentStatus: string }
@@ -86,6 +88,7 @@ export default function StoreIntelPage() {
   const isIOS = appData?.platform === 'ios'
   const { data: analysis, refetch } = useAnalysis<StoreIntelData>(slug, 'store-intel')
   const { generate, generating } = useGenerate(slug, 'store-intel', { onSuccess: refetch })
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   // Algorithm factors sorting
   const algoAccessors = useMemo(() => ({
@@ -172,7 +175,11 @@ export default function StoreIntelPage() {
         {/* § 01 Market trends — AI ANALYSIS */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">§ 01</span><h2>Market <em>trends</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">§ 01</span>
+              <h2>Market <em>trends</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="pill" style={{ fontSize: 9, letterSpacing: 1, background: 'var(--color-accent-wash)', color: 'var(--color-accent)' }}>AI ANALYSIS</span>
               <div className="section-sub" style={{ margin: 0 }}>Broader industry shifts affecting your app&apos;s vertical.</div>
@@ -427,6 +434,8 @@ export default function StoreIntelPage() {
           </section>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES['store-intel']} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

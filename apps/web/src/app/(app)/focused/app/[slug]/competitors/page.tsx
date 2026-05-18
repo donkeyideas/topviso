@@ -10,6 +10,8 @@ import type { CompetitorsData, OverviewData, KeywordsData, CompetitorAlert, Mark
 import { asArray } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState, useCallback, useRef } from 'react'
 import { useGenerateContext } from '@/contexts/GenerateContext'
 
@@ -75,6 +77,7 @@ export default function CompetitorsV2Page() {
 
   // Sync All: competitors → market-intel (sequential because MI depends on comp data)
   const [syncingAll, setSyncingAll] = useState(false)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const { startGeneration, endGeneration } = useGenerateContext()
   const syncRef = useRef(false)
 
@@ -232,7 +235,11 @@ export default function CompetitorsV2Page() {
         {/* ── § 01 Head-to-head matrix ── */}
         <section>
           <div className="section-head">
-            <div className="section-head-left"><span className="section-num">&sect; 01</span><h2>Head-to-head <em>matrix</em></h2></div>
+            <div className="section-head-left">
+              <span className="section-num">&sect; 01</span>
+              <h2>Head-to-head <em>matrix</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
+            </div>
             <div className="section-sub">Sortable competitor comparison with threat levels, keyword overlap, and key metrics.</div>
           </div>
           {competitors.length > 0 ? (
@@ -532,6 +539,8 @@ export default function CompetitorsV2Page() {
           </div>
         )}
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.competitors} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }

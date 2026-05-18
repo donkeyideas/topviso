@@ -11,6 +11,8 @@ import { useGenerateContext } from '@/contexts/GenerateContext'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
 import { ScoreRing } from '@/components/dashboard/charts/ScoreRing'
+import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryModal'
+import { GLOSSARIES } from '@/lib/glossaries'
 import type {
   VisibilityData,
   KeywordsData,
@@ -53,6 +55,7 @@ export default function OverviewPage() {
 
   // --- Sync All: fires all analysis types for every V2 page ---
   const [generating, setGenerating] = useState(false)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
   const { startGeneration, endGeneration } = useGenerateContext()
   const syncInflight = useRef(false)
 
@@ -229,6 +232,7 @@ export default function OverviewPage() {
             <div className="section-head-left">
               <span className="section-num">&sect; 01</span>
               <h2>Keyword <em>snapshot</em></h2>
+              <GlossaryButton onClick={() => setGlossaryOpen(true)} />
             </div>
             <Link href={`${base}/keywords`} className="btn ghost" style={{ fontSize: 12 }}>See all &rarr;</Link>
           </div>
@@ -468,6 +472,8 @@ export default function OverviewPage() {
         </section>
 
       </div>
+
+      {glossaryOpen && <GlossaryModal {...GLOSSARIES.overview} onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }
