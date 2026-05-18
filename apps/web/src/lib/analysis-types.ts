@@ -44,7 +44,7 @@ export interface KeywordItem {
   rank?: number | null
   country?: string
   delta7d?: number | null
-  kei?: string
+  kei?: number | string
   topCompetitor?: string
   field?: string
   isEstimate?: { volume?: boolean; cpc?: boolean; difficulty?: boolean }

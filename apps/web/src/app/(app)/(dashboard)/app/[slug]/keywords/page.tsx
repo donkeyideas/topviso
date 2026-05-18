@@ -10,7 +10,8 @@ import type { KeywordsData } from '@/lib/analysis-types'
 import { asArray } from '@/lib/analysis-types'
 import { useTableSort } from '@/hooks/useTableSort'
 import { SortHeader } from '@/components/dashboard/SortHeader'
-import { useMemo } from 'react'
+import { KeywordGlossaryModal } from '@/components/dashboard/KeywordGlossaryModal'
+import { useMemo, useState } from 'react'
 
 export default function KeywordsPage() {
   const params = useParams()
@@ -26,7 +27,11 @@ export default function KeywordsPage() {
     volume: (kw: (typeof keywords)[0]) => kw.volume ?? 0,
     difficulty: (kw: (typeof keywords)[0]) => kw.difficulty,
     delta7d: (kw: (typeof keywords)[0]) => kw.delta7d ?? 0,
-    kei: (kw: (typeof keywords)[0]) => kw.kei ?? '',
+    kei: (kw: (typeof keywords)[0]) => {
+      if (kw.kei == null || kw.kei === '') return null
+      const n = Number(kw.kei)
+      return isNaN(n) ? null : n
+    },
     topCompetitor: (kw: (typeof keywords)[0]) => kw.topCompetitor ?? '',
     field: (kw: (typeof keywords)[0]) => kw.field ?? '',
     cpc: (kw: (typeof keywords)[0]) => kw.cpc ?? 0,
@@ -35,6 +40,7 @@ export default function KeywordsPage() {
     country: (kw: (typeof keywords)[0]) => kw.country ?? '',
   }), [])
   const { sorted: sortedKeywords, sortKey, sortDir, toggle } = useTableSort(keywords, accessors)
+  const [glossaryOpen, setGlossaryOpen] = useState(false)
 
   if (appLoading) {
     return (
@@ -86,6 +92,24 @@ export default function KeywordsPage() {
             <div className="section-head-left">
               <span className="section-num">§ 01</span>
               <h2>Keyword <em>intelligence</em></h2>
+              <button
+                type="button"
+                onClick={() => setGlossaryOpen(true)}
+                aria-label="What do these terms mean?"
+                title="What do these terms mean?"
+                style={{
+                  width: 22, height: 22, borderRadius: '50%',
+                  border: '1px solid var(--color-line)',
+                  background: 'transparent',
+                  color: 'var(--color-ink-3)',
+                  fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', marginLeft: 8,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1,
+                }}
+              >
+                ?
+              </button>
             </div>
             <div className="chip-row">
               <span className="chip on">{appData?.platform === 'ios' ? 'App Store' : 'Play Store'} · US</span>
@@ -235,6 +259,8 @@ export default function KeywordsPage() {
           </div>
         </section>
       </div>
+
+      {glossaryOpen && <KeywordGlossaryModal onClose={() => setGlossaryOpen(false)} />}
     </>
   )
 }
