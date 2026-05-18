@@ -97,18 +97,15 @@ export default function KeywordsPage() {
                 onClick={() => setGlossaryOpen(true)}
                 aria-label="What do these terms mean?"
                 title="What do these terms mean?"
+                className="chip"
                 style={{
-                  width: 22, height: 22, borderRadius: '50%',
-                  border: '1px solid var(--color-line)',
-                  background: 'transparent',
-                  color: 'var(--color-ink-3)',
-                  fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', marginLeft: 8,
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  lineHeight: 1,
+                  fontSize: 11,
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  alignSelf: 'center',
                 }}
               >
-                ?
+                ? What do these mean
               </button>
             </div>
             <div className="chip-row">
