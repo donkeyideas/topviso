@@ -448,11 +448,12 @@ QUALITY:
 - Write for HUMANS first, algorithms second
 ${app.platform === 'ios' ? `
 iOS-SPECIFIC STRATEGY:
-- Apple does NOT index the description for search — so focus on CONVERSION and LLM DISCOVERABILITY, not keyword stuffing
-- The promotional text (170 chars) IS updateable without a new app version — make it timely, seasonal, or event-driven
-- Lead the promotional text with your strongest hook: a new feature, a seasonal angle, or a compelling stat
-- In the full description, write entity-rich sentences that AI assistants (ChatGPT, Siri, etc.) can quote when recommending apps
-- Structure the description so each paragraph covers one clear feature/benefit — LLMs excerpt by paragraph` : ''}
+- Apple's search algorithm does not directly index the description, BUT the description still matters for: (1) LLM/AI discoverability (ChatGPT, Siri, Spotlight), (2) web search (Google indexes App Store pages), (3) conversion once users land on your page.
+- So DO include your top keywords naturally throughout — every keyword from the tracked list should appear at least once in the full description if it's relevant. Aim for 3-5% keyword density.
+- The promotional text (170 chars) IS updateable without a new app version — make it timely, seasonal, or event-driven.
+- Lead the promotional text with your strongest hook: a new feature, a seasonal angle, or a compelling stat.
+- Write entity-rich sentences that LLMs can quote when recommending apps in your category.
+- Structure the description so each paragraph covers one clear feature/benefit — LLMs excerpt by paragraph.` : ''}
 
 Return a JSON object: {"shortDescription": "${app.platform === 'ios' ? 'promotional text, max 170 chars' : 'short description, max 80 chars'}", "fullDescription": "full description, max 4000 chars", "keywordsUsed": ["keywords", "naturally", "included"]}
 Only return the JSON object, no other text.`
@@ -1423,6 +1424,7 @@ Only return the JSON object, no other text.`
           ratingsCount: Number(clStoreData?.ratings ?? 0),
           hasScreenshots: clScreenshots.length > 0,
           screenshotCount: clScreenshots.length,
+          platform: app.platform as 'ios' | 'android',
         }
         const clScore = calculateASOScore(clASOInput)
 
@@ -3215,33 +3217,11 @@ const LLM_OPTIMIZATION_DIRECTIVE = `LLM DISCOVERABILITY (CRITICAL — AI assista
 function buildAppleComplianceDirective(platform: string): string {
   if (platform !== 'ios') return ''
   return `
-APPLE APP STORE GUIDELINE COMPLIANCE (CRITICAL — violations cause IMMEDIATE REJECTION):
-
-Guideline 4.1(a) — COPYCATS (most common rejection reason):
-- NEVER reference third-party brand names, team names, league names, player names, or organizations you do not own
-- Examples of BANNED terms (unless the developer owns the rights): NBA, NFL, NHL, MLB, FIFA, Premier League, La Liga, NCAA, UFC, WWE, specific team names (Lakers, Yankees, etc.), player names (LeBron, Messi, etc.), TV show names, movie names, music artist names
-- Instead use GENERIC descriptors: "basketball scores", "football stats", "live sports", "league standings", "team tracker"
-- If the app aggregates third-party content (scores, news, stats), describe the FUNCTION not the SOURCE: "Live scores & stats" NOT "NBA Live Scores"
-- Even if the current title/metadata uses these terms, you MUST replace them with compliant alternatives
-
-Guideline 2.3.7 & 2.3.10 — ACCURATE METADATA:
-- NEVER reference other platforms (Android, Google Play, Windows, etc.) in iOS metadata
-- NEVER mention features/content not available on iOS
-- Do NOT use non-iOS status bar imagery or Android-style UI in any creative guidance
-- Metadata must accurately reflect what the iOS app ACTUALLY does
-- Do NOT reference other apps by name unless it's an official integration you own
-
-Guideline 2.3.1 — HIDDEN/UNDOCUMENTED FEATURES:
-- Only describe features that are actually present in the app
-
-SAFE ALTERNATIVES for sports/entertainment apps:
-- Instead of "NBA Scores" → "Basketball Scores & Stats"
-- Instead of "NFL Live" → "Football Live Scores"
-- Instead of "Premier League" → "Soccer League Tracker"
-- Instead of "Netflix Alternative" → "Streaming Guide"
-- Instead of team names → "Your favorite teams"
-- Instead of player names → "Player stats & rankings"
-- Instead of league names → "Major league coverage" or "Pro basketball"
+APPLE COMPLIANCE — avoid these specific issues:
+- Do NOT use proper trademarked names you don't own: league acronyms (NBA, NFL, NHL, MLB, FIFA, NCAA, UFC, WWE), team names (Lakers, Yankees), player names (LeBron, Messi), competitor app names (Netflix, Disney+), TV show / movie / artist names.
+- DO use generic category words freely: "basketball", "football", "soccer", "hockey", "sports", "scores", "stats", "live", "tracker", "league" — these are NOT trademarked and ARE high-volume search terms. Use them.
+- Do NOT reference other platforms (Android, Google Play, Windows) or features only available on Android.
+- Describe what the app does, not third-party content sources it pulls from.
 `
 }
 

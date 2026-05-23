@@ -133,6 +133,7 @@ export interface ASOScoreInput {
   ratingsCount: number
   hasScreenshots: boolean
   screenshotCount: number
+  platform?: 'ios' | 'android'
 }
 
 export interface ASOScoreResult {
@@ -176,7 +177,15 @@ export function calculateASOScore(input: ASOScoreInput): ASOScoreResult {
   let keywordsFieldScore = 0
   if (input.keywordsField) {
     const used = input.keywordsField.length
-    keywordsFieldScore = Math.round((used / 100) * 100)
+    // 50% character utilization (80+ chars is fully utilized)
+    const utilization = Math.min(50, Math.round((used / 80) * 50))
+    // 35% keyword diversity (10+ distinct comma-separated terms)
+    const terms = input.keywordsField.split(',').map(t => t.trim()).filter(Boolean)
+    const diversity = Math.min(35, Math.round((terms.length / 10) * 35))
+    // 15% format quality: no spaces after commas, no duplicates
+    const noTrailingSpace = !/, /.test(input.keywordsField) ? 8 : 0
+    const unique = new Set(terms.map(t => t.toLowerCase())).size === terms.length ? 7 : 0
+    keywordsFieldScore = Math.min(100, utilization + diversity + noTrailingSpace + unique)
   }
 
   let ratingsScore = 0
@@ -193,14 +202,26 @@ export function calculateASOScore(input: ASOScoreInput): ASOScoreResult {
     )
   }
 
-  const overall = Math.round(
-    titleScore * 0.25 +
-      subtitleScore * 0.15 +
-      descriptionScore * 0.2 +
-      keywordsFieldScore * 0.1 +
-      ratingsScore * 0.15 +
-      creativesScore * 0.15,
-  )
+  // Platform-aware weights:
+  // - iOS: keywords field is primary search lever; description not indexed for search
+  // - Android: no keywords field; short description + description both indexed
+  const isIOS = input.platform !== 'android'
+  const overall = isIOS
+    ? Math.round(
+        titleScore * 0.25 +
+          subtitleScore * 0.15 +
+          descriptionScore * 0.1 +
+          keywordsFieldScore * 0.2 +
+          ratingsScore * 0.15 +
+          creativesScore * 0.15,
+      )
+    : Math.round(
+        titleScore * 0.25 +
+          subtitleScore * 0.2 +
+          descriptionScore * 0.25 +
+          ratingsScore * 0.15 +
+          creativesScore * 0.15,
+      )
 
   return {
     overall,

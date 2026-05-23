@@ -102,6 +102,7 @@ export async function runFullSync(
         ratingsCount: storeData.ratings,
         hasScreenshots: (storeData.screenshots?.length ?? 0) > 0,
         screenshotCount: storeData.screenshots?.length ?? 0,
+        platform: app.platform,
       })
     : null
 
