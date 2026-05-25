@@ -31,7 +31,7 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
         </TouchableOpacity>
         <Text style={[styles.logo, { color: colors.accent }]}>Top Viso</Text>
         {app?.icon_url && (
-          <Image source={{ uri: app.icon_url }} style={[styles.appIcon, { borderColor: colors.line }]} />
+          <Image source={{ uri: app.icon_url }} style={styles.appIcon} />
         )}
       </View>
       <View style={styles.right}>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   bars: { alignItems: 'center' },
   bar: { width: 14, height: 1.5, borderRadius: 1 },
   logo: { fontSize: 22, fontFamily: 'InstrumentSerif_400Regular_Italic', letterSpacing: -0.5 },
-  appIcon: { width: 32, height: 32, borderRadius: 8, borderWidth: 1 },
+  appIcon: { width: 32, height: 32, borderRadius: 8, alignSelf: 'center', resizeMode: 'cover' },
   syncBtn: { paddingHorizontal: 14, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', minWidth: 56 },
   syncText: { color: '#fff', fontSize: 12, fontFamily: 'InterTight_600SemiBold', letterSpacing: 0.3 },
   themeBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
