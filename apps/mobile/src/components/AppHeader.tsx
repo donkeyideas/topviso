@@ -31,13 +31,7 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
         </TouchableOpacity>
         <Text style={[styles.logo, { color: colors.accent }]}>Top Viso</Text>
         {app?.icon_url && (
-          <>
-            <Text style={[styles.sep, { color: colors.ink3 }]}>·</Text>
-            <Image source={{ uri: app.icon_url }} style={[styles.appIcon, { borderColor: colors.line }]} />
-            <Text style={[styles.appName, { color: colors.ink2 }]} numberOfLines={1}>
-              {app.name}
-            </Text>
-          </>
+          <Image source={{ uri: app.icon_url }} style={[styles.appIcon, { borderColor: colors.line }]} />
         )}
       </View>
       <View style={styles.right}>
@@ -118,9 +112,7 @@ const styles = StyleSheet.create({
   bars: { alignItems: 'center' },
   bar: { width: 14, height: 1.5, borderRadius: 1 },
   logo: { fontSize: 22, fontFamily: 'InstrumentSerif_400Regular_Italic', letterSpacing: -0.5 },
-  sep: { fontSize: 16, opacity: 0.6 },
-  appIcon: { width: 22, height: 22, borderRadius: 5, borderWidth: 1 },
-  appName: { fontSize: 13, fontFamily: 'InterTight_500Medium', flexShrink: 1 },
+  appIcon: { width: 32, height: 32, borderRadius: 8, borderWidth: 1 },
   syncBtn: { paddingHorizontal: 14, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center', minWidth: 56 },
   syncText: { color: '#fff', fontSize: 12, fontFamily: 'InterTight_600SemiBold', letterSpacing: 0.3 },
   themeBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
