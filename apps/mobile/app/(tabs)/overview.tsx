@@ -47,10 +47,19 @@ export default function OverviewScreen() {
   const kwCount = keywords.length
   const avgRating = Number(reviewsData?.averageRating ?? data?.storeRating ?? 0)
 
-  // Top keywords sorted by volume
-  const topKw = [...keywords].sort((a, b) => Number(b.volume ?? 0) - Number(a.volume ?? 0)).slice(0, 8)
+  // Sort the FULL keyword list, then slice the top 8 for display.
+  // Default: ranked keywords first (best rank #1 first), unranked sorted by volume desc.
+  const defaultSortedKw = [...keywords].sort((a, b) => {
+    const ar = a.rank == null ? null : Number(a.rank)
+    const br = b.rank == null ? null : Number(b.rank)
+    if (ar == null && br == null) return Number(b.volume ?? 0) - Number(a.volume ?? 0)
+    if (ar == null) return 1
+    if (br == null) return -1
+    return ar - br
+  })
 
-  const { sorted: sortedTopKw, sort: kwSort, toggle: kwToggle } = useSortable(topKw)
+  const { sorted: sortedFullKw, sort: kwSort, toggle: kwToggle } = useSortable(defaultSortedKw)
+  const sortedTopKw = sortedFullKw.slice(0, 8)
 
   // LLM data
   const llmResults = Array.isArray(llmData?.results) ? llmData.results as Array<Record<string, unknown>> : []
