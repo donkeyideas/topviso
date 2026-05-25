@@ -816,7 +816,7 @@ export default function Overview2Page() {
                     {computed.allGaps.length > 0 && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
                         {computed.allGaps.slice(0, 5).map((g, i) => (
-                          <span key={i} className="pill warn" style={{ fontSize: 10 }}>{g}</span>
+                          <span key={i} className="pill test" style={{ fontSize: 10 }}>{g}</span>
                         ))}
                         {computed.allGaps.length > 5 && <span className="pill" style={{ fontSize: 10 }}>+{computed.allGaps.length - 5}</span>}
                       </div>
