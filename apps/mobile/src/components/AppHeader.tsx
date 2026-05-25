@@ -30,6 +30,8 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
           </View>
         </TouchableOpacity>
         <Text style={[styles.logo, { color: colors.accent }]}>Top Viso</Text>
+      </View>
+      <View style={styles.center}>
         {app?.icon_url && (
           <Image source={{ uri: app.icon_url }} style={styles.appIcon} />
         )}
@@ -106,7 +108,8 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 12, borderBottomWidth: 1 },
-  left: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 },
+  left: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   right: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   menuBtn: { width: 32, height: 32, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   bars: { alignItems: 'center' },
