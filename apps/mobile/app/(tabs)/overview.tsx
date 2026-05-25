@@ -136,7 +136,7 @@ export default function OverviewScreen() {
           </Card>
 
           {/* Keyword Snapshot */}
-          {topKw.length > 0 && (
+          {sortedTopKw.length > 0 && (
             <>
               <SectionHead num="01" title="Keyword" accent="snapshot" />
               {/* Visibility card */}
