@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.topviso.mobile",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -27,7 +27,7 @@
         "backgroundColor": "#f8f7f4"
       },
       "package": "com.topviso.mobile",
-      "versionCode": 8
+      "versionCode": 9
     },
     "plugins": [
       "expo-router",
