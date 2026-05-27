@@ -7,6 +7,15 @@ import { Card } from '../../src/components/Card'
 import { SectionHead } from '../../src/components/SectionHead'
 import { Pill } from '../../src/components/Pill'
 
+const GOAL_LABELS: Record<string, string> = {
+  'balanced': 'Balanced',
+  'visibility': 'Visibility & Rankings',
+  'keyword-opportunities': 'Keyword Opportunities',
+  'conversion': 'Conversion & Downloads',
+  'competitive-edge': 'Competitive Edge',
+  'target-keyword': 'Target Keywords',
+}
+
 export default function OptimizerScreen() {
   const { colors } = useTheme()
   const { app } = useAppData()
@@ -43,6 +52,33 @@ export default function OptimizerScreen() {
         AI-crafted <Text style={[styles.accent, { color: colors.accent }]}>metadata</Text>.
       </Text>
       <Text style={[styles.pageSub, { color: colors.ink3 }]}>Optimized titles, subtitles, and descriptions.</Text>
+
+      {/* Active optimization goal + target keywords (read-only on mobile — edit on web) */}
+      {app?.optimization_goal && (
+        <View style={[styles.goalCard, { backgroundColor: colors.paper2, borderColor: colors.lineSoft }]}>
+          <View style={styles.goalRow}>
+            <Text style={[styles.goalLabel, { color: colors.ink3 }]}>GOAL</Text>
+            <Text style={[styles.goalValue, { color: colors.ink }]}>{GOAL_LABELS[app.optimization_goal] ?? app.optimization_goal}</Text>
+          </View>
+          {app.optimization_goal === 'target-keyword' && (
+            <View style={styles.goalRow}>
+              <Text style={[styles.goalLabel, { color: colors.ink3 }]}>TARGETS</Text>
+              <View style={styles.chipRow}>
+                {(app.target_keywords ?? []).length === 0 ? (
+                  <Text style={[styles.goalValue, { color: colors.ink3 }]}>None picked — set on web</Text>
+                ) : (
+                  (app.target_keywords ?? []).map((kw, i) => (
+                    <View key={kw} style={[styles.targetChip, { borderColor: colors.accent, backgroundColor: colors.accentWash }]}>
+                      <Text style={[styles.targetChipNum, { color: colors.accent }]}>#{i + 1}</Text>
+                      <Text style={[styles.targetChipText, { color: colors.accent }]}>{kw}</Text>
+                    </View>
+                  ))
+                )}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
 
       {!hasData && loading ? (
         <Card title="Loading..."><Text style={{ color: colors.ink3 }}>Fetching optimizer data...</Text></Card>
@@ -143,4 +179,11 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderRadius: 3 },
   chipText: { fontSize: 10, fontFamily: 'InterTight_400Regular' },
   kwField: { fontSize: 12, fontFamily: 'InterTight_400Regular', padding: 10, borderRadius: 6, lineHeight: 18 },
+  goalCard: { borderWidth: 1, borderRadius: 6, padding: 12, marginBottom: 16 },
+  goalRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 4 },
+  goalLabel: { fontSize: 10, fontFamily: 'InterTight_500Medium', letterSpacing: 1.2, minWidth: 60, paddingTop: 2 },
+  goalValue: { fontSize: 13, fontFamily: 'InterTight_600SemiBold', flex: 1 },
+  targetChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderRadius: 4 },
+  targetChipNum: { fontSize: 9, fontFamily: 'InterTight_500Medium' },
+  targetChipText: { fontSize: 11, fontFamily: 'InterTight_600SemiBold' },
 })

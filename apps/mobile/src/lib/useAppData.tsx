@@ -8,6 +8,8 @@ export interface AppData {
   platform: string
   store_id: string
   icon_url: string | null
+  optimization_goal?: string
+  target_keywords?: string[]
 }
 
 interface AppDataContextType {
@@ -42,7 +44,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       // Get ALL apps in org
       const { data: orgApps } = await supabase
         .from('apps')
-        .select('id, name, platform, store_id, icon_url')
+        .select('id, name, platform, store_id, icon_url, optimization_goal, target_keywords')
         .eq('organization_id', profile.default_organization_id)
         .order('created_at', { ascending: true })
 
