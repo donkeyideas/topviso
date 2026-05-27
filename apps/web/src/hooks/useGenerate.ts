@@ -24,7 +24,7 @@ export function useGenerate(
   const inFlightRef = useRef(false)
 
   const generate = useCallback(
-    async (extraParams?: { locale?: string; prompt?: string; goal?: string }) => {
+    async (extraParams?: { locale?: string; prompt?: string; goal?: string; targetKeywords?: string[] }) => {
       if (!appId || inFlightRef.current) return
       inFlightRef.current = true
       setGenerating(true)

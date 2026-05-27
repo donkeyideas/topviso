@@ -47,6 +47,7 @@ export async function PATCH(
     category?: string | null
     current_version?: string | null
     optimization_goal?: string
+    target_keywords?: string[]
   } = {}
 
   if ('name' in body) updates.name = body.name
@@ -55,6 +56,12 @@ export async function PATCH(
   if ('category' in body) updates.category = body.category
   if ('current_version' in body) updates.current_version = body.current_version
   if ('optimization_goal' in body) updates.optimization_goal = body.optimization_goal
+  if ('target_keywords' in body && Array.isArray(body.target_keywords)) {
+    updates.target_keywords = body.target_keywords
+      .map((k: unknown) => String(k ?? '').trim())
+      .filter((k: string) => k.length > 0)
+      .slice(0, 3)
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })

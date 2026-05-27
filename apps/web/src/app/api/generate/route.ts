@@ -47,6 +47,7 @@ interface GenerateRequest {
   locale?: string
   prompt?: string
   goal?: string
+  targetKeywords?: string[]
   imageUrl?: string
 }
 
@@ -58,6 +59,12 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as GenerateRequest
     const { action, appId, locale, prompt: userPrompt, goal } = body
+    const targetKeywords = Array.isArray(body.targetKeywords)
+      ? body.targetKeywords
+          .map((k) => String(k ?? '').trim())
+          .filter((k) => k.length > 0)
+          .slice(0, 3)
+      : []
 
     // Fetch app details
     const { data: app, error: appErr } = await supabaseAdmin
@@ -332,7 +339,7 @@ export async function POST(req: NextRequest) {
 
 ${appContext}
 
-${buildGoalDirective(goal, 'title', app.platform)}
+${buildGoalDirective(goal, 'title', app.platform, targetKeywords)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 ${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
@@ -371,7 +378,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'subtitle', app.platform)}
+${buildGoalDirective(goal, 'subtitle', app.platform, targetKeywords)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 ${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
@@ -418,7 +425,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'description', app.platform)}
+${buildGoalDirective(goal, 'description', app.platform, targetKeywords)}
 
 ${LLM_OPTIMIZATION_DIRECTIVE}
 ${buildAppleComplianceDirective(app.platform as string)}${buildGooglePlayComplianceDirective(app.platform as string)}
@@ -465,7 +472,7 @@ Only return the JSON object, no other text.`
 
 ${appContext}
 
-${buildGoalDirective(goal, 'keywords', app.platform)}
+${buildGoalDirective(goal, 'keywords', app.platform, targetKeywords)}
 ${buildAppleComplianceDirective(app.platform as string)}
 CHARACTER LIMIT (STRICT — Apple enforced):
 - EXACTLY 100 characters or fewer. Count every character including commas. This is a HARD limit.
@@ -3236,8 +3243,37 @@ GOOGLE PLAY POLICY COMPLIANCE:
 `
 }
 
-function buildGoalDirective(goal: string | undefined, field: string, platform?: string): string {
+function buildGoalDirective(
+  goal: string | undefined,
+  field: string,
+  platform?: string,
+  targetKeywords: string[] = [],
+): string {
   const isIOS = platform === 'ios'
+
+  // "Target Keywords" goal — user has hand-picked 1-3 hero keywords to rank for.
+  // Overrides the strategy options below. If no keywords are picked, fall back to balanced.
+  if (goal === 'target-keyword') {
+    if (targetKeywords.length === 0) {
+      return `OPTIMIZATION GOAL — TARGET KEYWORDS (no keywords selected):
+- User selected the Target Keywords goal but did not pick any keywords yet.
+- Fall back to balanced optimization: balance keyword density with readability.`
+    }
+    const list = targetKeywords.map((k, i) => `${i + 1}. "${k}"`).join('\n')
+    const primary = targetKeywords[0]!
+    return `OPTIMIZATION GOAL — TARGET KEYWORDS (user-selected, priority order):
+${list}
+
+HARD REQUIREMENTS:
+- The PRIMARY target keyword "${primary}" MUST appear verbatim (or in the closest natural form) in the ${field === 'keywords' ? 'keywords field' : field}.
+- Front-load "${primary}" toward the start of the ${field === 'keywords' ? 'keywords field' : field} so the store algorithm weights it heavily.
+- Every other target keyword above should appear at least once across the full listing (title + subtitle/short description + description${isIOS ? ' + keywords field' : ''}) — distribute them, do not stuff them into one field.
+- PRESERVE the brand/app name. Do NOT replace the brand with a target keyword. The output must still clearly identify the app.
+- NO keyword stuffing. Readability must remain natural — if a keyword cannot fit cleanly, place it in a different field rather than mangling this one.
+- In the "reasoning" field of every returned variant, explicitly state which target keyword(s) it incorporates and where.${isIOS && (field === 'subtitle' || field === 'keywords') ? `
+- iOS: title + subtitle + keywords field together form the search index. Plan distribution across all three — do not waste overlap on the same target keyword in multiple fields.` : ''}`
+  }
+
   const directives: Record<string, string> = {
     'balanced': `OPTIMIZATION GOAL — BALANCED:
 - Balance keyword density with natural readability

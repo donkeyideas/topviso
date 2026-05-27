@@ -14,6 +14,7 @@ interface AppData {
   current_version: string | null
   is_active: boolean
   optimization_goal: string
+  target_keywords?: string[]
 }
 
 export function useApp(appId: string | null) {

@@ -248,6 +248,7 @@ export interface Database {
           added_at: string
           is_active: boolean
           optimization_goal: string
+          target_keywords: string[]
           created_at: string
           updated_at: string
         }
@@ -264,6 +265,7 @@ export interface Database {
           added_at?: string
           is_active?: boolean
           optimization_goal?: string
+          target_keywords?: string[]
           created_at?: string
           updated_at?: string
         }
@@ -275,6 +277,7 @@ export interface Database {
           current_version?: string | null
           is_active?: boolean
           optimization_goal?: string
+          target_keywords?: string[]
           updated_at?: string
         }
         Relationships: []

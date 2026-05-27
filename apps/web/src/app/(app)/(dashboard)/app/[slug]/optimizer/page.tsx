@@ -24,7 +24,10 @@ const GOALS = [
   { id: 'keyword-opportunities', label: 'Keyword Opportunities', icon: '\u2197', description: 'Target untapped high-volume keywords' },
   { id: 'conversion', label: 'Conversion & Downloads', icon: '\u2193', description: 'Optimize copy to convert views into installs' },
   { id: 'competitive-edge', label: 'Competitive Edge', icon: '\u2726', description: 'Differentiate from competitor listings' },
+  { id: 'target-keyword', label: 'Target Keywords', icon: '\u2316', description: 'Build the listing around keywords you pick' },
 ]
+
+const MAX_TARGET_KEYWORDS = 3
 
 const GOAL_TIPS: Record<string, string[]> = {
   'balanced': [
@@ -51,6 +54,11 @@ const GOAL_TIPS: Record<string, string[]> = {
     'Name your unique features explicitly',
     'Use "only app that..." or "first to..." patterns',
     'Target keywords where competitors are weak',
+  ],
+  'target-keyword': [
+    'Pick 1-3 hero keywords — more dilutes the listing',
+    'Primary keyword goes in the title, verbatim',
+    'Check volume before picking — low-volume = low payoff',
   ],
 }
 
@@ -107,8 +115,10 @@ export default function OptimizerPage() {
 
   // Optimization goal — persisted to DB
   const [selectedGoal, setSelectedGoal] = useState('balanced')
+  const [targetKeywords, setTargetKeywords] = useState<string[]>([])
   useEffect(() => {
     if (appData?.optimization_goal) setSelectedGoal(appData.optimization_goal)
+    if (appData?.target_keywords) setTargetKeywords(appData.target_keywords)
   }, [appData])
 
   const handleGoalChange = useCallback((goal: string) => {
@@ -121,6 +131,36 @@ export default function OptimizerPage() {
       }).catch(err => console.error('[optimizer] Failed to save goal:', err))
     }
   }, [slug])
+
+  const saveTargetKeywords = useCallback((next: string[]) => {
+    setTargetKeywords(next)
+    if (slug) {
+      fetch(`/api/apps/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target_keywords: next }),
+      }).catch(err => console.error('[optimizer] Failed to save target keywords:', err))
+    }
+  }, [slug])
+
+  const toggleTargetKeyword = useCallback((kw: string) => {
+    const trimmed = kw.trim()
+    if (!trimmed) return
+    const exists = targetKeywords.some(k => k.toLowerCase() === trimmed.toLowerCase())
+    if (exists) {
+      saveTargetKeywords(targetKeywords.filter(k => k.toLowerCase() !== trimmed.toLowerCase()))
+    } else if (targetKeywords.length < MAX_TARGET_KEYWORDS) {
+      saveTargetKeywords([...targetKeywords, trimmed])
+    }
+  }, [targetKeywords, saveTargetKeywords])
+
+  // Params passed to every generate call — includes target keywords when that goal is active
+  const genParams = useMemo(
+    () => selectedGoal === 'target-keyword'
+      ? { goal: selectedGoal, targetKeywords }
+      : { goal: selectedGoal },
+    [selectedGoal, targetKeywords],
+  )
 
   // Selected variant indices
   const [selTitle, setSelTitle] = useState(0)
@@ -304,12 +344,11 @@ export default function OptimizerPage() {
 
   // Sequential generation to avoid DeepSeek rate limits dropping requests
   async function handleFullRewrite() {
-    const params = { goal: selectedGoal }
-    await genTitle(params)
-    await genSubtitle(params)
-    await genDesc(params)
+    await genTitle(genParams)
+    await genSubtitle(genParams)
+    await genDesc(genParams)
     if (isIOS) {
-      await genKw(params)
+      await genKw(genParams)
     }
   }
 
@@ -390,7 +429,7 @@ export default function OptimizerPage() {
           <p style={{ fontSize: 13, color: 'var(--color-ink-3)', marginBottom: 14 }}>
             Choose what to prioritize — AI will tailor all generated content to this goal.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: selectedGoal === 'target-keyword' ? 12 : 24 }}>
             {GOALS.map(g => {
               const isSelected = selectedGoal === g.id
               const isRecommended = recommendedGoal === g.id
@@ -444,6 +483,23 @@ export default function OptimizerPage() {
               )
             })}
           </div>
+
+          {selectedGoal === 'target-keyword' && (
+            <TargetKeywordPicker
+              tracked={trackedKws}
+              selected={targetKeywords}
+              max={MAX_TARGET_KEYWORDS}
+              onToggle={toggleTargetKeyword}
+              onAddCustom={(kw) => {
+                const trimmed = kw.trim()
+                if (!trimmed) return
+                const exists = targetKeywords.some(k => k.toLowerCase() === trimmed.toLowerCase())
+                if (!exists && targetKeywords.length < MAX_TARGET_KEYWORDS) {
+                  saveTargetKeywords([...targetKeywords, trimmed])
+                }
+              }}
+            />
+          )}
         </section>
 
         {/* AI Store Listing Optimizer CTA */}
@@ -483,7 +539,7 @@ export default function OptimizerPage() {
               snapshot={snapshot?.title}
               reasoning={titles[selTitle]?.reasoning}
               generating={g1}
-              onGenerate={() => genTitle({ goal: selectedGoal })}
+              onGenerate={() => genTitle(genParams)}
               variants={titles.map(t => t.title)}
               selectedVariant={selTitle}
               onSelectVariant={setSelTitle}
@@ -498,7 +554,7 @@ export default function OptimizerPage() {
               snapshot={isIOS ? snapshot?.subtitle : snapshot?.short_description}
               reasoning={subtitles[selSubtitle]?.reasoning}
               generating={g2}
-              onGenerate={() => genSubtitle({ goal: selectedGoal })}
+              onGenerate={() => genSubtitle(genParams)}
               variants={subtitles.map(s => s.subtitle)}
               selectedVariant={selSubtitle}
               onSelectVariant={setSelSubtitle}
@@ -514,7 +570,7 @@ export default function OptimizerPage() {
                 snapshot={snapshot?.keywords_field}
                 reasoning={kwFieldData?.reasoning}
                 generating={g4}
-                onGenerate={() => genKw({ goal: selectedGoal })}
+                onGenerate={() => genKw(genParams)}
                 mono
               />
             )}
@@ -527,7 +583,7 @@ export default function OptimizerPage() {
                 limit={limits.promo}
                 charColor={charColor}
                 generating={g3}
-                onGenerate={() => genDesc({ goal: selectedGoal })}
+                onGenerate={() => genDesc(genParams)}
               />
             )}
 
@@ -539,7 +595,7 @@ export default function OptimizerPage() {
               charColor={charColor}
               snapshot={snapshot?.description}
               generating={g3}
-              onGenerate={() => genDesc({ goal: selectedGoal })}
+              onGenerate={() => genDesc(genParams)}
               multiline
             />
 
@@ -934,6 +990,205 @@ function FieldCard({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ── TargetKeywordPicker — keyword selector for the Target Keywords goal ── */
+function TargetKeywordPicker({
+  tracked,
+  selected,
+  max,
+  onToggle,
+  onAddCustom,
+}: {
+  tracked: Array<{ keyword: string; volume?: number; rank?: number | null; difficulty?: number }>
+  selected: string[]
+  max: number
+  onToggle: (kw: string) => void
+  onAddCustom: (kw: string) => void
+}) {
+  const [custom, setCustom] = useState('')
+  const [query, setQuery] = useState('')
+
+  const options = useMemo(() => {
+    const seen = new Set<string>()
+    const filtered = tracked.filter(k => {
+      const key = k.keyword.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      if (query && !key.includes(query.toLowerCase())) return false
+      return true
+    })
+    filtered.sort((a, b) => (b.volume ?? 0) - (a.volume ?? 0))
+    return filtered.slice(0, 30)
+  }, [tracked, query])
+
+  const atMax = selected.length >= max
+  const lowVolWarn = (vol?: number) => vol != null && vol < 500
+
+  return (
+    <div style={{
+      marginBottom: 24,
+      padding: 16,
+      borderRadius: 6,
+      border: '1px solid var(--color-line)',
+      background: 'var(--color-paper-2)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+        <div>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--color-ink-3)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Target keywords
+          </span>
+          <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-ink-3)' }}>
+            {selected.length} / {max} selected · pick the keywords the AI should build the listing around
+          </span>
+        </div>
+      </div>
+
+      {selected.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {selected.map((kw, i) => (
+            <button
+              key={kw}
+              onClick={() => onToggle(kw)}
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                fontWeight: 600,
+                background: 'var(--color-ink)',
+                color: 'var(--color-paper)',
+                border: 'none',
+                borderRadius: 4,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+              title="Click to remove"
+            >
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, opacity: 0.7 }}>#{i + 1}</span>
+              {kw}
+              <span style={{ marginLeft: 4, opacity: 0.6 }}>×</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tracked.length === 0 ? (
+        <div style={{ fontSize: 12, color: 'var(--color-ink-3)', padding: '8px 0' }}>
+          No tracked keywords yet — sync the app first, or add a custom keyword below.
+        </div>
+      ) : (
+        <>
+          <input
+            type="text"
+            placeholder="Filter tracked keywords..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              fontSize: 12,
+              border: '1px solid var(--color-line)',
+              borderRadius: 4,
+              background: 'var(--color-paper)',
+              color: 'var(--color-ink)',
+              marginBottom: 10,
+            }}
+          />
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
+            {options.map(k => {
+              const isPicked = selected.some(s => s.toLowerCase() === k.keyword.toLowerCase())
+              const disabled = !isPicked && atMax
+              return (
+                <button
+                  key={k.keyword}
+                  onClick={() => onToggle(k.keyword)}
+                  disabled={disabled}
+                  style={{
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: isPicked ? 'var(--color-ink)' : 'var(--color-paper)',
+                    color: isPicked ? 'var(--color-paper)' : disabled ? 'var(--color-ink-4)' : 'var(--color-ink-2)',
+                    border: `1px solid ${isPicked ? 'var(--color-ink)' : 'var(--color-line)'}`,
+                    borderRadius: 4,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}
+                  title={lowVolWarn(k.volume) ? 'Low search volume — limited discoverability' : undefined}
+                >
+                  {k.keyword}
+                  {k.volume != null && (
+                    <span style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 10,
+                      opacity: 0.7,
+                      color: lowVolWarn(k.volume) ? '#d97706' : 'inherit',
+                    }}>
+                      {k.volume >= 1000 ? `${(k.volume / 1000).toFixed(1)}K` : k.volume}
+                    </span>
+                  )}
+                  {k.rank != null && k.rank <= 10 && (
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: '#22c55e' }}>#{k.rank}</span>
+                  )}
+                </button>
+              )
+            })}
+            {options.length === 0 && (
+              <div style={{ fontSize: 12, color: 'var(--color-ink-3)' }}>No keywords match the filter.</div>
+            )}
+          </div>
+        </>
+      )}
+
+      <div style={{ marginTop: 12, display: 'flex', gap: 6 }}>
+        <input
+          type="text"
+          placeholder="Or type a custom keyword..."
+          value={custom}
+          onChange={e => setCustom(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && custom.trim()) {
+              onAddCustom(custom)
+              setCustom('')
+            }
+          }}
+          disabled={atMax}
+          style={{
+            flex: 1,
+            padding: '6px 10px',
+            fontSize: 12,
+            border: '1px solid var(--color-line)',
+            borderRadius: 4,
+            background: 'var(--color-paper)',
+            color: 'var(--color-ink)',
+            opacity: atMax ? 0.5 : 1,
+          }}
+        />
+        <button
+          onClick={() => {
+            if (custom.trim()) {
+              onAddCustom(custom)
+              setCustom('')
+            }
+          }}
+          disabled={atMax || !custom.trim()}
+          className="chip"
+          style={{ fontSize: 11, opacity: (atMax || !custom.trim()) ? 0.5 : 1 }}
+        >
+          Add
+        </button>
+      </div>
+      {atMax && (
+        <div style={{ marginTop: 8, fontSize: 11, color: 'var(--color-ink-3)' }}>
+          Max {max} keywords — remove one to add another.
+        </div>
+      )}
     </div>
   )
 }
