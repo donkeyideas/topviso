@@ -147,7 +147,13 @@ export async function checkKeywordRanking(
       country,
       topCompetitor: topComp?.title ?? undefined,
     }
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] checkKeywordRanking (android) failed', {
+      keyword,
+      targetAppId,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return { keyword, position: null, country }
   }
 }
@@ -179,7 +185,11 @@ export async function fetchSimilarApps(
       score: r.score,
       icon: r.icon,
     }))
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] fetchSimilarApps failed', {
+      appId,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return []
   }
 }
@@ -203,7 +213,12 @@ export async function searchApps(
       score: r.score,
       icon: r.icon,
     }))
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] searchApps (android) failed', {
+      term,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return []
   }
 }
@@ -302,7 +317,13 @@ export async function checkKeywordRankingIOS(
       country,
       topCompetitor: topComp ? String(topComp.trackName ?? '') : undefined,
     }
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] checkKeywordRankingIOS failed', {
+      keyword,
+      targetAppId,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return { keyword, position: null, country }
   }
 }
@@ -342,7 +363,12 @@ export async function searchAppsIOS(
       score: Number(r.averageUserRating ?? 0),
       icon: String(r.artworkUrl100 ?? r.artworkUrl60 ?? ''),
     }))
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] searchAppsIOS failed', {
+      term,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return []
   }
 }
@@ -378,7 +404,11 @@ export async function fetchSimilarAppsIOS(
         score: Number(r.averageUserRating ?? 0),
         icon: String(r.artworkUrl100 ?? r.artworkUrl60 ?? ''),
       }))
-  } catch {
+  } catch (err) {
+    console.error('[store-scraper] fetchSimilarAppsIOS failed', {
+      appId,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return []
   }
 }
@@ -631,8 +661,11 @@ export async function fetchAppleAppData(
         }
       }
     }
-  } catch {
-    // iTunes API failed, fall through to Tier 2
+  } catch (err) {
+    console.error('[store-scraper] iTunes API tier-1 lookup failed', {
+      appId,
+      error: err instanceof Error ? err.message : String(err),
+    })
   }
 
   // Tier 2: Scrape the public App Store page (works for ALL apps with a public page)

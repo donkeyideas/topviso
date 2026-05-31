@@ -33,6 +33,9 @@ interface AppRow {
   platform: 'ios' | 'android'
   store_id: string
   name: string
+  target_keywords?: string[] | null
+  optimization_goal?: string | null
+  category?: string | null
 }
 
 export interface SyncResult {
@@ -45,7 +48,7 @@ export interface SyncResult {
     score: number
     overlapCount: number
   }>
-  visibilityScore: number
+  visibilityScore: number | null
   asoScore: ASOScoreResult | null
 }
 
@@ -88,7 +91,7 @@ export async function runFullSync(
   // Step 6: Calculate scores (volume-weighted for accuracy)
   const visibilityScore = calculateVisibilityScore(
     rankings.map((r) => {
-      const metrics = estimateKeywordMetrics(r.keyword)
+      const metrics = estimateKeywordMetrics(r.keyword, app.platform)
       return { position: r.position, searchVolume: metrics.volume }
     }),
   )
@@ -216,39 +219,105 @@ async function persistReviews(
   }
 }
 
+function buildKeywordSystemPrompt(platform: 'ios' | 'android'): string {
+  if (platform === 'android') {
+    return [
+      'You are a Google Play ASO keyword expert.',
+      'Google Play has NO dedicated keywords field — ranking is driven by the title, short description, and long description.',
+      'Google Play queries skew more conversational and long-tail than the App Store ("how to track sleep" vs "sleep tracker").',
+      'Mix short head terms (1 word) and long-tail phrases (3-5 words). Prefer natural-language phrases over comma-separated tokens.',
+      'Include intent variants (what users TYPE on Android), not iOS jargon like "shortcuts" or "siri".',
+      'Return ONLY a JSON array of 18 keyword strings. No explanations, no preamble, no markdown.',
+    ].join(' ')
+  }
+  return [
+    'You are an Apple App Store ASO keyword expert.',
+    'The App Store has a hidden 100-character keywords field plus the title and subtitle. Ranking favors short, comma-separated tokens.',
+    'Bias toward 1-2 word head terms over long-tail phrases.',
+    'Avoid generic descriptive verbs; favor nouns and category-defining terms that pack into 100 chars.',
+    'Return ONLY a JSON array of 18 keyword strings. No explanations, no preamble, no markdown.',
+  ].join(' ')
+}
+
+function normalizeKeyword(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function dedupeKeywords(list: string[], limit = 25): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const raw of list) {
+    const k = normalizeKeyword(raw)
+    if (!k || k.length > 64 || seen.has(k)) continue
+    seen.add(k)
+    out.push(k)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
 async function generateKeywordSuggestions(
   app: AppRow,
   storeData: StoreAppData | null,
 ): Promise<string[]> {
+  // 1. Seed from the user's target_keywords — these are the user's stated priorities,
+  //    not a prompt decoration. They go through ranking even if the LLM never returns them.
+  const seeds = (app.target_keywords ?? [])
+    .map((k) => String(k ?? '').trim())
+    .filter((k) => k.length > 0)
+
+  // 2. Expand via LLM with a platform-specific system prompt.
   const deepseek = getDeepSeekClient()
-  const context = storeData
+  const platformContext = app.platform === 'android'
+    ? `Platform: Google Play (Android)`
+    : `Platform: App Store (iOS)`
+
+  const goalLine = app.optimization_goal
+    ? `Optimization goal: ${app.optimization_goal}`
+    : ''
+
+  const seedLine = seeds.length > 0
+    ? `User target keywords (MUST keep these and expand around them): ${seeds.join(', ')}`
+    : ''
+
+  const baseContext = storeData
     ? `App: ${storeData.title}\nCategory: ${storeData.genre}\nDescription: ${storeData.description.slice(0, 500)}`
-    : `App: ${app.name}\nPlatform: ${app.platform}`
+    : `App: ${app.name}`
 
-  const completion = await deepseek.chat.completions.create({
-    model: 'deepseek-chat',
-    messages: [
-      {
-        role: 'system',
-        content:
-          'You are an ASO keyword expert. Return ONLY a JSON array of 15 keyword strings (1-3 words each) that users would search to find this app. No explanations.',
-      },
-      { role: 'user', content: context },
-    ],
-    temperature: 0.7,
-    max_tokens: 500,
-  })
+  const userContent = [platformContext, baseContext, goalLine, seedLine]
+    .filter(Boolean)
+    .join('\n')
 
+  let llmKeywords: string[] = []
   try {
+    const completion = await deepseek.chat.completions.create({
+      model: 'deepseek-chat',
+      messages: [
+        { role: 'system', content: buildKeywordSystemPrompt(app.platform) },
+        { role: 'user', content: userContent },
+      ],
+      temperature: 0.7,
+      max_tokens: 700,
+    })
     const raw = completion.choices[0]?.message?.content ?? '[]'
     const cleaned = raw
       .replace(/^```(?:json)?\s*\n?/i, '')
       .replace(/\n?```\s*$/i, '')
       .trim()
-    return JSON.parse(cleaned) as string[]
-  } catch {
-    return []
+    const parsed = JSON.parse(cleaned)
+    if (Array.isArray(parsed)) {
+      llmKeywords = parsed.filter((s): s is string => typeof s === 'string')
+    }
+  } catch (err) {
+    console.error('[sync-pipeline] keyword LLM expansion failed', {
+      app_id: app.id,
+      platform: app.platform,
+      error: err instanceof Error ? err.message : String(err),
+    })
   }
+
+  // 3. Merge: seeds first (preserve user intent), then LLM expansion, dedup, cap.
+  return dedupeKeywords([...seeds, ...llmKeywords], 25)
 }
 
 async function persistKeywords(
@@ -362,7 +431,7 @@ async function writeAnalysisResults(
       score: number
       overlapCount: number
     }>
-    visibilityScore: number
+    visibilityScore: number | null
     asoScore: ASOScoreResult | null
   },
 ) {
@@ -411,7 +480,7 @@ async function writeAnalysisResults(
   // Build fresh entries from sync rankings
   const syncKeywordsMap = new Map<string, Record<string, unknown>>()
   for (const r of data.rankings) {
-    const metrics = estimateKeywordMetrics(r.keyword)
+    const metrics = estimateKeywordMetrics(r.keyword, app.platform)
     const kwId = kwIdMap.get(r.keyword.toLowerCase())
     const oldRank = kwId ? oldRanks.get(kwId) : undefined
     const delta7d = (oldRank != null && r.position != null)
@@ -501,7 +570,7 @@ async function writeAnalysisResults(
 
   // Build per-keyword breakdown with volume-weighted contribution
   const kwBreakdown = data.rankings.map((r) => {
-    const metrics = estimateKeywordMetrics(r.keyword)
+    const metrics = estimateKeywordMetrics(r.keyword, app.platform)
     const weight = r.position ? getPositionWeight(r.position) : 0
     return {
       keyword: r.keyword,
@@ -579,12 +648,17 @@ async function writeAnalysisResults(
         surface: isAndroid ? 'Play Store Search' : 'App Store Search',
         score: data.visibilityScore,
         status:
-          data.visibilityScore > 60
-            ? 'strong'
-            : data.visibilityScore > 30
-              ? 'moderate'
-              : 'weak',
-        recommendation: `${rankedCount} of ${data.rankings.length} keywords ranked`,
+          data.visibilityScore === null
+            ? 'pending'
+            : data.visibilityScore > 60
+              ? 'strong'
+              : data.visibilityScore > 30
+                ? 'moderate'
+                : 'weak',
+        recommendation:
+          data.visibilityScore === null
+            ? 'Awaiting rank data — first daily sweep pending'
+            : `${rankedCount} of ${data.rankings.length} keywords ranked`,
       },
       {
         surface: 'Category Rankings',
@@ -602,7 +676,10 @@ async function writeAnalysisResults(
       notRanked: notRankedCount,
     },
     keywordBreakdown,
-    summary: `Visibility score ${data.visibilityScore}/100 based on ${data.rankings.length} tracked keywords. ${top10Count} in top 10, ${top3Count} in top 3.`,
+    summary:
+      data.visibilityScore === null
+        ? `Awaiting first rank sweep across ${data.rankings.length} tracked keywords.`
+        : `Visibility score ${data.visibilityScore}/100 based on ${data.rankings.length} tracked keywords. ${top10Count} in top 10, ${top3Count} in top 3.`,
     refreshedAt: now,
   }
   await upsertAnalysis(
@@ -743,7 +820,7 @@ async function writeAnalysisResults(
       ai: { recommended: '—', citations: 0, referralInstalls: '—' },
     },
     summary: data.storeData
-      ? `${data.storeData.title} — ${(data.storeData.ratings ?? 0).toLocaleString()} ratings (${(data.storeData.score ?? 0).toFixed(1)}★), ${data.storeData.installs ?? '0'} installs. ASO score: ${data.asoScore?.overall ?? '—'}/100. Visibility: ${data.visibilityScore}/100.`
+      ? `${data.storeData.title} — ${(data.storeData.ratings ?? 0).toLocaleString()} ratings (${(data.storeData.score ?? 0).toFixed(1)}★), ${data.storeData.installs ?? '0'} installs. ASO score: ${data.asoScore?.overall ?? '—'}/100. Visibility: ${data.visibilityScore ?? '—'}/100.`
       : `${app.name} — real data sync completed.`,
     asoScore: data.asoScore?.overall ?? null,
     realData: true,

@@ -9,7 +9,12 @@ export interface KeywordMetrics {
   cpc: number
   difficulty: number
   intent: 'navigational' | 'informational' | 'transactional' | 'commercial'
+  // True when the value is heuristic, not sourced from a real provider.
+  // Consumers should label these as "Est." in the UI.
+  isEstimate: boolean
 }
+
+export type Platform = 'ios' | 'android'
 
 /** Seeded hash for deterministic results per keyword */
 function seed(str: string): number {
@@ -17,24 +22,45 @@ function seed(str: string): number {
 }
 
 /**
- * Estimate keyword metrics using heuristic analysis.
- * Provides reasonable estimates based on keyword characteristics.
+ * Estimate keyword metrics. Always heuristic for now (isEstimate: true).
+ * Google Play queries skew more verbose than the App Store, so we apply a
+ * platform calibration when one is supplied.
+ *
+ * To plug in real data (data.ai, Sensor Tower, AppTweak), replace the body
+ * of this function — the rest of the codebase already routes through it.
  */
-export function estimateKeywordMetrics(keyword: string): KeywordMetrics {
+export function estimateKeywordMetrics(
+  keyword: string,
+  platform?: Platform,
+): KeywordMetrics {
   const kw = keyword.toLowerCase().trim()
   const words = kw.split(/\s+/)
   const wordCount = words.length
 
   const intent = classifyIntent(kw)
-  const volume = estimateVolume(kw, wordCount, intent)
+  let volume = estimateVolume(kw, wordCount, intent)
   const cpc = estimateCPC(kw, intent)
-  const difficulty = estimateDifficulty(kw, wordCount, volume)
+  let difficulty = estimateDifficulty(kw, wordCount, volume)
+
+  // Platform calibration. App Store users skew toward 1-2 word head terms;
+  // Play Store users skew toward 3+ word natural-language queries. We don't
+  // have real volume numbers, but we can correct the *shape* of the
+  // distribution so head/long-tail balance is closer to reality.
+  if (platform === 'android') {
+    if (wordCount === 1) volume *= 0.7        // less head-term dominance on Play
+    else if (wordCount >= 3) volume *= 1.35   // more long-tail
+    difficulty = Math.max(5, difficulty - 5)  // Play ranking moves faster
+  } else if (platform === 'ios') {
+    if (wordCount === 1) volume *= 1.15
+    else if (wordCount >= 4) volume *= 0.75
+  }
 
   return {
-    volume: Math.round(volume),
+    volume: Math.max(50, Math.round(volume / 10) * 10),
     cpc: Math.round(cpc * 100) / 100,
     difficulty: Math.round(difficulty),
     intent,
+    isEstimate: true,
   }
 }
 
@@ -43,10 +69,11 @@ export function estimateKeywordMetrics(keyword: string): KeywordMetrics {
  */
 export function enrichKeywords(
   keywords: string[],
+  platform?: Platform,
 ): Array<{ keyword: string } & KeywordMetrics> {
   return keywords.map((kw) => ({
     keyword: kw,
-    ...estimateKeywordMetrics(kw),
+    ...estimateKeywordMetrics(kw, platform),
   }))
 }
 

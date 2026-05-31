@@ -106,8 +106,8 @@ export default function KeywordsPage() {
                 <tr>
                   <SortHeader label="Keyword" sortKey="keyword" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} style={{ position: 'sticky', left: 0, background: 'var(--color-bg)', zIndex: 2, minWidth: 120 }} />
                   <SortHeader label="Rank" sortKey="rank" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
-                  <SortHeader label="Vol." sortKey="volume" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
-                  <SortHeader label="Diff." sortKey="difficulty" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
+                  <SortHeader label="Est. Vol." sortKey="volume" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
+                  <SortHeader label="Est. Diff." sortKey="difficulty" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
                   <SortHeader label="Δ7d" sortKey="delta7d" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
                   <SortHeader label="KEI" sortKey="kei" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} className="tn" />
                   <SortHeader label="Top Competitor" sortKey="topCompetitor" activeSortKey={sortKey} sortDir={sortDir} onSort={toggle} style={{ minWidth: 100, maxWidth: 150 }} />

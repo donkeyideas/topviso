@@ -19,16 +19,20 @@ export function getPositionWeight(position: number): number {
   return Math.max(0.01, 0.12 * Math.exp(-0.05 * (position - 10)))
 }
 
+// Returns null when there is no usable rank data (no keywords tracked, or no
+// keyword has ever been measured). A real 0 means "tracked keywords exist and
+// none ranked"; null means "we don't know yet" — the UI should distinguish.
 export function calculateVisibilityScore(
   rankings: Array<{ position: number | null; searchVolume?: number }>,
-): number {
-  if (rankings.length === 0) return 0
+): number | null {
+  if (rankings.length === 0) return null
+
+  const hasAnyMeasurement = rankings.some((r) => r.position !== null)
+  if (!hasAnyMeasurement) return null
 
   const hasVolume = rankings.some((r) => r.searchVolume && r.searchVolume > 0)
 
   if (hasVolume) {
-    // Volume-weighted: Σ(position_weight × volume) / Σ(volume) × 100
-    // This matches OpticRank's formula — max possible is all keywords at #1
     const maxPossible = rankings.reduce(
       (sum, r) => sum + (r.searchVolume ?? 0),
       0,
@@ -43,10 +47,7 @@ export function calculateVisibilityScore(
     return Math.min(100, Math.round((actual / maxPossible) * 100))
   }
 
-  // Fallback: equal-weight when no volume data
   const rankedKeywords = rankings.filter((r) => r.position !== null)
-  if (rankedKeywords.length === 0) return 0
-
   const maxPossible = rankings.length * 1.0
   const actual = rankedKeywords.reduce(
     (sum, r) => sum + getPositionWeight(r.position!),
@@ -95,7 +96,7 @@ export async function computeVisibilityTrend(
       const score = calculateVisibilityScore(
         ranks.map(r => ({ position: r.rank }))
       )
-      results.push({ date: dateStr, score })
+      if (score !== null) results.push({ date: dateStr, score })
     }
   }
 

@@ -1,6 +1,7 @@
 import { inngest } from '../lib/inngest'
 import { getServiceClient } from '../lib/supabase'
 import { lookupPlayStoreApp, checkKeywordRank, fetchPlayStoreReviews } from '../scrapers/play-store'
+import { extractKeywordsField } from '../lib/extract-keywords'
 
 // Runs daily at 7am UTC — scrapes Play Store data for all tracked Android apps
 export const scrapePlayStore = inngest.createFunction(
@@ -27,9 +28,31 @@ export const scrapePlayStore = inngest.createFunction(
     let reviewsScraped = 0
 
     for (const app of apps) {
+      // Determine the app's primary country from its tracked keywords (mode);
+      // fall back to 'us'. Used for metadata + reviews + install storage so
+      // non-US apps see their actual store data.
+      const primaryCountry = await step.run(`primary-country-${app.id}`, async () => {
+        const { data: kws } = await supabase
+          .from('keywords')
+          .select('country')
+          .eq('app_id', app.id)
+          .eq('is_tracked', true)
+        const counts = new Map<string, number>()
+        for (const k of kws ?? []) {
+          const c = (k.country ?? 'us').toLowerCase()
+          counts.set(c, (counts.get(c) ?? 0) + 1)
+        }
+        let best = 'us'
+        let bestN = 0
+        for (const [c, n] of counts) {
+          if (n > bestN) { best = c; bestN = n }
+        }
+        return best
+      })
+
       // Step 1: Scrape app metadata (richer data via google-play-scraper)
       await step.run(`scrape-app-${app.id}`, async () => {
-        const info = await lookupPlayStoreApp(app.store_id)
+        const info = await lookupPlayStoreApp(app.store_id, { country: primaryCountry })
         if (!info) return
 
         // Update app record with latest data
@@ -44,10 +67,12 @@ export const scrapePlayStore = inngest.createFunction(
           .eq('id', app.id)
 
         // Store full metadata snapshot (richer than before)
+        const derivedKeywords = extractKeywordsField(info.title, info.description)
         await supabase.from('app_metadata_snapshots').insert({
           app_id: app.id,
           title: info.title,
           description: info.description,
+          keywords_field: derivedKeywords,
           metadata: {
             score: info.score,
             ratings: info.ratingCount,
@@ -61,6 +86,7 @@ export const scrapePlayStore = inngest.createFunction(
             updated: info.updated,
             screenshots: info.screenshots,
             reviews: info.reviews,
+            country: primaryCountry.toUpperCase(),
           },
         })
 
@@ -70,7 +96,7 @@ export const scrapePlayStore = inngest.createFunction(
             {
               app_id: app.id,
               date: today,
-              country: 'US',
+              country: primaryCountry.toUpperCase(),
               downloads_low: info.minInstalls,
               downloads_high: info.maxInstalls ?? info.minInstalls * 2,
             },
@@ -81,21 +107,21 @@ export const scrapePlayStore = inngest.createFunction(
         processed++
       })
 
-      // Step 2: Check keyword rankings (same as iOS daily-rank-check)
+      // Step 2: Check keyword rankings for ALL tracked keywords
       await step.run(`keywords-${app.id}`, async () => {
         const { data: keywords } = await supabase
           .from('keywords')
           .select('id, text, country')
           .eq('app_id', app.id)
           .eq('is_tracked', true)
-          .limit(30)
 
         if (!keywords || keywords.length === 0) return
 
         for (const kw of keywords) {
-          const position = await checkKeywordRank(kw.text, app.store_id, kw.country ?? 'us')
+          const country = (kw.country ?? 'us').toLowerCase()
+          const position = await checkKeywordRank(kw.text, app.store_id, country)
 
-          await supabase.from('keyword_ranks_daily').upsert(
+          const { error } = await supabase.from('keyword_ranks_daily').upsert(
             {
               keyword_id: kw.id,
               date: today,
@@ -103,33 +129,45 @@ export const scrapePlayStore = inngest.createFunction(
             },
             { onConflict: 'keyword_id,date' },
           )
+          if (error) {
+            console.error('[scrape-play-store] rank upsert failed', {
+              keyword_id: kw.id,
+              error: error.message,
+            })
+          }
 
           keywordsChecked++
-          // Rate limit between keyword checks
           await new Promise(r => setTimeout(r, 500))
         }
       })
 
       // Step 3: Scrape latest reviews
       await step.run(`reviews-${app.id}`, async () => {
-        const reviews = await fetchPlayStoreReviews(app.store_id, 50)
+        const reviews = await fetchPlayStoreReviews(app.store_id, 50, { country: primaryCountry })
         if (reviews.length === 0) return
 
         for (const review of reviews) {
-          // Upsert with store_review_id to avoid duplicates
-          await supabase.from('reviews').upsert(
+          const { error } = await supabase.from('reviews').upsert(
             {
               app_id: app.id,
               store_review_id: review.id,
-              user_name: review.userName,
+              author: review.userName,
               title: null,
               body: review.text,
               rating: review.score,
-              date: review.date,
+              reviewed_at: review.date,
               version: review.version ?? null,
             },
             { onConflict: 'app_id,store_review_id', ignoreDuplicates: true },
           )
+          if (error) {
+            console.error('[scrape-play-store] review upsert failed', {
+              app_id: app.id,
+              store_review_id: review.id,
+              error: error.message,
+            })
+            continue
+          }
           reviewsScraped++
         }
       })

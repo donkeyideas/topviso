@@ -204,10 +204,10 @@ export interface StoreIntelData {
 }
 
 export interface VisibilityData {
-  overallScore: number
+  overallScore: number | null
   scoreDelta?: string
-  iosScore?: number
-  androidScore?: number
+  iosScore?: number | null
+  androidScore?: number | null
   platformDelta?: string
   categoryRank?: string
   categoryRankDelta?: string
@@ -215,7 +215,7 @@ export interface VisibilityData {
   shareOfSearchDelta?: string
   categoryPercentile?: string
   refreshedAt?: string
-  surfaces: Array<{ surface: string; score: number; status: 'strong' | 'moderate' | 'weak'; recommendation: string }>
+  surfaces: Array<{ surface: string; score: number | null; status: 'strong' | 'moderate' | 'weak' | 'pending'; recommendation: string }>
   quickWins: Array<{ action: string; expectedImpact: string }>
   recommendations?: Array<{
     severity: 'easy-win' | 'medium' | 'watch'

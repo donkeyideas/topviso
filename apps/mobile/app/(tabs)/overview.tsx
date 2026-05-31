@@ -40,7 +40,10 @@ export default function OverviewScreen() {
 
   // Combine data from multiple analysis sources (like the web does)
   const asoScore = Number(data?.asoScore ?? 0)
-  const visScore = Number(visData?.overallScore ?? 0)
+  const visScoreRaw = visData?.overallScore
+  const hasVisScore = visScoreRaw != null
+  const visScore = hasVisScore ? Number(visScoreRaw) : 0
+  const visScoreDisplay = hasVisScore ? String(visScore) : '—'
 
   // Keywords can be array directly or { keywords: [...] }
   const keywords = Array.isArray(kwData) ? kwData : (Array.isArray((kwData as Record<string, unknown>)?.keywords) ? (kwData as Record<string, unknown>).keywords as Array<Record<string, unknown>> : [])
@@ -111,7 +114,7 @@ export default function OverviewScreen() {
         <>
           <KpiStrip items={[
             { label: 'ASO SCORE', value: String(asoScore), deltaType: asoScore > 60 ? 'up' : 'down' },
-            { label: 'VISIBILITY', value: String(visScore) },
+            { label: 'VISIBILITY', value: visScoreDisplay },
             { label: 'KEYWORDS', value: kwCount.toLocaleString() },
             { label: 'LLM SOV', value: llmSov > 0 ? `${llmSov}%` : '--' },
             { label: 'AVG RATING', value: avgRating > 0 ? avgRating.toFixed(1) : '--', deltaType: avgRating >= 4 ? 'up' : 'down' },
@@ -124,7 +127,7 @@ export default function OverviewScreen() {
               <Text style={[styles.scoreLabel, { color: colors.ink3 }]}>ASO SCORE</Text>
               <View style={styles.scoreMinis}>
                 <View style={styles.scoreMini}>
-                  <Text style={[styles.miniVal, { color: colors.ink }]}>{visScore}</Text>
+                  <Text style={[styles.miniVal, { color: colors.ink }]}>{visScoreDisplay}</Text>
                   <Text style={[styles.miniLabel, { color: colors.ink3 }]}>Visibility</Text>
                 </View>
                 <View style={styles.scoreMini}>

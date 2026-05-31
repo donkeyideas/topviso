@@ -48,7 +48,8 @@ export default function KeywordsScreen() {
   const top10 = ranked.filter(k => Number(k.rank) <= 10).length
   const top3 = ranked.filter(k => Number(k.rank) <= 3).length
   const avgPos = ranked.length > 0 ? Math.round(ranked.reduce((s, k) => s + Number(k.rank ?? 0), 0) / ranked.length) : 0
-  const vis = Number(visData?.overallScore ?? 0)
+  const visRaw = visData?.overallScore
+  const visDisplay = visRaw != null ? String(Number(visRaw)) : '—'
   const avgDiff = keywords.length > 0 ? Math.round(keywords.reduce((s, k) => s + Number(k.difficulty ?? 0), 0) / keywords.length) : 0
   const avgRel = keywords.length > 0 ? Math.round(keywords.reduce((s, k) => s + Number(k.relevance ?? 0), 0) / keywords.length) : 0
   const totalVol = keywords.reduce((s, k) => s + Number(k.volume ?? 0), 0)
@@ -88,7 +89,7 @@ export default function KeywordsScreen() {
             { label: 'TRACKED', value: String(totalKw) },
             { label: 'TOP 10', value: String(top10) },
             { label: 'AVG POSITION', value: String(avgPos) },
-            { label: 'VISIBILITY', value: String(vis) },
+            { label: 'VISIBILITY', value: visDisplay },
           ]} />
 
           {/* Keyword Intelligence table */}

@@ -282,7 +282,17 @@ export default function Overview2Page() {
                 <span className="tag">{visibilityData?.scoreDelta ?? ''}</span>
               </div>
               <div className="card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, padding: '24px 20px' }}>
-                <ScoreRing score={visibilityData?.overallScore ?? 0} />
+                {visibilityData?.overallScore != null ? (
+                  <ScoreRing score={visibilityData.overallScore} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '32px 0' }}>
+                    <div style={{ fontSize: 32, fontWeight: 600, color: 'var(--muted, #888)' }}>—</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted, #888)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Awaiting data</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted, #888)', textAlign: 'center', maxWidth: 220 }}>
+                      First daily rank sweep runs overnight. Track keywords to populate this score.
+                    </div>
+                  </div>
+                )}
                 <div style={{ width: '100%' }}>
                   {[
                     { label: appData?.platform === 'ios' ? 'iOS Score' : 'Android Score', val: appData?.platform === 'ios' ? visibilityData?.iosScore : visibilityData?.androidScore },

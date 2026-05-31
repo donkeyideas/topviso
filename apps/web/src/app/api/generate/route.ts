@@ -99,7 +99,16 @@ export async function POST(req: NextRequest) {
     // Handle sync action — real data pipeline + AI enrichment for all overview-2 sections
     if (action === 'sync') {
       const { runFullSync } = await import('@/lib/sync-pipeline')
-      const syncResult = await runFullSync(supabaseAdmin, app as { id: string; organization_id: string; platform: 'ios' | 'android'; store_id: string; name: string })
+      const syncResult = await runFullSync(supabaseAdmin, app as {
+        id: string
+        organization_id: string
+        platform: 'ios' | 'android'
+        store_id: string
+        name: string
+        target_keywords?: string[] | null
+        optimization_goal?: string | null
+        category?: string | null
+      })
 
       // After real data sync, generate AI-dependent analyses in parallel
       // These populate overview-2 sections that need AI: recommendations, llm-track, store-intel AI fields
@@ -279,7 +288,7 @@ export async function POST(req: NextRequest) {
 
           // Enrich with heuristic estimates (clearly flagged)
           newEnriched = newRankings.map(r => {
-            const metrics = estimateKeywordMetrics(r.keyword)
+            const metrics = estimateKeywordMetrics(r.keyword, app.platform as 'ios' | 'android' | undefined)
             const keiScore = Math.round(metrics.volume / Math.max(metrics.difficulty, 1))
             return {
               keyword: r.keyword,
@@ -1155,7 +1164,7 @@ Only return the JSON object, no other text.`
         // Build rankings array for score calculation
         const visRankings = visKwList.map(k => {
           const rank = visRankMap.get(k.id) ?? null
-          const metrics = visEstimate(k.text)
+          const metrics = visEstimate(k.text, app.platform as 'ios' | 'android' | undefined)
           return { keyword: k.text, position: rank, volume: metrics.volume, searchVolume: metrics.volume }
         })
 
@@ -1225,14 +1234,27 @@ Only return the JSON object, no other text.`
           {
             surface: visIsAndroid ? 'Play Store Search' : visIsIos ? 'App Store Search' : 'Store Search',
             score: visScore,
-            status: (visScore > 60 ? 'strong' : visScore > 30 ? 'moderate' : 'weak') as 'strong' | 'moderate' | 'weak',
-            recommendation: `${visRankings.filter(r => r.position != null).length} of ${visRankings.length} keywords ranked`,
+            status:
+              (visScore === null
+                ? 'pending'
+                : visScore > 60
+                  ? 'strong'
+                  : visScore > 30
+                    ? 'moderate'
+                    : 'weak') as 'strong' | 'moderate' | 'weak' | 'pending',
+            recommendation:
+              visScore === null
+                ? 'Awaiting first daily rank sweep'
+                : `${visRankings.filter(r => r.position != null).length} of ${visRankings.length} keywords ranked`,
           },
         ]
 
         // 9. AI for recommendations only
         let visRecommendations: Array<{ severity: string; effort: string; text: string; action: string }> = []
-        let visSummary = `Visibility score ${visScore}/100 based on ${visRankings.length} tracked keywords. ${visTop10} in top 10, ${visTop3} in top 3.`
+        let visSummary =
+          visScore === null
+            ? `Awaiting first rank sweep across ${visRankings.length} tracked keywords.`
+            : `Visibility score ${visScore}/100 based on ${visRankings.length} tracked keywords. ${visTop10} in top 10, ${visTop3} in top 3.`
         try {
           const visAiCompletion = await loggedChatCompletion({
             model: 'deepseek-chat',
@@ -1571,7 +1593,7 @@ Only return the JSON object, no other text.`
           }
 
           aiKwRanks = aiKwList.map(k => {
-            const metrics = aiEstimate(k.text)
+            const metrics = aiEstimate(k.text, app.platform as 'ios' | 'android' | undefined)
             return {
               keyword: k.text,
               rank: rankMap.get(k.id) ?? null,
@@ -2026,7 +2048,7 @@ Only return the JSON object, no other text.`
           }
 
           giKeywordVis = giKwList.map(k => {
-            const metrics = giEstimate(k.text)
+            const metrics = giEstimate(k.text, app.platform as 'ios' | 'android' | undefined)
             const rank = latestRankMap.get(k.id) ?? null
             const prevRank = prevRankMap.get(k.id) ?? null
             const weight = rank ? getPositionWeight(rank) : 0
@@ -2189,7 +2211,7 @@ Only return the JSON object, no other text.`
           }
 
           kaEnriched = kaKwList.map(k => {
-            const metrics = kaEstimate(k.text)
+            const metrics = kaEstimate(k.text, app.platform as 'ios' | 'android' | undefined)
             return {
               keyword: k.text,
               rank: rankMap.get(k.id) ?? null,

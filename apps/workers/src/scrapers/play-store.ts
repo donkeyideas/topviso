@@ -21,9 +21,14 @@ export interface PlayStoreAppInfo {
   genreId: string | null
 }
 
-export async function lookupPlayStoreApp(appId: string): Promise<PlayStoreAppInfo | null> {
+export async function lookupPlayStoreApp(
+  appId: string,
+  opts: { country?: string; lang?: string } = {},
+): Promise<PlayStoreAppInfo | null> {
+  const country = (opts.country ?? 'us').toLowerCase()
+  const lang = (opts.lang ?? 'en').toLowerCase()
   try {
-    const result = await gplay.app({ appId, lang: 'en', country: 'us' })
+    const result = await gplay.app({ appId, lang, country })
     return {
       appId,
       title: result.title,
@@ -67,7 +72,12 @@ export async function searchPlayStore(
       developer: r.developer ?? '',
       score: r.score ?? 0,
     }))
-  } catch {
+  } catch (err) {
+    console.error('[play-store] searchPlayStore failed', {
+      query,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return []
   }
 }
@@ -75,12 +85,15 @@ export async function searchPlayStore(
 export async function fetchPlayStoreReviews(
   appId: string,
   count = 100,
+  opts: { country?: string; lang?: string } = {},
 ): Promise<Array<{ id: string; userName: string; text: string; score: number; date: string; version?: string }>> {
+  const country = (opts.country ?? 'us').toLowerCase()
+  const lang = (opts.lang ?? 'en').toLowerCase()
   try {
     const result = await gplay.reviews({
       appId,
-      lang: 'en',
-      country: 'us',
+      lang,
+      country,
       sort: 2 as unknown as typeof gplay.sort, // NEWEST
       num: count,
     })
@@ -112,7 +125,13 @@ export async function checkKeywordRank(
     })
     const index = results.findIndex(r => r.appId === targetAppId)
     return index >= 0 ? index + 1 : null
-  } catch {
+  } catch (err) {
+    console.error('[play-store] checkKeywordRank failed', {
+      keyword,
+      targetAppId,
+      country,
+      error: err instanceof Error ? err.message : String(err),
+    })
     return null
   }
 }

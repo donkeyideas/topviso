@@ -1,6 +1,7 @@
 import { inngest } from '../lib/inngest'
 import { getServiceClient } from '../lib/supabase'
 import { lookupAppById, getAppRankForKeyword } from '../scrapers/app-store'
+import { extractKeywordsField } from '../lib/extract-keywords'
 
 // Runs daily at 6am UTC — scrapes App Store data for all tracked iOS apps
 export const scrapeAppStore = inngest.createFunction(
@@ -24,8 +25,29 @@ export const scrapeAppStore = inngest.createFunction(
     let processed = 0
 
     for (const app of apps) {
+      // Pick the most common country across this app's tracked keywords so
+      // metadata + rank checks happen in the storefront the user actually targets.
+      const primaryCountry = await step.run(`primary-country-${app.id}`, async () => {
+        const { data: kws } = await supabase
+          .from('keywords')
+          .select('country')
+          .eq('app_id', app.id)
+          .eq('is_tracked', true)
+        const counts = new Map<string, number>()
+        for (const k of kws ?? []) {
+          const c = (k.country ?? 'us').toLowerCase()
+          counts.set(c, (counts.get(c) ?? 0) + 1)
+        }
+        let best = 'us'
+        let bestN = 0
+        for (const [c, n] of counts) {
+          if (n > bestN) { best = c; bestN = n }
+        }
+        return best
+      })
+
       await step.run(`scrape-app-${app.id}`, async () => {
-        const info = await lookupAppById(app.store_id)
+        const info = await lookupAppById(app.store_id, primaryCountry)
         if (!info) return
 
         await supabase
@@ -39,11 +61,13 @@ export const scrapeAppStore = inngest.createFunction(
           })
           .eq('id', app.id)
 
+        const derivedKeywords = extractKeywordsField(info.trackName, info.description)
         await supabase.from('app_metadata_snapshots').insert({
           app_id: app.id,
           title: info.trackName,
           description: info.description,
           version: info.version,
+          keywords_field: derivedKeywords,
           metadata: {
             score: info.averageUserRating,
             ratings: info.userRatingCount,
