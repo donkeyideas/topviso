@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Top Viso - Google Play Screenshots (1080x1920)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0e0e0c; font-family: 'Inter Tight', sans-serif; padding: 40px; }
+
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ebe7dc;
+    --paper-3: #e0dbce;
+    --ink: #0e0e0c;
+    --ink-2: #3a3a36;
+    --ink-3: #72716a;
+    --ink-4: #a8a69b;
+    --line: #d8d3c4;
+    --line-soft: #e4e0d3;
+    --accent: #1d3fd9;
+    --accent-2: #0a1f8a;
+    --accent-wash: #e8ecfa;
+    --warn: #c43b1e;
+    --warn-wash: #f7e6df;
+    --ok: #1f6a3a;
+    --ok-wash: #e0efe3;
+    --gold: #b58300;
+    --display: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter Tight', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  .page-title { font-family: var(--display); font-style: italic; font-size: 48px; color: var(--accent); text-align: center; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .page-subtitle { text-align: center; color: rgba(255,255,255,0.4); font-size: 14px; margin-bottom: 12px; letter-spacing: 2px; text-transform: uppercase; font-family: var(--mono); }
+  .page-spec { text-align: center; color: rgba(255,255,255,0.25); font-family: var(--mono); font-size: 13px; margin-bottom: 40px; }
+
+  .instructions { max-width: 900px; margin: 0 auto 40px; background: #1c1c1a; border: 1px solid #333; border-radius: 12px; padding: 24px; color: #ccc; font-size: 14px; line-height: 1.6; }
+  .instructions h2 { color: var(--accent); font-family: var(--mono); font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; text-transform: uppercase; }
+  .instructions strong { color: #fff; }
+  .instructions code { background: #333; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+
+  .slide-label { text-align: center; font-family: var(--mono); font-weight: 500; font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; }
+
+  .screenshot-slide {
+    width: 1080px;
+    height: 1920px;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Phone frame */
+  .phone-frame {
+    width: 340px;
+    height: 735px;
+    background: var(--ink);
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    border: 3px solid #2a2a28;
+    box-shadow: 0 0 0 2px #111, 0 30px 60px rgba(0,0,0,0.6), 0 15px 30px rgba(0,0,0,0.4);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    padding: 8px;
+  }
+  .phone-screen {
+    background: var(--paper);
+    border-radius: 32px;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .phone-dyn-island {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 84px;
+    height: 26px;
+    background: var(--ink);
+    border-radius: 999px;
+    z-index: 10;
+  }
+
+  .status-bar { padding: 14px 20px 6px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--ink); height: 44px; flex-shrink: 0; }
+  .status-bar .right { display: flex; align-items: center; gap: 3px; font-size: 11px; }
+
+  .headline { font-family: var(--display); color: #fff; text-align: center; letter-spacing: -0.02em; line-height: 1.05; }
+  .headline em { font-style: italic; color: var(--accent); }
+  .subheadline { font-family: var(--sans); font-weight: 400; color: rgba(255,255,255,0.55); text-align: center; line-height: 1.5; }
+
+  /* Tab bar */
+  .tab-bar { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(244,241,234,0.92); backdrop-filter: blur(20px); border-top: 1px solid rgba(216,211,196,0.6); display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 0 22px; border-bottom-left-radius: 32px; border-bottom-right-radius: 32px; }
+  .tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: var(--sans); font-size: 9px; color: var(--ink-4); font-weight: 500; padding: 4px 0; }
+  .tab-item.active { color: var(--accent); }
+  .tab-item svg { width: 22px; height: 22px; }
+
+  /* App content styles */
+  .scroll-area { flex: 1; overflow: hidden; padding-bottom: 56px; }
+  .nav-head { padding: 4px 20px 16px; }
+  .nav-title-sm { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 4px; }
+  .nav-title { font-family: var(--display); font-size: 28px; line-height: 1.05; letter-spacing: -0.025em; font-weight: 400; color: var(--ink); margin-bottom: 2px; }
+  .nav-title em { font-style: italic; color: var(--accent); }
+  .nav-sub { font-size: 11px; color: var(--ink-3); }
+
+  .m-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; margin: 0 14px 10px; padding: 12px 14px; }
+  .m-card.highlight { background: var(--accent); color: white; border-color: var(--accent); }
+  .m-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .m-sub { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .m-val { font-family: var(--display); font-size: 28px; line-height: 1; letter-spacing: -0.02em; }
+  .m-val.sm { font-size: 20px; }
+  .m-delta { font-family: var(--mono); font-size: 9px; letter-spacing: 0.06em; font-weight: 500; }
+  .m-delta.up { color: var(--ok); }
+  .m-delta.down { color: var(--warn); }
+  .m-pill { display: inline-flex; align-items: center; font-size: 9px; padding: 2px 6px; font-family: var(--mono); letter-spacing: 0.08em; text-transform: uppercase; border-radius: 3px; font-weight: 600; }
+  .m-pill.ok { background: var(--ok-wash); color: var(--ok); }
+  .m-pill.warn { background: var(--warn-wash); color: var(--warn); }
+  .m-pill.acc { background: var(--accent-wash); color: var(--accent); }
+  .m-pill.dark { background: var(--ink); color: var(--paper); }
+  .m-bar { height: 5px; background: var(--paper-3); border-radius: 3px; overflow: hidden; }
+  .m-bar .f { height: 100%; border-radius: 3px; }
+  .m-section-head { padding: 16px 20px 8px; display: flex; justify-content: space-between; align-items: center; }
+  .m-section-head h2 { font-family: var(--display); font-size: 17px; font-weight: 400; letter-spacing: -0.015em; }
+  .m-section-head h2 em { font-style: italic; }
+  .m-section-head .more { font-family: var(--sans); font-size: 11px; color: var(--accent); font-weight: 500; }
+
+  .kw-row { padding: 10px 14px; display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; border-bottom: 1px solid var(--line-soft); }
+  .kw-row:last-child { border: none; }
+  .kw-name { font-size: 12px; font-weight: 500; }
+  .kw-meta { font-family: var(--mono); font-size: 9px; color: var(--ink-3); margin-top: 2px; letter-spacing: 0.04em; }
+  .kw-rank { font-family: var(--display); font-size: 22px; line-height: 1; letter-spacing: -0.02em; }
+  .kw-delta { font-family: var(--mono); font-size: 9px; letter-spacing: 0.04em; text-align: right; margin-top: 2px; }
+  .kw-delta.up { color: var(--ok); }
+  .kw-delta.down { color: var(--warn); }
+
+  .engine-row { padding: 8px 14px; display: grid; grid-template-columns: 60px 1fr 34px; gap: 8px; align-items: center; font-size: 11px; }
+  .engine-name { font-weight: 600; }
+  .engine-val { text-align: right; font-family: var(--mono); font-weight: 600; font-size: 10px; }
+
+  .review-bubble { background: var(--paper-2); border-radius: 12px; padding: 10px 12px; margin: 0 14px 8px; }
+  .review-bubble .rb-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .review-bubble .stars { color: var(--gold); font-size: 10px; letter-spacing: 1px; }
+  .review-bubble .rb-text { font-family: var(--display); font-style: italic; font-size: 12px; line-height: 1.35; color: var(--ink); margin-bottom: 6px; }
+  .review-bubble .rb-meta { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.04em; }
+
+  .ico { width: 32px; height: 32px; background: var(--accent-wash); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent); font-size: 14px; flex-shrink: 0; }
+  .ico.warn { background: var(--warn-wash); color: var(--warn); }
+  .ico.ok { background: var(--ok-wash); color: var(--ok); }
+  .ico.dark { background: var(--ink); color: var(--paper); }
+
+  .alert-row { padding: 10px 14px; display: flex; gap: 10px; align-items: flex-start; border-bottom: 1px solid var(--line-soft); }
+  .alert-row:last-child { border: none; }
+  .alert-body { flex: 1; min-width: 0; }
+  .alert-title { font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .alert-meta { font-family: var(--mono); font-size: 9px; color: var(--ink-3); letter-spacing: 0.04em; }
+
+  /* Decorative */
+  .deco-circle { position: absolute; border-radius: 50%; border: 2px solid rgba(29,63,217,0.15); }
+  .deco-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: rgba(29,63,217,0.3); }
+  .deco-grid { position: absolute; opacity: 0.06; }
+
+  .zoom-controls { position: fixed; top: 20px; right: 20px; display: flex; gap: 8px; z-index: 100; }
+  .zoom-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 16px; font-family: var(--sans); font-weight: 700; font-size: 14px; cursor: pointer; }
+  .zoom-btn:hover { transform: scale(1.05); }
+  .zoom-btn.active { background: #fff; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="zoom-controls">
+  <button class="zoom-btn" onclick="setZoom(0.5)">50%</button>
+  <button class="zoom-btn active" onclick="setZoom(0.65)">65%</button>
+  <button class="zoom-btn" onclick="setZoom(0.85)">85%</button>
+  <button class="zoom-btn" onclick="setZoom(1)">100%</button>
+</div>
+
+<h1 class="page-title">Top Viso</h1>
+<p class="page-subtitle">Google Play Store Screenshots</p>
+<p class="page-spec">Phone: 1080 x 1920 px -- JPEG/PNG, no alpha -- up to 8 screenshots</p>
+
+<div class="instructions">
+  <h2>Export Instructions</h2>
+  <p>1. Click <strong>100%</strong> zoom above.</p>
+  <p>2. Right-click a slide and select <strong>Inspect</strong>.</p>
+  <p>3. In DevTools, right-click the <code>.screenshot-slide</code> element and select <strong>Capture node screenshot</strong>.</p>
+  <p>4. Repeat for each slide. Upload the PNGs to Google Play Console.</p>
+  <p style="margin-top:8px;">The Feature Graphic (1024x500) is at the bottom of this page.</p>
+</div>
+
+
+<!-- SLIDE 1: HERO -->
+<div class="slide-label">1 / 7 -- HERO</div>
+<div id="slide-1" class="screenshot-slide" style="background: linear-gradient(165deg, #f4f1ea 0%, #e8ecfa 50%, #f4f1ea 100%);">
+  <div class="deco-circle" style="width:400px;height:400px;top:-100px;right:-100px;"></div>
+  <div class="deco-circle" style="width:300px;height:300px;bottom:200px;left:-80px;"></div>
+  <div class="deco-circle" style="width:200px;height:200px;top:40%;left:60%;"></div>
+  <div class="deco-dot" style="top:180px;left:200px;"></div>
+  <div class="deco-dot" style="top:300px;right:180px;"></div>
+  <div class="deco-dot" style="bottom:400px;left:300px;"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div class="headline" style="font-size:68px;color:var(--ink);margin-bottom:20px;">Your ASO<br><em>command center</em></div>
+      <div class="subheadline" style="font-size:22px;color:var(--ink-3);max-width:700px;">Keywords, LLM visibility, reviews, and creative tests.<br>All in your pocket.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">MAY 7, WEDNESDAY</div>
+              <div class="nav-title">Good morning.</div>
+              <div class="nav-sub">Lumen Finance · 4 new alerts</div>
+            </div>
+            <div class="m-card highlight">
+              <div class="m-row">
+                <div>
+                  <div class="m-sub" style="color:rgba(255,255,255,0.7);">VISIBILITY · iOS US</div>
+                  <div class="m-val" style="color:white;">82</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="m-delta up" style="color:#6be08a;">+4 · 30d</div>
+                  <div class="m-sub" style="color:rgba(255,255,255,0.7);margin-top:4px;">TOP 18% OF CAT</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 14px 10px;">
+              <div class="m-card" style="margin:0;padding:10px;">
+                <div class="m-sub">ASO SCORE</div>
+                <div class="m-val sm">78</div>
+                <div class="m-delta up">+2 this wk</div>
+              </div>
+              <div class="m-card" style="margin:0;padding:10px;">
+                <div class="m-sub">LLM SoV</div>
+                <div class="m-val sm">23%</div>
+                <div class="m-delta down">-6pt cat</div>
+              </div>
+            </div>
+            <div class="m-card" style="padding:0;">
+              <div class="alert-row">
+                <div class="ico warn">!</div>
+                <div class="alert-body"><div class="alert-title">Review spike: sync lag cluster</div><div class="alert-meta">REVIEWS+ · 9m</div></div>
+              </div>
+              <div class="alert-row">
+                <div class="ico ok">↑</div>
+                <div class="alert-body"><div class="alert-title">"budget app" → #1 on Claude</div><div class="alert-meta">LLM TRACKER · 2h</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;text-align:center;">
+      <div style="font-family:var(--display);font-style:italic;font-size:32px;color:var(--accent);letter-spacing:-0.02em;">Top Viso</div>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--ink-3);letter-spacing:0.12em;margin-top:8px;text-transform:uppercase;">ASO Intelligence Platform</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 2: KEYWORDS -->
+<div class="slide-label">2 / 7 -- KEYWORD TRACKING</div>
+<div id="slide-2" class="screenshot-slide" style="background: linear-gradient(170deg, #1d3fd9 0%, #2a4de8 50%, #0a1f8a 100%);">
+  <div class="deco-circle" style="width:400px;height:400px;top:-120px;left:-120px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco-circle" style="width:280px;height:280px;bottom:100px;right:-80px;border-color:rgba(255,255,255,0.1);"></div>
+  <div class="deco-dot" style="top:200px;right:200px;background:rgba(255,255,255,0.3);"></div>
+  <div class="deco-dot" style="bottom:350px;left:250px;background:rgba(255,255,255,0.3);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div class="headline" style="font-size:64px;margin-bottom:20px;">Track <em style="color:#fff;">every</em><br>keyword rank</div>
+      <div class="subheadline" style="font-size:20px;color:rgba(255,255,255,0.55);">App Store & Google Play. Real-time movements,<br>volume, and difficulty scoring.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">KEYWORDS · iOS US</div>
+              <div class="nav-title"><em>184</em> tracked</div>
+              <div class="nav-sub">41 in top 3 · 108 in top 10</div>
+            </div>
+            <div style="padding:0 14px 12px;display:flex;gap:6px;">
+              <span class="m-pill dark">ALL 184</span>
+              <span class="m-pill" style="background:var(--paper-2);color:var(--ink-3);">MOVING</span>
+              <span class="m-pill" style="background:var(--paper-2);color:var(--ink-3);">TOP 3</span>
+              <span class="m-pill" style="background:var(--paper-2);color:var(--ink-3);">GAPS</span>
+            </div>
+            <div class="m-card" style="padding:0;">
+              <div class="kw-row"><div><div class="kw-name">aso tool</div><div class="kw-meta">VOL 74 · DIFF 38</div></div><div style="text-align:right;"><div class="kw-rank" style="color:var(--accent);">#2</div><div class="kw-delta up">↑ 3</div></div></div>
+              <div class="kw-row"><div><div class="kw-name">app store optimization</div><div class="kw-meta">VOL 62 · DIFF 52</div></div><div style="text-align:right;"><div class="kw-rank" style="color:var(--accent);">#1</div><div class="kw-delta up">↑ 1</div></div></div>
+              <div class="kw-row"><div><div class="kw-name">keyword tracker app</div><div class="kw-meta">VOL 81 · DIFF 44</div></div><div style="text-align:right;"><div class="kw-rank" style="color:var(--accent);">#1</div><div class="kw-delta" style="color:var(--ink-3);">—</div></div></div>
+              <div class="kw-row"><div><div class="kw-name">app analytics</div><div class="kw-meta">VOL 58 · DIFF 61</div></div><div style="text-align:right;"><div class="kw-rank">#17</div><div class="kw-delta up">↑ 5</div></div></div>
+              <div class="kw-row"><div><div class="kw-name">play store ranking</div><div class="kw-meta">VOL 66 · DIFF 47</div></div><div style="text-align:right;"><div class="kw-rank" style="color:var(--accent);">#3</div><div class="kw-delta" style="color:var(--ink-3);">—</div></div></div>
+              <div class="kw-row"><div><div class="kw-name">mobile growth</div><div class="kw-meta">VOL 71 · RISING</div></div><div style="text-align:right;"><div class="kw-rank">#8</div><div class="kw-delta up">↑ 12</div></div></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;display:flex;gap:50px;">
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:#fff;">5K</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">Keywords</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:#fff;">2</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">Stores</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:#fff;">24/7</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">Tracking</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 3: LLM DISCOVERY -->
+<div class="slide-label">3 / 7 -- LLM DISCOVERY</div>
+<div id="slide-3" class="screenshot-slide" style="background: linear-gradient(160deg, #0e0e0c 0%, #1a1a18 50%, #0e0e0c 100%);">
+  <div class="deco-circle" style="width:500px;height:500px;top:-150px;right:-150px;border-color:rgba(29,63,217,0.2);"></div>
+  <div class="deco-circle" style="width:300px;height:300px;bottom:100px;left:-100px;border-color:rgba(29,63,217,0.15);"></div>
+  <div class="deco-dot" style="top:250px;left:200px;background:rgba(29,63,217,0.4);width:8px;height:8px;"></div>
+  <div class="deco-dot" style="bottom:300px;right:250px;background:rgba(29,63,217,0.4);width:8px;height:8px;"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div style="font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:0.2em;text-transform:uppercase;margin-bottom:16px;">INDUSTRY FIRST</div>
+      <div class="headline" style="font-size:60px;margin-bottom:20px;"><em>LLM</em> discovery<br>tracking</div>
+      <div class="subheadline" style="font-size:20px;">See how ChatGPT, Claude, Gemini, Perplexity<br>and Copilot recommend your app.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">LLM TRACKER <span style="color:var(--accent);margin-left:6px;">◆ NEW</span></div>
+              <div class="nav-title">Share of <em>voice</em></div>
+              <div class="nav-sub">147 prompts · 5 engines · live</div>
+            </div>
+            <div class="m-card" style="text-align:center;padding:18px 14px;">
+              <div class="m-sub">SHARE OF VOICE · 30D</div>
+              <div style="font-family:var(--display);font-size:56px;line-height:1;letter-spacing:-0.03em;margin:4px 0;">23<span style="font-size:24px;color:var(--ink-3);">%</span></div>
+              <div class="m-delta down" style="font-size:10px;">-6pt vs cat avg (29%)</div>
+            </div>
+            <div class="m-section-head"><h2>By <em>engine</em></h2><span class="more">Expand</span></div>
+            <div class="m-card" style="padding:8px 0;">
+              <div class="engine-row"><div class="engine-name">Claude</div><div class="m-bar"><div class="f" style="width:62%;background:var(--accent);"></div></div><div class="engine-val">62%</div></div>
+              <div class="engine-row"><div class="engine-name">Perplex.</div><div class="m-bar"><div class="f" style="width:47%;background:var(--accent);"></div></div><div class="engine-val">47%</div></div>
+              <div class="engine-row"><div class="engine-name">ChatGPT</div><div class="m-bar"><div class="f" style="width:38%;background:var(--ink);"></div></div><div class="engine-val">38%</div></div>
+              <div class="engine-row"><div class="engine-name">Gemini</div><div class="m-bar"><div class="f" style="width:14%;background:var(--warn);"></div></div><div class="engine-val">14%</div></div>
+              <div class="engine-row"><div class="engine-name">Copilot</div><div class="m-bar"><div class="f" style="width:9%;background:var(--warn);"></div></div><div class="engine-val">9%</div></div>
+            </div>
+            <div class="m-section-head"><h2>Winning prompts</h2><span class="more">All 34</span></div>
+            <div class="m-card">
+              <div class="m-row" style="align-items:flex-start;"><div style="flex:1;"><div style="font-family:var(--display);font-style:italic;font-size:13px;line-height:1.3;margin-bottom:4px;">"best aso tool 2026"</div><div class="m-sub">DOMINANT · 81% Claude</div></div><span class="m-pill ok">#1</span></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;display:flex;gap:50px;">
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:var(--accent);">5</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">AI Engines</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:var(--accent);">147</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">Prompts</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:36px;color:var(--accent);">LIVE</div><div style="font-family:var(--sans);font-weight:600;font-size:14px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;">Monitoring</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 4: REVIEWS -->
+<div class="slide-label">4 / 7 -- REVIEW INTELLIGENCE</div>
+<div id="slide-4" class="screenshot-slide" style="background: linear-gradient(165deg, #f4f1ea 0%, #e0efe3 50%, #f4f1ea 100%);">
+  <div class="deco-circle" style="width:350px;height:350px;bottom:-80px;right:-80px;border-color:rgba(31,106,58,0.15);"></div>
+  <div class="deco-circle" style="width:250px;height:250px;top:60px;left:-60px;border-color:rgba(31,106,58,0.15);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div class="headline" style="font-size:64px;color:var(--ink);margin-bottom:20px;">Understand<br>your <em>reviews</em></div>
+      <div class="subheadline" style="font-size:20px;color:var(--ink-3);">AI-powered sentiment analysis. Theme clustering.<br>Spike detection before ratings drop.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">REVIEWS+</div>
+              <div class="nav-title">Today's <em>voices</em></div>
+              <div class="nav-sub">341 new · 82% positive</div>
+            </div>
+            <div class="m-card" style="background:var(--warn-wash);border-color:#e6b9ac;padding:10px 12px;">
+              <div class="m-row"><div class="ico warn" style="background:var(--warn);color:white;">!</div><div style="flex:1;margin-left:10px;"><div style="font-size:12px;font-weight:600;color:var(--warn);line-height:1.3;">Sync lag cluster ↑ 340%</div><div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:2px;">-0.3★ RISK</div></div></div>
+            </div>
+            <div class="m-section-head"><h2>Trending <em>themes</em></h2><span class="more">All</span></div>
+            <div class="m-card" style="padding:10px 12px;">
+              <div class="m-row" style="margin-bottom:8px;"><div style="font-size:12px;font-weight:600;">Sync lag reports</div><span class="m-pill warn">↑ 340%</span></div>
+              <div class="m-bar"><div class="f" style="width:78%;background:var(--warn);"></div></div>
+            </div>
+            <div class="m-card" style="padding:10px 12px;">
+              <div class="m-row" style="margin-bottom:8px;"><div style="font-size:12px;font-weight:600;">New feature requests</div><span class="m-pill ok">↑ 112%</span></div>
+              <div class="m-bar"><div class="f" style="width:62%;background:var(--ok);"></div></div>
+            </div>
+            <div class="m-section-head"><h2>Latest</h2><span class="more">Filter</span></div>
+            <div class="review-bubble">
+              <div class="rb-top"><span class="stars">★★★★★</span><span class="m-pill ok">POSITIVE</span></div>
+              <div class="rb-text">"Finally an ASO tool that tracks LLM citations. Game changer for our growth team."</div>
+              <div class="rb-meta">APP STORE · @sarahm · 2h</div>
+            </div>
+            <div class="review-bubble">
+              <div class="rb-top"><span class="stars">★★★★</span><span class="m-pill acc">FEATURE REQ</span></div>
+              <div class="rb-text">"Love the keyword tracking but would love custom reports for my team."</div>
+              <div class="rb-meta">PLAY STORE · @devjohn · 5h</div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;text-align:center;">
+      <div style="font-family:var(--mono);font-weight:700;font-size:16px;color:var(--ok);letter-spacing:0.12em;text-transform:uppercase;">AI-Powered Sentiment Analysis</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 5: CREATIVE A/B TESTING -->
+<div class="slide-label">5 / 7 -- CREATIVE LAB</div>
+<div id="slide-5" class="screenshot-slide" style="background: linear-gradient(165deg, #f4f1ea 0%, #f7e6df 50%, #f4f1ea 100%);">
+  <div class="deco-circle" style="width:350px;height:350px;top:-80px;left:-80px;border-color:rgba(196,59,30,0.12);"></div>
+  <div class="deco-circle" style="width:250px;height:250px;bottom:150px;right:-60px;border-color:rgba(196,59,30,0.12);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div class="headline" style="font-size:64px;color:var(--ink);margin-bottom:20px;">A/B test your<br><em>creatives</em></div>
+      <div class="subheadline" style="font-size:20px;color:var(--ink-3);">Icons, screenshots, feature graphics.<br>Statistical confidence, not guesswork.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">CREATIVE LAB</div>
+              <div class="nav-title">A/B <em>tests</em></div>
+              <div class="nav-sub">3 active · 2 concluded</div>
+            </div>
+            <div class="m-card">
+              <div class="m-row" style="margin-bottom:8px;">
+                <div><div style="font-size:12px;font-weight:600;">Icon Test: Gradient vs Flat</div><div class="m-sub">RUNNING · 14D · 82K IMPRESSIONS</div></div>
+                <span class="m-pill acc">LIVE</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:var(--paper-2);border-radius:8px;padding:10px;text-align:center;">
+                  <div style="width:40px;height:40px;background:linear-gradient(135deg,var(--accent),#5b7aff);border-radius:10px;margin:0 auto 6px;"></div>
+                  <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ok);">+12.3%</div>
+                  <div style="font-size:9px;color:var(--ink-3);margin-top:2px;">Variant A</div>
+                </div>
+                <div style="background:var(--paper-2);border-radius:8px;padding:10px;text-align:center;">
+                  <div style="width:40px;height:40px;background:var(--accent);border-radius:10px;margin:0 auto 6px;"></div>
+                  <div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ink-3);">baseline</div>
+                  <div style="font-size:9px;color:var(--ink-3);margin-top:2px;">Control</div>
+                </div>
+              </div>
+              <div style="margin-top:8px;"><div class="m-bar"><div class="f" style="width:94%;background:var(--ok);"></div></div><div style="font-family:var(--mono);font-size:9px;color:var(--ok);margin-top:4px;">94% CONFIDENCE</div></div>
+            </div>
+            <div class="m-card">
+              <div class="m-row">
+                <div><div style="font-size:12px;font-weight:600;">Screenshot Set: Feature vs Lifestyle</div><div class="m-sub">CONCLUDED · 98% CONF</div></div>
+                <span class="m-pill ok">WINNER</span>
+              </div>
+            </div>
+            <div class="m-card">
+              <div class="m-row">
+                <div><div style="font-size:12px;font-weight:600;">Title Test: "Track" vs "Monitor"</div><div class="m-sub">RUNNING · 7D · 41K IMPRESSIONS</div></div>
+                <span class="m-pill acc">LIVE</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;text-align:center;">
+      <div style="font-family:var(--mono);font-weight:700;font-size:16px;color:var(--warn);letter-spacing:0.12em;text-transform:uppercase;">Data-Driven Creative Decisions</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 6: COMPETITORS -->
+<div class="slide-label">6 / 7 -- COMPETITORS</div>
+<div id="slide-6" class="screenshot-slide" style="background: linear-gradient(170deg, #1a1a18 0%, #0e0e0c 100%);">
+  <div class="deco-circle" style="width:400px;height:400px;top:-100px;left:-100px;border-color:rgba(181,131,0,0.2);"></div>
+  <div class="deco-circle" style="width:300px;height:300px;bottom:150px;right:-80px;border-color:rgba(181,131,0,0.15);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;height:100%;">
+    <div style="padding-top:100px;text-align:center;flex-shrink:0;">
+      <div class="headline" style="font-size:64px;margin-bottom:20px;">Know your<br><em>competitors</em></div>
+      <div class="subheadline" style="font-size:20px;">Track their rankings, rating changes, and<br>update frequency. Find their gaps.</div>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:30px 0;">
+      <div class="phone-frame" style="transform:scale(1.65);">
+        <div class="phone-screen">
+          <div class="phone-dyn-island"></div>
+          <div class="status-bar"><span>9:41</span><span class="right">||||&nbsp;100%</span></div>
+          <div class="scroll-area">
+            <div class="nav-head">
+              <div class="nav-title-sm">COMPETITORS</div>
+              <div class="nav-title"><em>5</em> monitored</div>
+              <div class="nav-sub">Keyword overlap · Rating delta</div>
+            </div>
+            <div class="m-card">
+              <div class="m-row" style="margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:28px;height:28px;background:var(--paper-2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:var(--ink-3);">AT</div>
+                  <div><div style="font-size:12px;font-weight:600;">AppTweak</div><div class="m-sub">4.6★ · $89/MO</div></div>
+                </div>
+                <div style="text-align:right;"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--warn);">-3</div><div style="font-size:9px;color:var(--ink-3);">KW overlap</div></div>
+              </div>
+              <div class="m-bar"><div class="f" style="width:45%;background:var(--gold);"></div></div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-top:4px;">45% KW OVERLAP</div>
+            </div>
+            <div class="m-card">
+              <div class="m-row">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:28px;height:28px;background:var(--paper-2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:var(--ink-3);">ST</div>
+                  <div><div style="font-size:12px;font-weight:600;">Sensor Tower</div><div class="m-sub">4.3★ · $449/MO</div></div>
+                </div>
+                <div style="text-align:right;"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ok);">+2</div><div style="font-size:9px;color:var(--ink-3);">KW overlap</div></div>
+              </div>
+            </div>
+            <div class="m-card">
+              <div class="m-row">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:28px;height:28px;background:var(--paper-2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:var(--ink-3);">DA</div>
+                  <div><div style="font-size:12px;font-weight:600;">data.ai</div><div class="m-sub">4.1★ · $500+/MO</div></div>
+                </div>
+                <div style="text-align:right;"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ok);">+5</div><div style="font-size:9px;color:var(--ink-3);">KW overlap</div></div>
+              </div>
+            </div>
+            <div class="m-section-head"><h2>Keyword <em>gaps</em></h2><span class="more">12 found</span></div>
+            <div class="m-card" style="padding:10px 12px;">
+              <div class="m-row"><div style="font-size:12px;font-weight:500;">"llm app tracking"</div><span class="m-pill ok">ONLY YOU</span></div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Home</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Keywords</div>
+            <div class="tab-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>Data</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Reviews</div>
+            <div class="tab-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>More</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding-bottom:60px;flex-shrink:0;text-align:center;">
+      <div style="font-family:var(--display);font-style:italic;font-size:24px;color:rgba(255,255,255,0.6);">Beat them at their own game.</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- SLIDE 7: FREE PLAN CTA -->
+<div class="slide-label">7 / 7 -- CTA</div>
+<div id="slide-7" class="screenshot-slide" style="background: linear-gradient(165deg, #f4f1ea 0%, #e8ecfa 40%, #f4f1ea 100%);">
+  <div class="deco-circle" style="width:600px;height:600px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:rgba(29,63,217,0.08);"></div>
+  <div class="deco-circle" style="width:400px;height:400px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:rgba(29,63,217,0.12);"></div>
+  <div class="deco-circle" style="width:200px;height:200px;top:50%;left:50%;transform:translate(-50%,-50%);border-color:rgba(29,63,217,0.18);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;text-align:center;padding:60px;">
+    <div style="font-family:var(--display);font-style:italic;font-size:42px;color:var(--accent);letter-spacing:-0.02em;margin-bottom:40px;">Top Viso</div>
+    <div class="headline" style="font-size:72px;color:var(--ink);margin-bottom:24px;">Start <em>free</em>.<br>Scale when ready.</div>
+    <div class="subheadline" style="font-size:22px;color:var(--ink-3);max-width:700px;margin-bottom:60px;">50 keywords, LLM tracking, review intelligence,<br>and creative testing. No credit card required.</div>
+    <div style="display:flex;gap:40px;margin-bottom:60px;">
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:44px;color:var(--accent);">$0</div><div style="font-family:var(--sans);font-weight:600;font-size:15px;color:var(--ink-3);text-transform:uppercase;letter-spacing:2px;margin-top:4px;">To Start</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:44px;color:var(--ink);">50</div><div style="font-family:var(--sans);font-weight:600;font-size:15px;color:var(--ink-3);text-transform:uppercase;letter-spacing:2px;margin-top:4px;">Keywords</div></div>
+      <div style="text-align:center;"><div style="font-family:var(--mono);font-weight:700;font-size:44px;color:var(--ink);">5</div><div style="font-family:var(--sans);font-weight:600;font-size:15px;color:var(--ink-3);text-transform:uppercase;letter-spacing:2px;margin-top:4px;">AI Engines</div></div>
+    </div>
+    <div style="background:var(--ink);color:var(--paper);padding:20px 60px;border-radius:12px;font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:0.5px;">Download Now</div>
+    <div style="margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--ink-4);letter-spacing:0.1em;">topviso.com</div>
+  </div>
+</div>
+
+
+<!-- FEATURE GRAPHIC (1024x500) -->
+<div class="slide-label" style="margin-top:60px;">FEATURE GRAPHIC -- 1024 x 500</div>
+<div id="feature-graphic" style="width:1024px;height:500px;margin:0 auto 60px;background:linear-gradient(135deg,#0e0e0c 0%,#1a1a18 50%,#0e0e0c 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+  <div class="deco-circle" style="width:400px;height:400px;top:-100px;right:-100px;border-color:rgba(29,63,217,0.2);"></div>
+  <div class="deco-circle" style="width:300px;height:300px;bottom:-80px;left:-80px;border-color:rgba(29,63,217,0.15);"></div>
+  <div style="position:relative;z-index:2;text-align:center;">
+    <div style="font-family:var(--display);font-style:italic;font-size:56px;color:#fff;letter-spacing:-0.02em;margin-bottom:12px;">Top Viso</div>
+    <div style="font-family:var(--sans);font-size:20px;color:rgba(255,255,255,0.6);letter-spacing:0.5px;">ASO Intelligence · Keyword Tracking · LLM Discovery</div>
+    <div style="margin-top:20px;font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:0.15em;text-transform:uppercase;">Free to start · No credit card</div>
+  </div>
+</div>
+
+
+<script>
+function setZoom(level) {
+  document.querySelectorAll('.screenshot-slide, #feature-graphic').forEach(el => {
+    el.style.transform = `scale(${level})`;
+    el.style.transformOrigin = 'top center';
+    el.style.marginBottom = (level < 1) ? `-${(1 - level) * (el.id === 'feature-graphic' ? 500 : 1920)}px` : '60px';
+  });
+  document.querySelectorAll('.zoom-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+}
+setZoom(0.65);
+</script>
+
+</body>
+</html>
