@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { useState, useEffect, useRef } from 'react'
 import { ThemeToggle } from './ThemeToggle'
+import { StoreBadges } from '@/components/marketing/StoreBadges'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface SidebarV2Props {
@@ -268,6 +269,9 @@ export function SidebarV2({
 
       {/* Footer */}
       <div className="sidebar-footer">
+        <div style={{ padding: '10px 22px 14px' }}>
+          <StoreBadges size="compact" align="left" label="Mobile app" />
+        </div>
         <div style={{ display: 'flex', gap: 12, padding: '4px 22px', marginBottom: 4, flexWrap: 'wrap' }}>
           <button onClick={handleSwitchToFullSuite} style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>FULL SUITE &rarr;</button>
         </div>

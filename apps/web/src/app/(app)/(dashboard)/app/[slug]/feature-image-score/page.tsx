@@ -6,6 +6,7 @@ import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
+import { useGenerateContext } from '@/contexts/GenerateContext'
 import type { FeatureImageScoreData, FeatureImageScoreCategory } from '@/lib/analysis-types'
 import { analyzeImage } from '@/lib/image-analysis'
 import { useState, useCallback, useEffect, useRef } from 'react'
@@ -66,6 +67,7 @@ export default function FeatureImageScorePage() {
 
   const { data, setData, refetch } = useAnalysis<FeatureImageScoreData>(slug, 'feature-image-score')
   const { generate, generating } = useGenerate(slug, 'feature-image-score', { onSuccess: refetch })
+  const { startGeneration, endGeneration } = useGenerateContext()
 
   // Store preview — fetch feature graphic URL from live store on load
   const [storeImageUrl, setStoreImageUrl] = useState<string | null>(null)
@@ -116,7 +118,14 @@ export default function FeatureImageScorePage() {
   const handleAnalyze = useCallback(async () => {
     const imgSrc = uploadUrl ?? storeImageUrl ?? data?.featureImageUrl
     if (!imgSrc) {
-      // No image available — just call generate and let server fetch from store
+      if (!isAndroid) {
+        // iOS apps have no feature graphic, so the server has nothing to fetch and
+        // would respond 400. Prompt for an upload instead of firing a doomed request.
+        startGeneration('feature-image-score')
+        endGeneration('iOS apps have no feature graphic. Upload an image to score it.')
+        return
+      }
+      // Android: no local image, let the server pull the feature graphic from Google Play
       generate()
       return
     }
@@ -138,7 +147,7 @@ export default function FeatureImageScorePage() {
     } finally {
       setAnalyzingImage(false)
     }
-  }, [generate, uploadUrl, storeImageUrl, data?.featureImageUrl])
+  }, [generate, uploadUrl, storeImageUrl, data?.featureImageUrl, isAndroid, startGeneration, endGeneration])
 
   const [copiedFindings, setCopiedFindings] = useState(false)
   const [copiedPlaybook, setCopiedPlaybook] = useState(false)

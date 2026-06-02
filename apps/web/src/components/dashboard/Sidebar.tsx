@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { useState, useEffect, useRef } from 'react'
 import { ThemeToggle } from './ThemeToggle'
+import { StoreBadges } from '@/components/marketing/StoreBadges'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 
 interface SidebarProps {
@@ -137,7 +138,8 @@ export function Sidebar({
   ]
 
   const systemNav: NavItem[] = [
-    { label: 'API & Data', href: `${base}/api-data` },
+    // API & Data is a per-app route; only valid when an app is in context
+    ...(effectiveSlug ? [{ label: 'API & Data', href: `${base}/api-data` }] : []),
     { label: 'Pricing', href: '/pricing-page' },
     { label: 'Settings', href: '/settings' },
   ]
@@ -337,15 +339,21 @@ export function Sidebar({
         </div>
       )}
 
-      {/* Navigation groups -- only show per-app tabs if we have an app */}
+      {/* Navigation groups -- per-app tabs build hrefs from `base`, which is empty
+          without an app in context. Rendering them then would emit broken top-level
+          links (e.g. /llm-tracker) that 404 on Next.js Link prefetch, so gate them
+          all behind effectiveSlug. Only System (absolute links) shows app-less. */}
       {effectiveSlug && renderGroup('Core', coreNav)}
-      {renderGroup('Discovery', discoveryNav)}
-      {renderGroup('Conversion', conversionNav)}
-      {renderGroup('Measure', measureNav)}
+      {effectiveSlug && renderGroup('Discovery', discoveryNav)}
+      {effectiveSlug && renderGroup('Conversion', conversionNav)}
+      {effectiveSlug && renderGroup('Measure', measureNav)}
       {renderGroup('System', systemNav)}
 
       {/* Footer */}
       <div className="sidebar-footer">
+        <div style={{ padding: '10px 22px 14px' }}>
+          <StoreBadges size="compact" align="left" label="Mobile app" />
+        </div>
         <div style={{ padding: '4px 22px', marginBottom: 4 }}>
           <button onClick={handleSwitchToFocused} style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--color-accent)', letterSpacing: '0.06em', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>TRY FOCUSED &rarr;</button>
         </div>
