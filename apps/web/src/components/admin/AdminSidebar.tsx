@@ -60,6 +60,7 @@ const navGroups: NavGroup[] = [
     items: [
       { label: 'Financials & P&L', href: '/admin/financials' },
       { label: 'Pricing', href: '/admin/pricing' },
+      { label: 'Promo Codes', href: '/admin/promo-codes', badge: { text: 'NEW', type: 'new' } },
       { label: 'Churn & Retention', href: '/admin/churn-retention', badge: { text: 'HOT', type: 'hot' } },
     ],
   },

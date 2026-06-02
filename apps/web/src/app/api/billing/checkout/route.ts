@@ -12,6 +12,9 @@ export async function POST(request: Request) {
 
   const body = await request.json()
   const plan = body.plan as 'team' | 'enterprise'
+  const promoCode = typeof body.promoCode === 'string'
+    ? body.promoCode.trim().toUpperCase()
+    : ''
 
   if (!plan || !PLANS[plan]?.stripePriceId) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
@@ -56,7 +59,30 @@ export async function POST(request: Request) {
         .eq('id', org.id)
     }
 
-    // Create checkout session
+    // Resolve promo code → Stripe promotion_code ID. If user typed something
+    // invalid, surface a 400 — don't silently drop the discount.
+    let promotionCodeId: string | undefined
+    if (promoCode) {
+      const promo = await stripe.promotionCodes.list({
+        code: promoCode,
+        active: true,
+        limit: 1,
+      })
+      const found = promo.data[0]
+      if (!found) {
+        return NextResponse.json({ error: 'Promo code not found or expired' }, { status: 400 })
+      }
+      if (found.expires_at && found.expires_at * 1000 < Date.now()) {
+        return NextResponse.json({ error: 'Promo code has expired' }, { status: 400 })
+      }
+      if (found.max_redemptions && found.times_redeemed >= found.max_redemptions) {
+        return NextResponse.json({ error: 'Promo code is fully redeemed' }, { status: 400 })
+      }
+      promotionCodeId = found.id
+    }
+
+    // Create checkout session. If no promo code resolved, set
+    // allow_promotion_codes so users can still enter one on Stripe's hosted page.
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
@@ -66,7 +92,11 @@ export async function POST(request: Request) {
       metadata: {
         organization_id: org.id,
         plan,
+        ...(promoCode ? { promo_code: promoCode } : {}),
       },
+      ...(promotionCodeId
+        ? { discounts: [{ promotion_code: promotionCodeId }] }
+        : { allow_promotion_codes: true }),
     })
 
     return NextResponse.json({ url: session.url })

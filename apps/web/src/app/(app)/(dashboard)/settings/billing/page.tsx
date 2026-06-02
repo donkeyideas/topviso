@@ -49,7 +49,22 @@ function BillingContent() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ type: 'downgrade' | 'cancel'; plan?: PlanTier } | null>(null)
-  const [checkout, setCheckout] = useState<{ clientSecret: string; subscriptionId: string; planName: string; price: number } | null>(null)
+  const [checkout, setCheckout] = useState<{
+    clientSecret: string
+    subscriptionId: string
+    planName: string
+    stickerCents: number
+    firstChargeCents: number
+    currency: string
+    discountLabel: string | null
+    appliedCode: string | null
+    setupMode: boolean
+    setupIntentId: string | null
+  } | null>(null)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoApplied, setPromoApplied] = useState<{ code: string; description: string } | null>(null)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [promoValidating, setPromoValidating] = useState(false)
 
   const showSuccess = searchParams.get('success') === 'true'
   const showCancelled = searchParams.get('cancelled') === 'true'
@@ -107,6 +122,40 @@ function BillingContent() {
     load()
   }, [router])
 
+  // ── Validate promo code (preview only — no charge) ──
+  async function handleValidatePromo() {
+    const code = promoInput.trim().toUpperCase()
+    if (!code) return
+    setPromoValidating(true)
+    setPromoError(null)
+    try {
+      const res = await fetch('/api/billing/validate-promo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.valid) {
+        setPromoApplied(null)
+        setPromoError(data.error ?? 'Invalid code')
+        return
+      }
+      setPromoApplied({ code: data.code, description: data.description })
+      setPromoInput(data.code)
+    } catch {
+      setPromoApplied(null)
+      setPromoError('Could not validate code')
+    } finally {
+      setPromoValidating(false)
+    }
+  }
+
+  function handleClearPromo() {
+    setPromoApplied(null)
+    setPromoError(null)
+    setPromoInput('')
+  }
+
   // ── Upgrade → open in-app payment modal ──
   async function handleUpgrade(plan: 'team' | 'enterprise') {
     setActionLoading(plan)
@@ -115,7 +164,10 @@ function BillingContent() {
       const res = await fetch('/api/billing/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({
+          plan,
+          ...(promoApplied ? { promoCode: promoApplied.code } : {}),
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to start checkout')
@@ -124,7 +176,13 @@ function BillingContent() {
         clientSecret: data.clientSecret,
         subscriptionId: data.subscriptionId,
         planName: PLAN_INFO[plan].name,
-        price: PLAN_INFO[plan].price,
+        stickerCents: data.stickerCents ?? PLAN_INFO[plan].price * 100,
+        firstChargeCents: data.firstChargeCents ?? PLAN_INFO[plan].price * 100,
+        currency: data.currency ?? 'usd',
+        discountLabel: data.discountLabel ?? null,
+        appliedCode: data.appliedCode ?? null,
+        setupMode: data.setupMode === true,
+        setupIntentId: data.setupIntentId ?? null,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -133,8 +191,9 @@ function BillingContent() {
   }
 
   // ── After in-modal payment succeeds ──
-  async function handlePaymentSuccess() {
+  async function handlePaymentSuccess(ctx?: { setupIntentId?: string | null }) {
     const subId = checkout?.subscriptionId
+    const setupIntentId = ctx?.setupIntentId ?? checkout?.setupIntentId ?? null
     setCheckout(null)
     setError(null)
 
@@ -143,7 +202,7 @@ function BillingContent() {
         const res = await fetch('/api/billing/activate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ subscriptionId: subId }),
+          body: JSON.stringify({ subscriptionId: subId, setupIntentId }),
         })
         if (!res.ok) {
           const data = await res.json()
@@ -318,6 +377,101 @@ function BillingContent() {
         </div>
       </div>
 
+      {/* ── PROMO CODE ── (only relevant when user can still upgrade) */}
+      {tier !== 'enterprise' && (
+        <div className="rounded-lg p-6 mb-6" style={{ border: '1px solid var(--color-line)', background: 'white' }}>
+          <div
+            className="text-xs font-medium uppercase tracking-widest mb-4"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-ink-3)' }}
+          >
+            Promo code
+          </div>
+
+          {promoApplied ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '12px 16px',
+                background: 'var(--color-ok-soft, #ecfdf5)',
+                border: '1px solid var(--color-ok, #10b981)',
+                borderRadius: 8,
+              }}
+            >
+              <div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14 }}>
+                  {promoApplied.code}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--color-ink-3)', marginTop: 2 }}>
+                  {promoApplied.description} — applied at checkout
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleClearPromo}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  color: 'var(--color-ink-3)',
+                  textDecoration: 'underline',
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text"
+                  value={promoInput}
+                  onChange={(e) => {
+                    setPromoInput(e.target.value)
+                    setPromoError(null)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleValidatePromo()
+                    }
+                  }}
+                  placeholder="PRODUCTHUNT"
+                  disabled={promoValidating}
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    border: `1px solid ${promoError ? 'var(--color-warn, #d97706)' : 'var(--color-line)'}`,
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontFamily: 'var(--font-mono)',
+                    textTransform: 'uppercase',
+                    background: 'white',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleValidatePromo}
+                  disabled={promoValidating || !promoInput.trim()}
+                  className="settings-btn-primary"
+                  style={{ minWidth: 100 }}
+                >
+                  {promoValidating ? 'Checking...' : 'Apply'}
+                </button>
+              </div>
+              {promoError && (
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--color-warn, #d97706)' }}>
+                  {promoError}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── CHANGE PLAN ── */}
       <div className="rounded-lg p-6 mb-6" style={{ border: '1px solid var(--color-line)', background: 'white' }}>
         <div
@@ -469,8 +623,15 @@ function BillingContent() {
       {checkout && (
         <PaymentModal
           clientSecret={checkout.clientSecret}
+          subscriptionId={checkout.subscriptionId}
           planName={checkout.planName}
-          price={checkout.price}
+          stickerCents={checkout.stickerCents}
+          firstChargeCents={checkout.firstChargeCents}
+          currency={checkout.currency}
+          initialDiscountLabel={checkout.discountLabel}
+          initialAppliedCode={checkout.appliedCode}
+          setupMode={checkout.setupMode}
+          setupIntentId={checkout.setupIntentId}
           onSuccess={handlePaymentSuccess}
           onCancel={() => setCheckout(null)}
         />

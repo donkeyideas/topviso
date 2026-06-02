@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json()
-  const { subscriptionId } = body as { subscriptionId: string }
+  const { subscriptionId, setupIntentId } = body as { subscriptionId: string; setupIntentId?: string | null }
 
   if (!subscriptionId) {
     return NextResponse.json({ error: 'Missing subscriptionId' }, { status: 400 })
@@ -37,6 +37,26 @@ export async function POST(request: Request) {
     // Verify this subscription belongs to user's org
     if (subscription.metadata?.organization_id !== profile.default_organization_id) {
       return NextResponse.json({ error: 'Subscription mismatch' }, { status: 403 })
+    }
+
+    // If the upgrade went through a SetupIntent (100%-off first invoice
+    // case), the subscription was created without a default payment method.
+    // Attach the card the customer just saved so future renewal invoices —
+    // when the discount ends — can be charged off-session.
+    if (setupIntentId) {
+      try {
+        const si = await stripe.setupIntents.retrieve(setupIntentId)
+        const pmId = typeof si.payment_method === 'string' ? si.payment_method : si.payment_method?.id
+        if (pmId && si.status === 'succeeded') {
+          await stripe.subscriptions.update(subscriptionId, {
+            default_payment_method: pmId,
+          })
+        }
+      } catch (err) {
+        console.error('[billing/activate] failed to attach SetupIntent PM', err)
+        // Non-fatal: the subscription is still active for now. The user can
+        // re-add a card from the Stripe Customer Portal before renewal.
+      }
     }
 
     // Map price ID to plan tier
