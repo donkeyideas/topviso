@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StoreBadges } from "./StoreBadges";
 
 const productLinks = [
   { label: "LLM Tracker", href: "/product/llm-tracker" },
@@ -64,6 +65,9 @@ export function Footer() {
               The full map of how your app gets found. App Store. Play Store.
               ChatGPT. Claude. Gemini. Perplexity. Copilot.
             </p>
+            <div className="mt-6">
+              <StoreBadges size="compact" align="left" />
+            </div>
           </div>
 
           {/* Product */}

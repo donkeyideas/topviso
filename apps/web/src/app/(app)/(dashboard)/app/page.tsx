@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSupabaseBrowserClient } from '@/lib/supabase/client'
 import { BillingModal } from '@/components/billing/BillingModal'
+import { StoreBadges } from '@/components/marketing/StoreBadges'
 import { useGenerateContext } from '@/contexts/GenerateContext'
 
 interface App {
@@ -194,6 +195,11 @@ export default function AppPickerPage() {
               {syncing ? 'Syncing all...' : 'Sync All Apps'}
             </button>
           </div>
+        </div>
+
+        {/* Mobile app callout */}
+        <div style={{ marginBottom: 24 }}>
+          <StoreBadges size="compact" align="left" label="Get the mobile app" />
         </div>
 
         {/* Filters */}

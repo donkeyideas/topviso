@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
+import { StoreBadges } from '@/components/marketing/StoreBadges'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerateContext } from '@/contexts/GenerateContext'
 import { useTableSort } from '@/hooks/useTableSort'
@@ -470,6 +471,11 @@ export default function OverviewPage() {
             </div>
           )}
         </section>
+
+        {/* Mobile app callout — keep at end so it never blocks first-fold content */}
+        <div style={{ marginTop: 48, paddingTop: 32, borderTop: '1px solid var(--color-line)' }}>
+          <StoreBadges size="compact" align="center" label="Top Viso on mobile" />
+        </div>
 
       </div>
 

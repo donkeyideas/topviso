@@ -1,3 +1,5 @@
+import { StoreBadges } from "./StoreBadges";
+
 export function Hero() {
   return (
     <section className="hero-section">
@@ -20,7 +22,7 @@ export function Hero() {
           </strong>
         </p>
 
-        <div className="mb-10 flex flex-wrap justify-center gap-[14px]">
+        <div className="mb-6 flex flex-wrap justify-center gap-[14px]">
           <a href="/signup" className="btn btn-accent btn-xl">
             Start 14-day free trial →
           </a>
@@ -32,6 +34,10 @@ export function Hero() {
           >
             Book a demo
           </a>
+        </div>
+
+        <div className="mb-10">
+          <StoreBadges label="Or get the mobile app" />
         </div>
       </div>
 
