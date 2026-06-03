@@ -916,11 +916,11 @@ Only return the JSON object, no other text.`,
           ],
           temperature: 0.5,
           max_tokens: 3000,
-        }, { action: 'reviews-analysis' })
+        }, { action: 'reviews-analysis' }).catch(() => null)
 
         let reviewAnalysis: Record<string, unknown> = {}
         try {
-          const raw = reviewCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = reviewCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           reviewAnalysis = JSON.parse(cleaned)
         } catch { /* parse failed */ }
@@ -1081,11 +1081,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.7,
           max_tokens: 3000,
-        }, { action: 'store-intel' })
+        }, { action: 'store-intel' }).catch(() => null)
 
         let aiAnalysis: Record<string, unknown> = {}
         try {
-          const raw = storeIntelCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = storeIntelCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           aiAnalysis = JSON.parse(cleaned)
         } catch { /* AI parse failed, use empty */ }
@@ -1514,22 +1514,27 @@ Return JSON:
 }
 Only return the JSON object, no other text.`
 
-        const clCompletion = await loggedChatCompletion({
-          model: 'deepseek-chat',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 3000,
-        }, { action: 'creative-lab' })
-
+        // AI here is supplementary — the real screenshots/score/competitor data above
+        // is the core value. Don't let a transient DeepSeek error 500 the whole action;
+        // fall back to real-data-only with empty recommendations.
         let clAI: Record<string, unknown> = {}
         try {
+          const clCompletion = await loggedChatCompletion({
+            model: 'deepseek-chat',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: prompt },
+            ],
+            temperature: 0.7,
+            max_tokens: 3000,
+          }, { action: 'creative-lab' })
+
           const raw = clCompletion.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           clAI = JSON.parse(cleaned)
-        } catch { /* empty */ }
+        } catch (e) {
+          console.error('[generate] creative-lab AI step failed, returning real data only:', e)
+        }
 
         const clResult = {
           // REAL DATA
@@ -1691,11 +1696,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.7,
           max_tokens: 3000,
-        }, { action: 'ad-intel' })
+        }, { action: 'ad-intel' }).catch(() => null)
 
         let aiAdAI: Record<string, unknown> = {}
         try {
-          const raw = aiAdCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = aiAdCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           aiAdAI = JSON.parse(cleaned)
         } catch { /* empty */ }
@@ -1829,11 +1834,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.7,
           max_tokens: 3000,
-        }, { action: 'market-intel' })
+        }, { action: 'market-intel' }).catch(() => null)
 
         let miAI: Record<string, unknown> = {}
         try {
-          const raw = miCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = miCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           miAI = JSON.parse(cleaned)
         } catch { /* empty */ }
@@ -2102,11 +2107,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.7,
           max_tokens: 2000,
-        }, { action: 'growth-insights' })
+        }, { action: 'growth-insights' }).catch(() => null)
 
         let giAI: Record<string, unknown> = {}
         try {
-          const raw = giCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = giCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           giAI = JSON.parse(cleaned)
         } catch { /* empty */ }
@@ -2281,11 +2286,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.7,
           max_tokens: 4000,
-        }, { action: 'keyword-audiences' })
+        }, { action: 'keyword-audiences' }).catch(() => null)
 
         let kaAI: Record<string, unknown> = {}
         try {
-          const raw = kaCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = kaCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           kaAI = JSON.parse(cleaned)
         } catch { /* empty */ }
@@ -2501,11 +2506,11 @@ Only return the JSON object, no other text.`,
           ],
           temperature: 0.7,
           max_tokens: 2000,
-        }, { action: 'overview' })
+        }, { action: 'overview' }).catch(() => null)
 
         let aiPriorities: unknown[] = []
         try {
-          const raw = ovrCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = ovrCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           const parsed = JSON.parse(cleaned) as Record<string, unknown>
           if (Array.isArray(parsed.priorities)) aiPriorities = parsed.priorities
@@ -2993,11 +2998,11 @@ Only return the JSON object, no other text.`
           ],
           temperature: 0.5,
           max_tokens: 4000,
-        }, { action: 'feature-image-score' })
+        }, { action: 'feature-image-score' }).catch(() => null)
 
         let fisAI: Record<string, unknown> = {}
         try {
-          const raw = fisCompletion.choices[0]?.message?.content ?? '{}'
+          const raw = fisCompletion?.choices[0]?.message?.content ?? '{}'
           const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
           fisAI = JSON.parse(cleaned)
         } catch {

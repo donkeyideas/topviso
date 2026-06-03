@@ -74,23 +74,30 @@ export default function OverviewPage() {
       }).then(r => { if (!r.ok) throw new Error(`${action} failed`); return r.json().catch(() => null) })
 
     try {
-      // Phase 1 (parallel): core sync + competitors + growth + update-impact
-      await Promise.all([
+      // Phase 1: core sync + competitors + growth + update-impact
+      // Phase 2: analyses that depend on competitors data
+      // Use allSettled so one action's failure doesn't discard the others' results.
+      const phase1 = await Promise.allSettled([
         fire('sync'),
         fire('competitors'),
         fire('growth-insights'),
         fire('update-impact'),
       ])
-      // Phase 2 (parallel): analyses that depend on competitors data
-      await Promise.all([
+      const phase2 = await Promise.allSettled([
         fire('market-intel'),
         fire('creative-lab'),
         fire('conversion'),
       ])
 
-      endGeneration()
+      const failed = [...phase1, ...phase2]
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map(r => (r.reason instanceof Error ? r.reason.message : 'unknown'))
+
+      // Always refetch — whatever synced successfully is still worth showing.
       await new Promise(r => setTimeout(r, 500))
       refetchVis(); refetchKw(); refetchRecs(); refetchOverview(); refetchComp(); refetchLlm(); refetchIntel(); refetchReviews()
+
+      endGeneration(failed.length ? `Some updates failed: ${failed.join(', ')}` : undefined)
     } catch (err) {
       endGeneration(err instanceof Error ? err.message : 'Sync failed')
     } finally {

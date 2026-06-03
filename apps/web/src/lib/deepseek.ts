@@ -8,6 +8,10 @@ export function getDeepSeekClient(): OpenAI {
     client = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY!,
       baseURL: 'https://api.deepseek.com',
+      // Fail a hung call fast enough to stay under the route's maxDuration (300s),
+      // and let the SDK retry transient 429/5xx/network errors rather than 500ing.
+      timeout: 60_000,
+      maxRetries: 2,
     })
   }
   return client

@@ -86,13 +86,17 @@ export default function LLMDiscoveryPage() {
         body: JSON.stringify({ action, appId: slug, ...body }),
       }).then(r => { if (!r.ok) throw new Error(`${action} failed`); return r.json().catch(() => null) })
     try {
-      await Promise.all([
+      // allSettled so one action's failure doesn't discard the other's result.
+      const results = await Promise.allSettled([
         fire('llm-track', prompt ? { userPrompt: prompt } : undefined),
         fire('discovery-map'),
       ])
-      endGeneration()
+      const failed = results
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map(r => (r.reason instanceof Error ? r.reason.message : 'unknown'))
       await new Promise(r => setTimeout(r, 500))
       llmRefetch(); discRefetch()
+      endGeneration(failed.length ? `Some updates failed: ${failed.join(', ')}` : undefined)
     } catch (err) {
       endGeneration(err instanceof Error ? err.message : 'Sync failed')
     } finally {
