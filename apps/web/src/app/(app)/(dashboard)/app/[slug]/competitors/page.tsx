@@ -31,6 +31,7 @@ export default function CompetitorsPage() {
   const top10Keywords = keywords.filter(k => k.rank != null && k.rank <= 10).length
   const compAccessors = useMemo(() => ({
     name: (c: (typeof competitors)[0]) => c.name,
+    developer: (c: (typeof competitors)[0]) => c.developer ?? '',
     overlapCount: (c: (typeof competitors)[0]) => c.overlapCount ?? 0,
     rating: (c: (typeof competitors)[0]) => c.rating ?? 0,
     threatLevel: (c: (typeof competitors)[0]) => c.threatLevel === 'high' ? 3 : c.threatLevel === 'medium' ? 2 : 1,

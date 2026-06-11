@@ -149,8 +149,8 @@ export default function VisibilityPage() {
                 })() : analysis?.surfaces?.length ? analysis.surfaces.map((s, i) => (
                   <div className="row-bar" key={i}>
                     <div className="rb-label">{s.surface}</div>
-                    <div className="bar"><div className={`fill${s.status === 'strong' ? ' accent' : s.status === 'weak' ? ' warn' : ''}`} style={{ width: `${s.score}%` }} /></div>
-                    <div className="rb-val">{s.score}</div>
+                    <div className="bar"><div className={`fill${s.status === 'strong' ? ' accent' : s.status === 'weak' ? ' warn' : ''}`} style={{ width: `${s.score ?? 0}%` }} /></div>
+                    <div className="rb-val">{s.score ?? '—'}</div>
                   </div>
                 )) : (
                   <div className="empty-state" style={{ textAlign: 'center', padding: '2rem 1rem' }}>

@@ -20,6 +20,50 @@ import { GlossaryModal, GlossaryButton } from '@/components/dashboard/GlossaryMo
 import { GLOSSARIES } from '@/lib/glossaries'
 import { useMemo, useState } from 'react'
 
+// Compact "3h ago" / "2d ago" formatter for the Last Checked column. Keeps
+// the cell narrow without losing the "is this fresh?" signal.
+function timeAgo(iso?: string): string {
+  if (!iso) return '—'
+  const t = new Date(iso).getTime()
+  if (!t) return '—'
+  const sec = Math.max(0, Math.floor((Date.now() - t) / 1000))
+  if (sec < 60) return 'just now'
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`
+  const days = Math.floor(sec / 86400)
+  return `${days}d ago`
+}
+
+// Compact "Real" / "Est." badge used on volume + difficulty cells. The
+// Phase 6 ASA path will set confidence='real'; everything else stays 'est'.
+function EstBadge({ confidence }: { confidence?: 'real' | 'modeled' | 'estimated' }) {
+  if (confidence === 'real') {
+    return (
+      <span title="Real data — Apple Search Ads" style={{
+        marginLeft: 4, fontSize: 8, fontWeight: 700, letterSpacing: '0.08em',
+        padding: '1px 4px', borderRadius: 2,
+        background: 'var(--color-ok-wash, #d1fae5)', color: 'var(--color-ok, #047857)',
+      }}>REAL</span>
+    )
+  }
+  if (confidence === 'modeled') {
+    return (
+      <span title="Modeled from auto-complete + Trends + corpus signals" style={{
+        marginLeft: 4, fontSize: 8, fontWeight: 600, letterSpacing: '0.08em',
+        padding: '1px 4px', borderRadius: 2,
+        background: 'var(--color-accent-wash, #e0e7ff)', color: 'var(--color-accent, #3730a3)',
+      }}>MODEL</span>
+    )
+  }
+  return (
+    <span title="Estimated — heuristic, not real volume data" style={{
+      marginLeft: 4, fontSize: 8, fontWeight: 600, letterSpacing: '0.08em',
+      padding: '1px 4px', borderRadius: 2,
+      background: 'var(--color-line, #e5e7eb)', color: 'var(--color-ink-3, #6b7280)',
+    }}>EST</span>
+  )
+}
+
 type Tab = 'rankings' | 'visibility' | 'intent' | 'audiences'
 
 type KwBreakdown = { keyword: string; position: number | null; volume: number; weight: number; contributionPct: number }
@@ -212,22 +256,68 @@ export default function KeywordsV2Page() {
                       <SortHeader label="Top Competitor" sortKey="topCompetitor" activeSortKey={kwSortKey} sortDir={kwSortDir} onSort={kwToggle} style={{ minWidth: 100, maxWidth: 150 }} />
                       <SortHeader label="Rel." sortKey="relevance" activeSortKey={kwSortKey} sortDir={kwSortDir} onSort={kwToggle} className="tn" />
                       <SortHeader label="Intent" sortKey="intent" activeSortKey={kwSortKey} sortDir={kwSortDir} onSort={kwToggle} className="tn" />
+                      <th className="tn" style={{ fontSize: 10, color: 'var(--color-ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'right' }}>Last Checked</th>
                     </tr>
                   </thead>
                   <tbody>
                     {sortedKeywords.length > 0 ? sortedKeywords.map((kw, i) => {
-                      const rankColor = kw.rank == null ? 'var(--color-ink-3)' : kw.rank <= 3 ? 'var(--color-ok)' : kw.rank <= 10 ? 'var(--color-accent)' : kw.rank <= 25 ? '#c9a227' : 'var(--color-ink-3)'
+                      // Phase 1 \u2014 render three distinct rank states. `status`
+                      // is undefined for legacy rows from before the migration;
+                      // treat those as 'ranked'/'not_in_top_250' based on rank.
+                      const status = kw.status ?? (kw.rank != null ? 'ranked' : 'not_in_top_250')
+                      const isErrored = status === 'error'
+                      const isMissing = status === 'not_in_top_250'
+                      const rankColor = isErrored
+                        ? '#d97706'
+                        : isMissing
+                          ? 'var(--color-ink-3)'
+                          : kw.rank! <= 3
+                            ? 'var(--color-ok)'
+                            : kw.rank! <= 10
+                              ? 'var(--color-accent)'
+                              : kw.rank! <= 25
+                                ? '#c9a227'
+                                : 'var(--color-ink-3)'
                       const diffColor = kw.difficulty < 30 ? 'var(--color-ok)' : kw.difficulty < 60 ? '#c9a227' : 'var(--color-warn, #d44)'
                       const fmtVol = (v?: number) => { if (!v) return '\u2014'; if (v >= 1000) return `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}K`; return String(v) }
+                      // Phase 4 \u2014 surface confidence so users know volume/diff are heuristic.
+                      // confidence is the source of truth (set by the sync); isEstimate
+                      // was historically always {volume:true}, so the old `=== false`
+                      // fallback could never reach 'real'. Default to 'estimated' when
+                      // confidence is missing (legacy rows).
+                      const volConf = kw.confidence?.volume ?? 'estimated'
+                      const diffConf = kw.confidence?.difficulty ?? 'estimated'
                       return (
                         <tr key={i}>
                           <td style={{ position: 'sticky', left: 0, background: 'var(--color-bg)', zIndex: 1 }}><strong>{kw.keyword}</strong></td>
-                          <td className="tn num-big"><span style={{ color: rankColor, fontWeight: 700 }}>{kw.rank != null ? `#${kw.rank}` : '\u2014'}</span></td>
-                          <td className="tn num-big">{fmtVol(kw.volume)}</td>
+                          <td className="tn num-big">
+                            {isErrored ? (
+                              kw.rank != null ? (
+                                <span title={`Last check errored (${kw.errorReason ?? 'unknown'}) \u2014 showing last good rank`} style={{ color: rankColor, fontWeight: 700 }}>
+                                  #{kw.rank} <small style={{ fontSize: 9, fontWeight: 500 }}>STALE</small>
+                                </span>
+                              ) : (
+                                <span title={`Check failed (${kw.errorReason ?? 'unknown'}) \u2014 will retry`} style={{ color: '#d97706', fontWeight: 600, fontSize: 11 }}>
+                                  \u26a0 ERROR
+                                </span>
+                              )
+                            ) : isMissing ? (
+                              <span title="Scrape succeeded \u2014 app not in top 250 for this keyword" style={{ color: 'var(--color-ink-3)', fontWeight: 500, fontSize: 11 }}>
+                                NOT IN TOP 250
+                              </span>
+                            ) : (
+                              <span style={{ color: rankColor, fontWeight: 700 }}>#{kw.rank}</span>
+                            )}
+                          </td>
+                          <td className="tn num-big">
+                            <span>{fmtVol(kw.volume)}</span>
+                            {kw.volume != null && <EstBadge confidence={volConf} />}
+                          </td>
                           <td className="tn num-big">
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                               <span style={{ width: 7, height: 7, borderRadius: '50%', background: diffColor, display: 'inline-block' }} />
                               <span>{kw.difficulty}</span>
+                              <EstBadge confidence={diffConf} />
                             </span>
                           </td>
                           <td className="tn num-big" style={{ color: kw.delta7d != null ? (kw.delta7d > 0 ? 'var(--color-ok)' : kw.delta7d < 0 ? 'var(--color-warn, #d44)' : 'var(--color-ink-3)') : 'var(--color-ink-3)' }}>
@@ -237,11 +327,14 @@ export default function KeywordsV2Page() {
                           <td style={{ maxWidth: 150, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: 12 }}>{kw.topCompetitor ?? '\u2014'}</td>
                           <td className="tn num-big">{kw.relevance}</td>
                           <td className="tn"><span className={`pill ${kw.intent === 'transactional' ? 'accent' : kw.intent === 'commercial' ? 'warn' : kw.intent === 'navigational' ? 'ok' : ''}`} style={{ fontSize: 10, textTransform: 'uppercase' }}>{kw.intent}</span></td>
+                          <td className="tn" style={{ fontSize: 11, color: 'var(--color-ink-3)', textAlign: 'right' }}>
+                            {timeAgo(kw.lastCheckedAt)}
+                          </td>
                         </tr>
                       )
                     }) : (
                       <tr>
-                        <td colSpan={9} style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--color-ink-3)' }}>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--color-ink-3)' }}>
                           <p style={{ marginBottom: 12, fontSize: 15 }}>No keyword data yet.</p>
                           <button className="btn accent" onClick={() => genKw()} disabled={genningKw}>{genningKw ? 'Generating\u2026' : 'Generate'}</button>
                         </td>

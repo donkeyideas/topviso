@@ -1,4 +1,5 @@
 import gplay from 'google-play-scraper'
+import { playStoreSearch } from './play-store-scraper'
 
 // --- Types ---
 
@@ -42,11 +43,67 @@ export interface StoreReview {
   replyDate?: string | undefined
 }
 
+// status distinguishes three real states that were previously conflated as
+// `position === null`:
+//   ranked          — scrape succeeded, app is at `position`
+//   not_in_top_250  — scrape succeeded, app is not in the top results
+//   error           — scrape failed (rate limit, network, parser, etc.).
+//                     `position` is null but callers MUST NOT interpret that
+//                     as "not ranking" — the rank is unknown.
+export type RankStatus = 'ranked' | 'not_in_top_250' | 'error'
+export type RankSource = 'gplay' | 'itunes'
+
 export interface KeywordRankResult {
   keyword: string
-  position: number | null // null = not found in top 250
+  position: number | null
   country: string
-  topCompetitor?: string | undefined // #1 app title for this keyword (excluding target app)
+  status: RankStatus
+  source: RankSource
+  errorReason?: string | undefined
+  topCompetitor?: string | undefined
+  topResults?: Array<{ appId: string; title: string; developer?: string; score?: number; installs?: string }> | undefined
+}
+
+// Retry policy for transient scrape failures.
+//
+// In the bulk sync path (~122 keywords) we have a hard 300s Vercel function
+// ceiling, so we can't afford the 1s/3s/7s backoff cascade we had earlier —
+// even partial rate-limit episodes would time the whole sync out. Two
+// attempts with one short retry is enough to absorb single-blip flakes;
+// anything persistent gets a real second chance from the staggered cron
+// at /api/cron/rank-check on its 8-minute cadence.
+const MAX_ATTEMPTS = 2
+const BACKOFF_MS = [1500]
+
+async function withRetry<T>(
+  label: string,
+  fn: (attempt: number) => Promise<T>,
+): Promise<T | { __error: string }> {
+  let lastErr: unknown = null
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fn(attempt)
+    } catch (err) {
+      lastErr = err
+      if (attempt < MAX_ATTEMPTS) {
+        const base = BACKOFF_MS[attempt - 1] ?? 7000
+        const jitter = Math.floor(Math.random() * 400)
+        await new Promise((r) => setTimeout(r, base + jitter))
+      }
+    }
+  }
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr)
+  console.error(`[store-scraper] ${label} failed after ${MAX_ATTEMPTS} attempts:`, msg)
+  return { __error: msg.slice(0, 200) }
+}
+
+export function classifyScrapeError(message: string): string {
+  const m = message.toLowerCase()
+  if (m.includes('429') || m.includes('rate') || m.includes('too many')) return 'rate_limit'
+  if (m.includes('timeout') || m.includes('etimedout')) return 'timeout'
+  if (m.includes('econnreset') || m.includes('socket') || m.includes('network')) return 'network'
+  if (m.includes('json') || m.includes('parse') || m.includes('html')) return 'parse_error'
+  return 'unknown'
 }
 
 export interface SimilarApp {
@@ -131,30 +188,61 @@ export async function checkKeywordRanking(
   targetAppId: string,
   country: string = 'us',
 ): Promise<KeywordRankResult> {
-  try {
-    const results = await gplay.search({
-      term: keyword,
-      num: 250,
-      lang: 'en',
-      country,
-    })
-    const position = results.findIndex((r) => r.appId === targetAppId)
-    // Find the top competitor (first app in results that isn't the target)
-    const topComp = results.find((r) => r.appId !== targetAppId)
+  // We dropped `google-play-scraper` for search because it started returning
+  // empty results (Google changed their HTML shape and the library can't
+  // parse anymore). Our own playStoreSearch hits play.google.com directly,
+  // parses app IDs from the rendered HTML, and matches the live UI exactly.
+  //
+  // Coverage: the server-rendered SERP contains roughly the top 30 results
+  // (Play Store lazy-loads the rest with client JS). For ASO this is the
+  // band that matters — anything beyond #30 isn't getting meaningful organic
+  // traffic. We call the second status 'not_in_top_250' for consistency
+  // with the wire type, but the practical cutoff is ~30.
+  const result = await withRetry(`checkKeywordRanking[${keyword}]`, async () => {
+    return await playStoreSearch(keyword, country)
+  })
+
+  if ('__error' in result) {
     return {
       keyword,
-      position: position >= 0 ? position + 1 : null,
+      position: null,
       country,
-      topCompetitor: topComp?.title ?? undefined,
+      status: 'error',
+      source: 'gplay',
+      errorReason: classifyScrapeError(result.__error),
     }
-  } catch (err) {
-    console.error('[store-scraper] checkKeywordRanking (android) failed', {
+  }
+
+  const results = result
+  const position = results.findIndex((r) => r.appId === targetAppId)
+  const topComp = results.find((r) => r.appId !== targetAppId)
+  const topResults = results.slice(0, 10).map((r) => ({
+    appId: r.appId,
+    title: r.title ?? '',
+    developer: r.developer ?? '',
+    score: r.score ?? 0,
+    installs: r.installs ?? '',
+  }))
+
+  if (position >= 0) {
+    return {
       keyword,
-      targetAppId,
+      position: position + 1,
       country,
-      error: err instanceof Error ? err.message : String(err),
-    })
-    return { keyword, position: null, country }
+      status: 'ranked',
+      source: 'gplay',
+      topCompetitor: topComp?.title ?? undefined,
+      topResults,
+    }
+  }
+  return {
+    keyword,
+    position: null,
+    country,
+    status: 'not_in_top_250',
+    source: 'gplay',
+    topCompetitor: topComp?.title ?? undefined,
+    topResults,
   }
 }
 
@@ -200,18 +288,18 @@ export async function searchApps(
   country: string = 'us',
 ): Promise<SimilarApp[]> {
   try {
-    const results = await gplay.search({
-      term,
-      num: count,
-      lang: 'en',
-      country,
-    })
-    return results.map((r) => ({
+    // Same reason as checkKeywordRanking: gplay.search returns empty for
+    // every query, so we hit Play Store directly and parse app IDs from
+    // the rendered HTML. We don't enrich with title/score here because
+    // the discovery flow only uses appIds to find competitors — those
+    // are then fetched individually via gplay.app() (which still works).
+    const results = await playStoreSearch(term, country)
+    return results.slice(0, count).map((r) => ({
       appId: r.appId,
-      title: r.title,
+      title: r.title ?? r.appId,
       developer: r.developer ?? '',
-      score: r.score,
-      icon: r.icon,
+      score: r.score ?? 0,
+      icon: '',
     }))
   } catch (err) {
     console.error('[store-scraper] searchApps (android) failed', {
@@ -265,23 +353,20 @@ export async function fetchCategoryTopApps(
     console.error('[store-scraper] fetchCategoryTopApps list failed:', err)
   }
 
-  // Attempt 2: fallback to search with genre name
+  // Attempt 2: fallback to search with genre name.
+  // Uses our direct Play Store scraper because gplay.search is broken
+  // (Google's HTML changed; the library returns empty for every query).
   try {
     const genreName = genreId.replace(/_/g, ' ').replace(/AND/g, '&').toLowerCase()
-    const results = await gplay.search({
-      term: genreName,
-      num: count,
-      lang: 'en',
-      country,
-    })
+    const results = await playStoreSearch(genreName, country)
     if (results.length > 0) {
-      return results.map((r, i) => ({
+      return results.slice(0, count).map((r, i) => ({
         rank: i + 1,
         appId: r.appId,
-        name: r.title,
+        name: r.title ?? r.appId,
         developer: r.developer ?? '',
         rating: r.score ?? 0,
-        iconUrl: r.icon ?? '',
+        iconUrl: '',
       }))
     }
   } catch (err) {
@@ -298,33 +383,56 @@ export async function checkKeywordRankingIOS(
   targetAppId: string,
   country: string = 'us',
 ): Promise<KeywordRankResult> {
-  try {
+  const result = await withRetry(`checkKeywordRankingIOS[${keyword}]`, async () => {
     const res = await fetch(
       `https://itunes.apple.com/search?term=${encodeURIComponent(keyword)}&country=${country}&media=software&limit=200`,
     )
-    if (!res.ok) return { keyword, position: null, country }
+    if (!res.ok) throw new Error(`itunes search returned ${res.status}`)
     const data = await res.json()
-    const results = data.results ?? []
-    const position = results.findIndex(
-      (r: Record<string, unknown>) => String(r.trackId) === targetAppId,
-    )
-    const topComp = results.find(
-      (r: Record<string, unknown>) => String(r.trackId) !== targetAppId,
-    )
+    return (data.results ?? []) as Array<Record<string, unknown>>
+  })
+
+  if ('__error' in result) {
     return {
       keyword,
-      position: position >= 0 ? position + 1 : null,
+      position: null,
       country,
-      topCompetitor: topComp ? String(topComp.trackName ?? '') : undefined,
+      status: 'error',
+      source: 'itunes',
+      errorReason: classifyScrapeError(result.__error),
     }
-  } catch (err) {
-    console.error('[store-scraper] checkKeywordRankingIOS failed', {
+  }
+
+  const results = result
+  const position = results.findIndex((r) => String(r.trackId) === targetAppId)
+  const topComp = results.find((r) => String(r.trackId) !== targetAppId)
+  const topResults = results.slice(0, 10).map((r) => ({
+    appId: String(r.trackId ?? ''),
+    title: String(r.trackName ?? ''),
+    developer: String(r.artistName ?? ''),
+    score: Number(r.averageUserRating ?? 0),
+    installs: '',
+  }))
+
+  if (position >= 0) {
+    return {
       keyword,
-      targetAppId,
+      position: position + 1,
       country,
-      error: err instanceof Error ? err.message : String(err),
-    })
-    return { keyword, position: null, country }
+      status: 'ranked',
+      source: 'itunes',
+      topCompetitor: topComp ? String(topComp.trackName ?? '') : undefined,
+      topResults,
+    }
+  }
+  return {
+    keyword,
+    position: null,
+    country,
+    status: 'not_in_top_250',
+    source: 'itunes',
+    topCompetitor: topComp ? String(topComp.trackName ?? '') : undefined,
+    topResults,
   }
 }
 

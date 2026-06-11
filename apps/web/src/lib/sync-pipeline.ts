@@ -3,8 +3,8 @@ import {
   fetchGooglePlayData,
   fetchGooglePlayReviews,
   fetchAppleAppData,
-  batchCheckKeywordRankings,
-  batchCheckKeywordRankingsIOS,
+  checkKeywordRanking,
+  checkKeywordRankingIOS,
   searchApps,
   searchAppsIOS,
   fetchSimilarApps,
@@ -24,6 +24,7 @@ import {
   type ASOScoreResult,
 } from './aso-scoring'
 import { estimateKeywordMetrics } from './keyword-enrichment'
+import { computeDifficultyFromSerp } from './keyword-intelligence'
 import { getPositionWeight } from './aso-scoring'
 import { getDeepSeekClient } from './deepseek'
 
@@ -47,6 +48,7 @@ export interface SyncResult {
     title: string
     score: number
     overlapCount: number
+    sharedKeywords: string[]
   }>
   visibilityScore: number | null
   asoScore: ASOScoreResult | null
@@ -78,11 +80,14 @@ export async function runFullSync(
     await persistReviews(supabase, app.id, reviews)
   }
 
-  // Step 4: Generate + check keywords (platform-aware)
+  // Step 4: Generate + check keywords (platform-aware, with SerpAPI primary on Android)
   const keywordSuggestions = await generateKeywordSuggestions(app, storeData)
-  const rankings = app.platform === 'ios'
-    ? await batchCheckKeywordRankingsIOS(keywordSuggestions, app.store_id, 'us', 400)
-    : await batchCheckKeywordRankings(keywordSuggestions, app.store_id, 'us', 300)
+  const rankings = await batchCheckKeywordRankingsUnified(
+    keywordSuggestions,
+    app.store_id,
+    app.platform,
+    'us',
+  )
   await persistKeywords(supabase, app, rankings)
 
   // Step 5: Discover competitors
@@ -320,13 +325,45 @@ async function generateKeywordSuggestions(
   return dedupeKeywords([...seeds, ...llmKeywords], 25)
 }
 
+// Sequential rank check across all keywords.
+//   Android: google-play-scraper
+//   iOS:     iTunes Search API
+//
+// We use the retry-with-backoff inside each scraper call (store-scraper.ts)
+// as the primary defense against rate limits. If a check still errors after
+// retries, the cron at /api/cron/rank-check is the safety net — it picks
+// up errored rows on its 8-minute cadence and retries them outside the
+// burst window.
+async function batchCheckKeywordRankingsUnified(
+  keywords: string[],
+  targetAppId: string,
+  platform: 'ios' | 'android',
+  country: string = 'us',
+): Promise<KeywordRankResult[]> {
+  const results: KeywordRankResult[] = []
+  // Shorter inter-keyword delay than before because the cron mops up errors
+  // anyway — better to finish in time than to be polite and time out.
+  const delayMs = platform === 'ios' ? 250 : 200
+
+  for (const keyword of keywords) {
+    const r = platform === 'ios'
+      ? await checkKeywordRankingIOS(keyword, targetAppId, country)
+      : await checkKeywordRanking(keyword, targetAppId, country)
+    results.push(r)
+    if (delayMs > 0) await new Promise((res) => setTimeout(res, delayMs))
+  }
+  return results
+}
+
 async function persistKeywords(
   supabase: SupabaseClient,
   app: AppRow,
   rankings: KeywordRankResult[],
 ) {
+  const today = new Date().toISOString().split('T')[0]
+  const now = new Date().toISOString()
+
   for (const r of rankings) {
-    // Upsert keyword
     const { data: kw } = await supabase
       .from('keywords')
       .upsert(
@@ -342,17 +379,44 @@ async function persistKeywords(
       .select('id')
       .single()
 
-    if (kw) {
-      // Insert daily rank
-      await supabase.from('keyword_ranks_daily').upsert(
-        {
-          keyword_id: kw.id,
-          date: new Date().toISOString().split('T')[0],
-          rank: r.position,
-        },
-        { onConflict: 'keyword_id,date' },
-      )
+    if (!kw) continue
+
+    // Phase 1 honesty: if today's row exists with a known-good rank, do NOT
+    // overwrite that rank with an error result — we'd lose real data. Update
+    // metadata (last_checked_at, error_reason) only.
+    if (r.status === 'error') {
+      const { data: existing } = await supabase
+        .from('keyword_ranks_daily')
+        .select('rank, status')
+        .eq('keyword_id', kw.id)
+        .eq('date', today)
+        .maybeSingle()
+
+      if (existing && existing.status === 'ranked') {
+        await supabase
+          .from('keyword_ranks_daily')
+          .update({
+            last_checked_at: now,
+            error_reason: r.errorReason ?? 'unknown',
+          })
+          .eq('keyword_id', kw.id)
+          .eq('date', today)
+        continue
+      }
     }
+
+    await supabase.from('keyword_ranks_daily').upsert(
+      {
+        keyword_id: kw.id,
+        date: today,
+        rank: r.position,
+        status: r.status,
+        last_checked_at: now,
+        error_reason: r.errorReason ?? null,
+        source: r.source,
+      },
+      { onConflict: 'keyword_id,date' },
+    )
   }
 }
 
@@ -365,20 +429,24 @@ async function discoverCompetitors(
     title: string
     score: number
     overlapCount: number
+    sharedKeywords: string[]
   }>
 > {
   const isIOS = app.platform === 'ios'
   const search = isIOS ? searchAppsIOS : searchApps
   const similar = isIOS ? fetchSimilarAppsIOS : fetchSimilarApps
 
-  // Search for the top-ranking keywords, count which apps appear most
+  // Search for the top-ranking keywords, count which apps appear most.
+  // Track the ACTUAL keyword strings each competitor showed up for — this
+  // populates the "N shared kw" line on the overview competitor card. Before
+  // this change we only tracked the count, so the UI fell back to "—".
   const rankedKeywords = rankings
     .filter((r) => r.position !== null && r.position <= 50)
     .slice(0, 5)
 
   const appFrequency = new Map<
     string,
-    { title: string; score: number; count: number }
+    { title: string; score: number; keywords: Set<string> }
   >()
 
   for (const kw of rankedKeywords) {
@@ -387,12 +455,12 @@ async function discoverCompetitors(
       if (result.appId === app.store_id) continue
       const existing = appFrequency.get(result.appId)
       if (existing) {
-        existing.count++
+        existing.keywords.add(kw.keyword)
       } else {
         appFrequency.set(result.appId, {
           title: result.title,
           score: result.score,
-          count: 1,
+          keywords: new Set([kw.keyword]),
         })
       }
     }
@@ -403,7 +471,7 @@ async function discoverCompetitors(
   if (appFrequency.size === 0) {
     const similarApps = await similar(app.store_id)
     for (const s of similarApps.slice(0, 10)) {
-      appFrequency.set(s.appId, { title: s.title, score: s.score, count: 1 })
+      appFrequency.set(s.appId, { title: s.title, score: s.score, keywords: new Set() })
     }
   }
 
@@ -412,7 +480,8 @@ async function discoverCompetitors(
       appId,
       title: data.title,
       score: data.score,
-      overlapCount: data.count,
+      overlapCount: data.keywords.size,
+      sharedKeywords: Array.from(data.keywords),
     }))
     .sort((a, b) => b.overlapCount - a.overlapCount)
     .slice(0, 10)
@@ -430,6 +499,7 @@ async function writeAnalysisResults(
       title: string
       score: number
       overlapCount: number
+      sharedKeywords: string[]
     }>
     visibilityScore: number | null
     asoScore: ASOScoreResult | null
@@ -477,7 +547,17 @@ async function writeAnalysisResults(
     }
   }
 
-  // Build fresh entries from sync rankings
+  // Build fresh entries from sync rankings.
+  //
+  // Phase 6 — INLINE path keeps only the *cheap* enrichment:
+  //   computeDifficultyFromSerp() reads from r.topResults that we ALREADY
+  //   scraped during the rank check. Zero extra HTTP. Real difficulty.
+  //
+  // The expensive Phase 6 calls (Apple Search Ads, Android autocomplete +
+  // Trends blend) are NOT run here — they would multiply the sync time by
+  // 3-5x and blow past Vercel's 300s function ceiling. Those run in the
+  // background cron at /api/cron/keyword-enrichment instead, which can take
+  // its time without blocking the user.
   const syncKeywordsMap = new Map<string, Record<string, unknown>>()
   for (const r of data.rankings) {
     const metrics = estimateKeywordMetrics(r.keyword, app.platform)
@@ -486,36 +566,74 @@ async function writeAnalysisResults(
     const delta7d = (oldRank != null && r.position != null)
       ? oldRank - r.position
       : 0
+
+    const diffComputed = computeDifficultyFromSerp(r.topResults)
+    const difficulty = diffComputed.confidence === 'modeled' ? diffComputed.difficulty : metrics.difficulty
+    const diffConfidence: 'real' | 'modeled' | 'estimated' = diffComputed.confidence
+
     syncKeywordsMap.set(r.keyword.toLowerCase(), {
       keyword: r.keyword,
       intent: metrics.intent,
-      difficulty: metrics.difficulty,
+      difficulty,
       relevance: r.position ? Math.max(10, 100 - r.position) : 30,
       volume: metrics.volume,
       cpc: metrics.cpc,
       rank: r.position,
       country: r.country,
       delta7d,
-      isEstimate: { volume: true, cpc: true, difficulty: true },
+      status: r.status,
+      source: r.source,
+      errorReason: r.errorReason ?? null,
+      lastCheckedAt: now,
+      isEstimate: {
+        volume: true,
+        cpc: true,
+        difficulty: diffConfidence === 'estimated',
+      },
+      confidence: { volume: 'estimated' as const, difficulty: diffConfidence },
     })
   }
 
-  // Merge: update existing keywords with fresh rank data, keep ones not in this sync
+  // Merge: update existing keywords with fresh rank data, keep ones not in this sync.
+  // Phase 1 honesty: if THIS sync errored for a keyword but the prior cached
+  // entry had a real rank, keep the rank but stamp lastCheckedAt + status so
+  // the UI can show "errored — last good rank: #N (3d ago)" instead of "—".
   const mergedMap = new Map<string, Record<string, unknown>>()
   for (const kw of existingKeywords) {
     const key = String(kw.keyword ?? '').toLowerCase()
     if (key) mergedMap.set(key, kw)
   }
   for (const [key, freshKw] of syncKeywordsMap) {
-    mergedMap.set(key, freshKw) // overwrite with fresh data
+    const prior = mergedMap.get(key)
+    if (
+      freshKw.status === 'error' &&
+      prior &&
+      prior.status === 'ranked' &&
+      prior.rank != null
+    ) {
+      mergedMap.set(key, {
+        ...prior,
+        status: 'error',
+        errorReason: freshKw.errorReason,
+        lastCheckedAt: freshKw.lastCheckedAt,
+        // rank stays the old value — that's the honest behavior
+      })
+    } else {
+      mergedMap.set(key, freshKw)
+    }
   }
   const keywordsResult = Array.from(mergedMap.values())
   await upsertAnalysis(supabase, app.id, orgId, 'keywords', keywordsResult)
 
   // competitors → analysis_results (enriched with real store data)
   const competitorsResult = await Promise.all(data.competitors.map(async (c) => {
-    // Fetch real store data for each competitor
-    let compStore: { score?: number | null; installs?: string | null; developer?: string | null; version?: string | null } = {}
+    // Fetch real store data for each competitor.
+    // We use compStore.title as the display name because the new direct
+    // Play Store scraper (playStoreSearch) only returns appIds — no titles —
+    // so `c.title` falls back to the package ID (e.g. "com.dev367.RhetoricGame").
+    // gplay.app() still works for the app-detail endpoint, so we pull the
+    // real name from there. Falls back to c.title only if the fetch failed.
+    let compStore: { title?: string; score?: number | null; installs?: string | null; developer?: string | null; version?: string | null } = {}
     try {
       const fetched = app.platform === 'android'
         ? await fetchGooglePlayData(c.appId)
@@ -524,7 +642,7 @@ async function writeAnalysisResults(
     } catch { /* use basic discovery data */ }
 
     return {
-      name: c.title,
+      name: compStore.title ?? c.title,
       reason: `Appears in ${c.overlapCount} keyword search${c.overlapCount > 1 ? 'es' : ''}`,
       strengths: [`Rating: ${(compStore.score ?? c.score ?? 0).toFixed(1)}`],
       weaknesses: [],
@@ -532,6 +650,7 @@ async function writeAnalysisResults(
         c.overlapCount >= 3 ? 'high' as const : c.overlapCount >= 2 ? 'medium' as const : 'low' as const,
       storeId: c.appId,
       overlapCount: c.overlapCount,
+      sharedKeywords: c.sharedKeywords,
       rating: compStore.score ?? c.score ?? null,
       installs: compStore.installs ?? null,
       developer: compStore.developer ?? null,
@@ -550,34 +669,46 @@ async function writeAnalysisResults(
     competitorsResult,
   )
 
-  // visibility → analysis_results (with ranking distribution + keyword breakdown)
-  const rankedCount = data.rankings.filter((r) => r.position !== null).length
-  const top3Count = data.rankings.filter(
-    (r) => r.position !== null && r.position <= 3,
-  ).length
-  const top10Count = data.rankings.filter(
-    (r) => r.position !== null && r.position <= 10,
-  ).length
-  const top25Count = data.rankings.filter(
-    (r) => r.position !== null && r.position <= 25,
-  ).length
-  const top50Count = data.rankings.filter(
-    (r) => r.position !== null && r.position <= 50,
-  ).length
-  const notRankedCount = data.rankings.filter(
-    (r) => r.position === null,
-  ).length
+  // visibility → analysis_results
+  //
+  // BUG FIX: previously every count + the visibility score were computed from
+  // `data.rankings` (the ~30 keywords from the *current* sync only), while the
+  // keywords table the UI shows is cumulative across all syncs. Result: apps
+  // with 45 top-10 rankings in the table would still show visibility=0 because
+  // the current batch happened to be new long-tail keywords with no ranks yet.
+  //
+  // Fix: pull from `keywordsResult` (the merged cumulative set we just wrote
+  // to analysis_results). The score now reflects the same data the user sees
+  // in the table.
+  const rankedCount = keywordsResult.filter((k) => (k.rank as number | null) != null).length
+  const top3Count = keywordsResult.filter((k) => (k.rank as number | null) != null && (k.rank as number) <= 3).length
+  const top10Count = keywordsResult.filter((k) => (k.rank as number | null) != null && (k.rank as number) <= 10).length
+  const top25Count = keywordsResult.filter((k) => (k.rank as number | null) != null && (k.rank as number) <= 25).length
+  const top50Count = keywordsResult.filter((k) => (k.rank as number | null) != null && (k.rank as number) <= 50).length
+  const notRankedCount = keywordsResult.filter((k) => (k.rank as number | null) == null).length
 
-  // Build per-keyword breakdown with volume-weighted contribution
-  const kwBreakdown = data.rankings.map((r) => {
-    const metrics = estimateKeywordMetrics(r.keyword, app.platform)
-    const weight = r.position ? getPositionWeight(r.position) : 0
+  // Cumulative visibility score — computed from the same set the UI shows.
+  // data.visibilityScore (from runFullSync) only saw the current batch and is
+  // kept on the return value for backwards compat, but the score persisted to
+  // the UI now uses the merged data.
+  const cumulativeVisibilityScore = calculateVisibilityScore(
+    keywordsResult.map((k) => ({
+      position: (k.rank as number | null) ?? null,
+      searchVolume: (k.volume as number | undefined) ?? estimateKeywordMetrics(String(k.keyword ?? ''), app.platform).volume,
+    })),
+  )
+
+  // Per-keyword breakdown from cumulative data (matches the table)
+  const kwBreakdown = keywordsResult.map((k) => {
+    const position = (k.rank as number | null) ?? null
+    const volume = (k.volume as number | undefined) ?? estimateKeywordMetrics(String(k.keyword ?? ''), app.platform).volume
+    const weight = position ? getPositionWeight(position) : 0
     return {
-      keyword: r.keyword,
-      position: r.position,
-      volume: metrics.volume,
+      keyword: String(k.keyword ?? ''),
+      position,
+      volume,
       weight,
-      contribution: weight * metrics.volume,
+      contribution: weight * volume,
     }
   })
   const totalContribution = kwBreakdown.reduce((s, k) => s + k.contribution, 0)
@@ -597,9 +728,10 @@ async function writeAnalysisResults(
   // Compute real visibility trend from historical rank data
   const visTrend = await computeVisibilityTrend(supabase, app.id, 13)
 
-  // Platform scores
+  // Platform scores — use cumulative score so the headline number matches
+  // what's in the keywords table.
   const isAndroid = app.platform === 'android'
-  const platformScore = data.visibilityScore
+  const platformScore = cumulativeVisibilityScore
   const iosScore = !isAndroid ? platformScore : null
   const androidScore = isAndroid ? platformScore : null
 
@@ -630,7 +762,7 @@ async function writeAnalysisResults(
   const shareOfSearch = totalVol > 0 ? `${((capturedVol / totalVol) * 100).toFixed(1)}%` : '0.0%'
 
   const visibilityResult = {
-    overallScore: data.visibilityScore,
+    overallScore: cumulativeVisibilityScore,
     iosScore,
     androidScore,
     categoryRank,
@@ -646,19 +778,19 @@ async function writeAnalysisResults(
     surfaces: [
       {
         surface: isAndroid ? 'Play Store Search' : 'App Store Search',
-        score: data.visibilityScore,
+        score: cumulativeVisibilityScore,
         status:
-          data.visibilityScore === null
+          cumulativeVisibilityScore === null
             ? 'pending'
-            : data.visibilityScore > 60
+            : cumulativeVisibilityScore > 60
               ? 'strong'
-              : data.visibilityScore > 30
+              : cumulativeVisibilityScore > 30
                 ? 'moderate'
                 : 'weak',
         recommendation:
-          data.visibilityScore === null
+          cumulativeVisibilityScore === null
             ? 'Awaiting rank data — first daily sweep pending'
-            : `${rankedCount} of ${data.rankings.length} keywords ranked`,
+            : `${rankedCount} of ${keywordsResult.length} keywords ranked`,
       },
       {
         surface: 'Category Rankings',
@@ -677,9 +809,9 @@ async function writeAnalysisResults(
     },
     keywordBreakdown,
     summary:
-      data.visibilityScore === null
-        ? `Awaiting first rank sweep across ${data.rankings.length} tracked keywords.`
-        : `Visibility score ${data.visibilityScore}/100 based on ${data.rankings.length} tracked keywords. ${top10Count} in top 10, ${top3Count} in top 3.`,
+      cumulativeVisibilityScore === null
+        ? `Awaiting first rank sweep across ${keywordsResult.length} tracked keywords.`
+        : `Visibility score ${cumulativeVisibilityScore}/100 based on ${keywordsResult.length} tracked keywords. ${top10Count} in top 10, ${top3Count} in top 3.`,
     refreshedAt: now,
   }
   await upsertAnalysis(
@@ -745,13 +877,16 @@ async function writeAnalysisResults(
   }
 
   if (top10Count === 0 && rankedCount > 0) {
-    const bestRank = data.rankings
-      .filter((r) => r.position !== null)
-      .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))[0]
+    // Pick best keyword from cumulative data — top10Count was computed from
+    // keywordsResult, so picking from data.rankings (current sync only) would
+    // surface the wrong keyword when historical ranks exist.
+    const bestRank = keywordsResult
+      .filter((k) => (k.rank as number | null) != null)
+      .sort((a, b) => ((a.rank as number | null) ?? 999) - ((b.rank as number | null) ?? 999))[0]
     if (bestRank) {
       autoPriorities.push({
         action: `Push "${bestRank.keyword}" into Top 10`,
-        detail: `Currently #${bestRank.position} — optimize title/description to move up.`,
+        detail: `Currently #${bestRank.rank} — optimize title/description to move up.`,
         surface: 'Play Store',
         module: 'Keywords',
         lift: '+5',
@@ -798,7 +933,8 @@ async function writeAnalysisResults(
   if (notRankedCount > 0) {
     autoPriorities.push({
       action: 'Set Up Keyword Tracking',
-      detail: `${notRankedCount} of ${data.rankings.length} keywords not ranking — establish baseline tracking.`,
+      // notRankedCount is cumulative — denominator must match.
+      detail: `${notRankedCount} of ${keywordsResult.length} keywords not ranking — establish baseline tracking.`,
       surface: 'Play Store',
       module: 'Keywords',
       lift: `+${notRankedCount}`,

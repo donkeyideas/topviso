@@ -48,6 +48,14 @@ export interface KeywordItem {
   topCompetitor?: string
   field?: string
   isEstimate?: { volume?: boolean; cpc?: boolean; difficulty?: boolean }
+  // Phase 1: rank-check honesty
+  status?: 'ranked' | 'not_in_top_250' | 'error'
+  source?: 'gplay' | 'itunes'
+  errorReason?: string | null
+  lastCheckedAt?: string
+  // Phase 6: confidence flag distinguishing real data (e.g. Apple Search Ads)
+  // from modeled/heuristic
+  confidence?: { volume?: 'real' | 'modeled' | 'estimated'; difficulty?: 'real' | 'modeled' | 'estimated' }
 }
 
 // LLM returns a raw array — pages must normalize
