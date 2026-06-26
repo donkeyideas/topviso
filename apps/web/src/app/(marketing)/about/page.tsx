@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "About Top Viso — App Store Optimization for the AI Era",
+  description:
+    "Top Viso is the app store optimization platform built for the AI era — tracking how apps get found across App Store, Play Store, and large language models like ChatGPT and Claude.",
+  alternates: { canonical: "/about" },
+};
+
 const surfaces = [
   { name: "App Store", icon: "A" },
   { name: "Play Store", icon: "P" },

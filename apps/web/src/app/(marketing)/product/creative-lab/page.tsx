@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Creative Lab — A/B Test App Store Screenshots & Icons | Top Viso",
+  description:
+    "Test app store creatives before you ship them. A/B test screenshots, icons, and preview videos to lift App Store and Play Store conversion rates.",
+  alternates: { canonical: "/product/creative-lab" },
+};
+
 const phases = [
   {
     step: "01",

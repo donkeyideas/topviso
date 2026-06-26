@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Careers — Join Top Viso | Build the Future of App Discovery",
+  description:
+    "Join Top Viso and help build the app store optimization platform for the AI era. See open roles and how we work — ship fast, measure everything.",
+  alternates: { canonical: "/careers" },
+};
+
 const values = [
   {
     title: "Ship fast",

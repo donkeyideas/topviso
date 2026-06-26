@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Privacy Policy — Top Viso",
+  description:
+    "How Top Viso collects, uses, and protects your data. Top Viso is the app store optimization platform operated by Donkey Ideas LLC.",
+  alternates: { canonical: "/privacy" },
+};
+
 export default function PrivacyPage() {
   return (
     <>

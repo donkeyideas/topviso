@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Product — App Store Optimization Software | Top Viso",
+  description:
+    "The complete app store optimization toolkit: LLM tracking, keyword research, creative testing, attribution, and review monitoring across App Store, Play Store, and 5 AI engines.",
+  alternates: { canonical: "/product" },
+};
+
 const modules = [
   {
     icon: "✦",
@@ -89,6 +96,28 @@ const modules = [
 export default function ProductPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Top Viso',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            description:
+              'App store optimization software: LLM tracking, keyword research, creative testing, attribution, and review monitoring across the App Store, Play Store, and 5 AI engines.',
+            url: 'https://www.topviso.com/product',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+              description: '14-day free trial — no credit card required.',
+            },
+          }),
+        }}
+      />
+
       <Nav />
 
       {/* Hero */}

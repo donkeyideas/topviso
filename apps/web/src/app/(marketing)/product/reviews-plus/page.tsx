@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Reviews+ — App Store Review Monitoring & Rating Risk | Top Viso",
+  description:
+    "Monitor App Store and Play Store reviews, track sentiment, and predict rating risk before it drops. Get alerted before a bad review wave hits your app.",
+  alternates: { canonical: "/product/reviews-plus" },
+};
+
 const coreFeatures = [
   {
     title: "Predictive rating risk",

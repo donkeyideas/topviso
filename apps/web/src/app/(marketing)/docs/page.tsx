@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Documentation — Top Viso ASO Platform Guides & Help",
+  description:
+    "Documentation for the Top Viso app store optimization platform: getting started, connecting your app, keyword tracking, LLM monitoring, and the API.",
+  alternates: { canonical: "/docs" },
+};
+
 const categories = [
   {
     icon: "G",

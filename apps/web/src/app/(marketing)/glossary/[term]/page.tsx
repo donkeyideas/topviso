@@ -5,6 +5,11 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
+const SITE = 'https://www.topviso.com'
+
+// Refresh known terms hourly; unknown slugs are rendered on demand.
+export const revalidate = 3600
+
 function getSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,37 +17,47 @@ function getSupabase() {
   )
 }
 
-async function getPost(slug: string) {
+async function getTerm(slug: string) {
   const supabase = getSupabase()
   const { data } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
-    .eq('type', 'blog')
+    .eq('type', 'guide')
     .single()
   return data
+}
+
+export async function generateStaticParams() {
+  const supabase = getSupabase()
+  const { data } = await supabase
+    .from('posts')
+    .select('slug')
+    .eq('status', 'published')
+    .eq('type', 'guide')
+
+  return (data ?? []).map((row) => ({ term: row.slug as string }))
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ term: string }>
 }): Promise<Metadata> {
-  const { slug } = await params
-  const post = await getPost(slug)
-  if (!post) return { title: 'Post Not Found' }
+  const { term } = await params
+  const post = await getTerm(term)
+  if (!post) return { title: 'Term Not Found | Top Viso ASO Glossary' }
 
   return {
-    title: `${post.title} | Top Viso Blog`,
+    title: `${post.title} — ASO Glossary | Top Viso`,
     description: post.excerpt ?? undefined,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: `/glossary/${post.slug}` },
     openGraph: {
       title: post.title,
       description: post.excerpt ?? undefined,
       type: 'article',
       publishedTime: post.published_at ?? undefined,
-      images: post.cover_image ? [post.cover_image] : undefined,
     },
   }
 }
@@ -57,35 +72,47 @@ function sanitizeHtml(html: string): string {
     .replace(/javascript\s*:/gi, 'blocked:')
 }
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-export default async function BlogPostPage({
+export default async function GlossaryTermPage({
   params,
 }: {
-  params: Promise<{ slug: string }>
+  params: Promise<{ term: string }>
 }) {
-  const { slug } = await params
-  const post = await getPost(slug)
+  const { term } = await params
+  const post = await getTerm(term)
   if (!post) notFound()
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.title,
-    description: post.excerpt,
-    datePublished: post.published_at,
-    author: post.author_name
-      ? { '@type': 'Person', name: post.author_name }
-      : undefined,
-    image: post.cover_image ?? undefined,
-  }
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'DefinedTerm',
+      name: post.title,
+      description: post.excerpt ?? undefined,
+      url: `${SITE}/glossary/${post.slug}`,
+      inDefinedTermSet: {
+        '@type': 'DefinedTermSet',
+        name: 'Top Viso ASO Glossary',
+        url: `${SITE}/glossary`,
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'ASO Glossary',
+          item: `${SITE}/glossary`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: post.title,
+          item: `${SITE}/glossary/${post.slug}`,
+        },
+      ],
+    },
+  ]
 
   const tags = (post.tags as string[] | null) ?? []
 
@@ -99,11 +126,7 @@ export default async function BlogPostPage({
       />
 
       <article
-        style={{
-          padding: '60px 32px 80px',
-          maxWidth: 760,
-          margin: '0 auto',
-        }}
+        style={{ padding: '60px 32px 80px', maxWidth: 760, margin: '0 auto' }}
       >
         {/* ── Header ── */}
         <header
@@ -124,17 +147,17 @@ export default async function BlogPostPage({
             }}
           >
             <Link
-              href="/blog"
+              href="/glossary"
               style={{
                 color: 'var(--color-accent)',
                 textDecoration: 'underline',
                 textUnderlineOffset: 2,
               }}
             >
-              BLOG
+              ASO GLOSSARY
             </Link>
             {' / '}
-            <span>{post.title.toUpperCase().slice(0, 40)}{'…'}</span>
+            <span>{post.title.toUpperCase()}</span>
           </div>
 
           {/* Tags */}
@@ -183,43 +206,25 @@ export default async function BlogPostPage({
             {post.title}
           </h1>
 
-          {/* Meta */}
-          <div
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 12,
-              color: 'var(--color-ink-3)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            {post.author_name && <span>{post.author_name} · </span>}
-            {formatDate(post.published_at)}
-          </div>
+          {/* Excerpt as lede */}
+          {post.excerpt && (
+            <p
+              style={{
+                fontFamily: 'var(--font-sans)',
+                fontSize: 18,
+                lineHeight: 1.5,
+                color: 'var(--color-ink-2)',
+              }}
+            >
+              {post.excerpt}
+            </p>
+          )}
         </header>
-
-        {/* ── Cover Image ── */}
-        {post.cover_image && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={post.cover_image}
-            alt={post.title}
-            style={{
-              width: '100%',
-              borderRadius: 12,
-              marginBottom: 48,
-              border: '1px solid var(--color-line)',
-            }}
-          />
-        )}
 
         {/* ── Content ── */}
         <div
           className="blog-content"
-          style={{
-            fontSize: 17,
-            lineHeight: 1.8,
-            color: 'var(--color-ink-2)',
-          }}
+          style={{ fontSize: 17, lineHeight: 1.8, color: 'var(--color-ink-2)' }}
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
         />
 
@@ -229,13 +234,10 @@ export default async function BlogPostPage({
             marginTop: 64,
             paddingTop: 24,
             borderTop: '1px solid var(--color-line)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
           }}
         >
           <Link
-            href="/blog"
+            href="/glossary"
             style={{
               fontFamily: 'var(--font-mono)',
               fontSize: 12,
@@ -245,21 +247,8 @@ export default async function BlogPostPage({
               letterSpacing: '0.06em',
             }}
           >
-            ← BACK TO BLOG
+            ← BACK TO GLOSSARY
           </Link>
-          {post.type && (
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 10,
-                letterSpacing: '0.12em',
-                color: 'var(--color-ink-4)',
-                textTransform: 'uppercase',
-              }}
-            >
-              {post.type}
-            </span>
-          )}
         </div>
       </article>
 

@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "LLM Tracker — See How ChatGPT, Claude & Gemini Rank Your App",
+  description:
+    "Track how your app surfaces in ChatGPT, Claude, Gemini, Perplexity, and Copilot. See which prompts mention you, which sources AIs cite, and where you rank across every LLM.",
+  alternates: { canonical: "/product/llm-tracker" },
+};
+
 const engines = [
   { name: "ChatGPT", model: "GPT-4o", color: "#10a37f" },
   { name: "Claude", model: "Opus / Sonnet", color: "#d4a574" },

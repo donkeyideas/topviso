@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Attribution — Mobile Marketing Mix Modeling (MMM) | Top Viso",
+  description:
+    "Bayesian marketing mix modeling built for mobile. Decompose install volume by channel, account for organic lift and seasonality, and measure true incremental impact.",
+  alternates: { canonical: "/product/attribution" },
+};
+
 const pillars = [
   {
     title: "Bayesian MMM",

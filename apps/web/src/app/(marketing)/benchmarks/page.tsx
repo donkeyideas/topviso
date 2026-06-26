@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "ASO Benchmarks — App Store Ranking & Conversion Data | Top Viso",
+  description:
+    "Industry benchmarks for app store optimization: keyword ranking concentration, conversion rates, and category trends across 24 app categories. See how your app compares.",
+  alternates: { canonical: "/benchmarks" },
+};
+
 const benchmarkCategories = [
   {
     label: "KEYWORD RANKINGS",

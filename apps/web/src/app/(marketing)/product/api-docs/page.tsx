@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "API — Top Viso ASO Platform REST API & Webhooks",
+  description:
+    "Build on Top Viso with the REST API and webhooks. Access LLM rankings, keyword data, attribution, and reviews programmatically across all discovery surfaces.",
+  alternates: { canonical: "/product/api-docs" },
+};
+
 const endpointGroups = [
   {
     group: "LLM Tracker",

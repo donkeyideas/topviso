@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Customers — Who Uses Top Viso for ASO | Top Viso",
+  description:
+    "From indie developers to enterprise growth teams, see who uses Top Viso to track app visibility across the App Store, Play Store, and AI assistants.",
+  alternates: { canonical: "/customers" },
+};
+
 const segments = [
   {
     title: "Indie developers",

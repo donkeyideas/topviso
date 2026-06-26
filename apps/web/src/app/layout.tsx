@@ -21,6 +21,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}` }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              {
+                '@context': 'https://schema.org',
+                '@type': 'Organization',
+                name: 'Top Viso',
+                legalName: 'Donkey Ideas LLC',
+                url: 'https://www.topviso.com',
+                logo: 'https://www.topviso.com/apple-icon.png',
+                description:
+                  'The app store optimization platform built for the AI era — tracking how apps get found across the App Store, Play Store, and large language models.',
+              },
+              {
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                name: 'Top Viso',
+                url: 'https://www.topviso.com',
+              },
+            ]),
+          }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

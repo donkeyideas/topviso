@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Press & Brand Assets — Top Viso Media Kit",
+  description:
+    "Top Viso press resources and brand assets: logos, icons, and usage guidelines for media, partners, and customers.",
+  alternates: { canonical: "/press" },
+};
+
 const brandAssets = [
   {
     label: "Primary logo",

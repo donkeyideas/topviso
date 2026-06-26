@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Security — How Top Viso Protects Your Data | SOC 2",
+  description:
+    "Security at Top Viso: SOC 2 Type II compliance, encryption, and data protection practices for the app store optimization platform.",
+  alternates: { canonical: "/security" },
+};
+
 export default function SecurityPage() {
   return (
     <>

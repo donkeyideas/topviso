@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "System Status — Top Viso Platform Uptime",
+  description:
+    "Live status and uptime for Top Viso services: API, web app, LLM Tracker, and background workers.",
+  alternates: { canonical: "/status" },
+};
+
 const systems = [
   { name: "API", description: "REST API and webhook delivery" },
   { name: "Web App", description: "Dashboard, reports, and settings" },

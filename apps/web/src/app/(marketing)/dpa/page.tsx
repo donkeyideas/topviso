@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Data Processing Agreement (DPA) — Top Viso",
+  description:
+    "Top Viso's Data Processing Agreement for GDPR and data protection compliance, operated by Donkey Ideas LLC.",
+  alternates: { canonical: "/dpa" },
+};
+
 export default function DpaPage() {
   return (
     <>

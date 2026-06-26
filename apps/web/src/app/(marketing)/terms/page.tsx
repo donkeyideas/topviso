@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Terms of Service — Top Viso",
+  description:
+    "The terms of service governing use of the Top Viso app store optimization platform, operated by Donkey Ideas LLC.",
+  alternates: { canonical: "/terms" },
+};
+
 export default function TermsPage() {
   return (
     <>

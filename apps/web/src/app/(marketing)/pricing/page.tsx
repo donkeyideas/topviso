@@ -3,6 +3,13 @@ import { Pricing } from "@/components/marketing/Pricing";
 import { Footer } from "@/components/marketing/Footer";
 import { getPlanConfig } from "@/lib/plan-config";
 
+export const metadata = {
+  title: "Pricing — Top Viso ASO Platform | Plans & 14-Day Free Trial",
+  description:
+    "Simple, transparent pricing for the Top Viso app store optimization platform. Start a 14-day free trial — no credit card required. Track App Store, Play Store, and 5 LLMs.",
+  alternates: { canonical: "/pricing" },
+};
+
 const faqs = [
   {
     q: "Is there a free trial?",
@@ -31,6 +38,24 @@ export default async function PricingPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.q,
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: faq.a,
+              },
+            })),
+          }),
+        }}
+      />
+
       <Nav />
       <Pricing plans={plans} />
 

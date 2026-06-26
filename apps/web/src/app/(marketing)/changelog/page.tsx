@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Changelog — Top Viso Product Updates & Releases",
+  description:
+    "Every Top Viso release, feature, and improvement. Follow what's new in the app store optimization platform built for the AI era.",
+  alternates: { canonical: "/changelog" },
+};
+
 const entries = [
   {
     date: "April 21, 2026",

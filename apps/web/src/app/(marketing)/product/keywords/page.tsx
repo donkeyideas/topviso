@@ -1,6 +1,13 @@
 import { Nav } from "@/components/marketing/Nav";
 import { Footer } from "@/components/marketing/Footer";
 
+export const metadata = {
+  title: "Keyword Research — App Store Keyword Tracking & Intent | Top Viso",
+  description:
+    "App store keyword research with semantic intent clustering. Track rankings, discover high-intent keywords, and group terms by what users actually mean.",
+  alternates: { canonical: "/product/keywords" },
+};
+
 const capabilities = [
   {
     title: "Semantic intent clustering",
