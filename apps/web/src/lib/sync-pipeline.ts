@@ -27,6 +27,7 @@ import { estimateKeywordMetrics } from './keyword-enrichment'
 import { computeDifficultyFromSerp } from './keyword-intelligence'
 import { getPositionWeight } from './aso-scoring'
 import { getDeepSeekClient } from './deepseek'
+import { formatProfileForPrompt, type AppProfile } from './website-profile'
 
 interface AppRow {
   id: string
@@ -37,6 +38,7 @@ interface AppRow {
   target_keywords?: string[] | null
   optimization_goal?: string | null
   category?: string | null
+  app_profile?: AppProfile | null
 }
 
 export interface SyncResult {
@@ -271,6 +273,14 @@ async function generateKeywordSuggestions(
     .map((k) => String(k ?? '').trim())
     .filter((k) => k.length > 0)
 
+  // The App Identity profile grounds the LLM expansion in what the app actually
+  // does (features, audience, value prop) — critical for thin/new listings where
+  // the store text alone gives the model almost nothing to work with. Its
+  // value-prop keywords are folded into the final merge (not forced as seeds).
+  const profileKeywords = (app.app_profile?.keywords_seed ?? [])
+    .map((k) => String(k ?? '').trim())
+    .filter((k) => k.length > 0)
+
   // 2. Expand via LLM with a platform-specific system prompt.
   const deepseek = getDeepSeekClient()
   const platformContext = app.platform === 'android'
@@ -289,7 +299,9 @@ async function generateKeywordSuggestions(
     ? `App: ${storeData.title}\nCategory: ${storeData.genre}\nDescription: ${storeData.description.slice(0, 500)}`
     : `App: ${app.name}`
 
-  const userContent = [platformContext, baseContext, goalLine, seedLine]
+  const profileBlock = formatProfileForPrompt(app.app_profile ?? null)
+
+  const userContent = [platformContext, baseContext, profileBlock, goalLine, seedLine]
     .filter(Boolean)
     .join('\n')
 
@@ -321,8 +333,9 @@ async function generateKeywordSuggestions(
     })
   }
 
-  // 3. Merge: seeds first (preserve user intent), then LLM expansion, dedup, cap.
-  return dedupeKeywords([...seeds, ...llmKeywords], 25)
+  // 3. Merge: user seeds first (preserve intent), then LLM expansion grounded in
+  //    the profile, then any profile keywords the LLM didn't surface. Dedup, cap.
+  return dedupeKeywords([...seeds, ...llmKeywords, ...profileKeywords], 25)
 }
 
 // Sequential rank check across all keywords.

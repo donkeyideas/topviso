@@ -323,6 +323,7 @@ export default function AppPickerPage() {
 function AddAppButton({ orgId, onAppAdded, appCount, appLimit, onUpgrade }: { orgId: string | null; onAppAdded: (app: App) => void; appCount: number; appLimit: number; onUpgrade: () => void }) {
   const [showForm, setShowForm] = useState(false)
   const [storeUrl, setStoreUrl] = useState('')
+  const [websiteUrl, setWebsiteUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -333,10 +334,11 @@ function AddAppButton({ orgId, onAppAdded, appCount, appLimit, onUpgrade }: { or
     setLoading(true)
     try {
       const { platform, storeId, appName } = parseStoreUrl(storeUrl)
+      const website = websiteUrl.trim() || null
       const createRes = await fetch('/api/apps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organization_id: orgId, platform, store_id: storeId, name: appName }),
+        body: JSON.stringify({ organization_id: orgId, platform, store_id: storeId, name: appName, website_url: website }),
       })
       if (!createRes.ok) {
         const err = await createRes.json().catch(() => ({ error: 'Failed to create app' }))
@@ -347,7 +349,14 @@ function AddAppButton({ orgId, onAppAdded, appCount, appLimit, onUpgrade }: { or
         .then(res => res.json())
         .then(({ data }) => { if (data) onAppAdded(data as App) })
         .catch(() => onAppAdded(app as App))
+      // Kick off the App Identity crawl in the background (non-blocking, like enrich).
+      // Fire after enrich so the extractor can cross-reference store metadata.
+      if (website) {
+        fetch(`/api/apps/${app.id}/profile`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ website_url: website }) })
+          .catch(() => {})
+      }
       setStoreUrl('')
+      setWebsiteUrl('')
       setShowForm(false)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add app')
@@ -395,11 +404,21 @@ function AddAppButton({ orgId, onAppAdded, appCount, appLimit, onUpgrade }: { or
       <label style={{ display: 'block', marginBottom: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--color-ink-3)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
         App Store or Play Store URL
       </label>
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
         <input
           type="url" value={storeUrl} onChange={(e) => setStoreUrl(e.target.value)} required autoFocus
           style={{ flex: 1, padding: '10px 12px', fontSize: 14, border: '1px solid var(--color-line)', borderRadius: 6, background: 'var(--color-card)', outline: 'none' }}
           placeholder="https://apps.apple.com/app/id123456789"
+        />
+      </div>
+      <label style={{ display: 'block', marginBottom: 6, fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--color-ink-3)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+        Website URL <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-ink-3)', opacity: 0.7 }}>— optional, lets AI learn what your app actually does</span>
+      </label>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          type="url" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)}
+          style={{ flex: 1, padding: '10px 12px', fontSize: 14, border: '1px solid var(--color-line)', borderRadius: 6, background: 'var(--color-card)', outline: 'none' }}
+          placeholder="https://yourapp.com"
         />
         <button type="submit" disabled={loading || !storeUrl.trim()} className="btn accent">{loading ? 'Adding...' : 'Add'}</button>
         <button type="button" onClick={() => { setShowForm(false); setError(null) }} className="btn ghost">Cancel</button>

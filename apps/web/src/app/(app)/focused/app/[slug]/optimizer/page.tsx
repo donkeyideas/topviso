@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
+import { AppIdentityPanel } from '@/components/dashboard/AppIdentityPanel'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import type { OptimizeTitleData, OptimizeSubtitleData, OptimizeDescriptionData, OptimizeKeywordsFieldData, KeywordsData, LlmTrackData, LlmTrackItem, LlmOptimizationTip, CompetitorsData, VisibilityData, ReviewsAnalysisData } from '@/lib/analysis-types'
@@ -101,9 +102,14 @@ export default function OptimizerPage() {
   // Optimization goal — persisted to DB
   const [selectedGoal, setSelectedGoal] = useState('balanced')
   const [targetKeywords, setTargetKeywords] = useState<string[]>([])
+  // Whether an App Identity profile exists — drives the "grounded in your
+  // website" note next to the generate controls.
+  const [hasIdentity, setHasIdentity] = useState(false)
   useEffect(() => {
     if (appData?.optimization_goal) setSelectedGoal(appData.optimization_goal)
     if (appData?.target_keywords) setTargetKeywords(appData.target_keywords)
+    const p = appData?.app_profile
+    if (p && (p.one_liner || (p.core_features?.length ?? 0) > 0)) setHasIdentity(true)
   }, [appData])
 
   const handleGoalChange = useCallback((goal: string) => {
@@ -348,6 +354,15 @@ export default function OptimizerPage() {
       />
 
       <div className="content">
+        {/* App Identity — the first-party context the AI uses to understand the app */}
+        <AppIdentityPanel
+          appId={slug}
+          initialProfile={appData?.app_profile}
+          initialWebsite={appData?.website_url}
+          initialStatus={appData?.profile_status}
+          onSaved={() => setHasIdentity(true)}
+        />
+
         {/* Optimization Goal selector */}
         <section>
           <div style={{ marginBottom: 6 }}>
@@ -442,6 +457,11 @@ export default function OptimizerPage() {
                 <div style={{ fontSize: 13, color: 'var(--color-ink-2)' }}>
                   AI analyzes your keywords, competitors, reviews, and locale data to maximize organic visibility and downloads.
                 </div>
+                {hasIdentity && (
+                  <div style={{ fontSize: 12, color: 'var(--color-good)', marginTop: 6 }}>
+                    ✓ Grounded in your website so the listing reflects what your app actually does.
+                  </div>
+                )}
               </div>
               <button
                 className="btn accent"

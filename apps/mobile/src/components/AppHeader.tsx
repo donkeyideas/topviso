@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, Image } from 'react-native'
-import { Feather } from '@expo/vector-icons'
+import Svg, { Path, Circle, Line } from 'react-native-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTheme } from '../lib/theme'
 import { useAppData } from '../lib/useAppData'
@@ -7,6 +7,32 @@ import { useSync } from '../lib/useSync'
 
 interface AppHeaderProps {
   onMenuPress: () => void
+}
+
+// Dark-mode toggle glyph. Drawn with react-native-svg (already a dependency)
+// so we don't pull in @expo/vector-icons for a single icon.
+function ThemeIcon({ isDark, size, color }: { isDark: boolean; size: number; color: string }) {
+  const stroke = { stroke: color, strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  if (isDark) {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+        <Circle cx={12} cy={12} r={5} {...stroke} />
+        <Line x1={12} y1={1} x2={12} y2={3} {...stroke} />
+        <Line x1={12} y1={21} x2={12} y2={23} {...stroke} />
+        <Line x1={4.22} y1={4.22} x2={5.64} y2={5.64} {...stroke} />
+        <Line x1={18.36} y1={18.36} x2={19.78} y2={19.78} {...stroke} />
+        <Line x1={1} y1={12} x2={3} y2={12} {...stroke} />
+        <Line x1={21} y1={12} x2={23} y2={12} {...stroke} />
+        <Line x1={4.22} y1={19.78} x2={5.64} y2={18.36} {...stroke} />
+        <Line x1={18.36} y1={5.64} x2={19.78} y2={4.22} {...stroke} />
+      </Svg>
+    )
+  }
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" {...stroke} />
+    </Svg>
+  )
 }
 
 export function AppHeader({ onMenuPress }: AppHeaderProps) {
@@ -54,7 +80,7 @@ export function AppHeader({ onMenuPress }: AppHeaderProps) {
           onPress={toggle}
           activeOpacity={0.7}
         >
-          <Feather name={isDark ? 'sun' : 'moon'} size={15} color={colors.ink3} />
+          <ThemeIcon isDark={isDark} size={15} color={colors.ink3} />
         </TouchableOpacity>
       </View>
 

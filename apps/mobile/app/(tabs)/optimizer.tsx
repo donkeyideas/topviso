@@ -34,6 +34,13 @@ export default function OptimizerScreen() {
     setRefreshing(false)
   }, [r1, r2, r3, r4])
 
+  // App Identity status (read-only reflection — connect/manage on web).
+  const websiteDomain = (() => {
+    if (!app?.website_url) return ''
+    try { return new URL(app.website_url).hostname.replace(/^www\./, '') } catch { return app.website_url }
+  })()
+  const grounded = app?.profile_status === 'ready'
+
   const titles = Array.isArray(titleData?.titles) ? titleData.titles as Array<Record<string, unknown>> : []
   const subtitles = Array.isArray(subtitleData?.subtitles) ? subtitleData.subtitles as Array<Record<string, unknown>> : []
   const shortDesc = String(descData?.shortDescription ?? '')
@@ -52,6 +59,26 @@ export default function OptimizerScreen() {
         AI-crafted <Text style={[styles.accent, { color: colors.accent }]}>metadata</Text>.
       </Text>
       <Text style={[styles.pageSub, { color: colors.ink3 }]}>Optimized titles, subtitles, and descriptions.</Text>
+
+      {/* App Identity — read-only reflection. When a website is connected on web,
+          generation is grounded in what the app actually does. */}
+      {app && (
+        <View style={[styles.identityRow, { backgroundColor: colors.paper2, borderColor: colors.lineSoft }]}>
+          {grounded ? (
+            <Text style={[styles.identityText, { color: colors.accent }]}>
+              ✓ Grounded in your website{websiteDomain ? ` — ${websiteDomain}` : ''}
+            </Text>
+          ) : app.website_url ? (
+            <Text style={[styles.identityText, { color: colors.ink3 }]}>
+              Website connected ({websiteDomain}) — syncing on the web dashboard.
+            </Text>
+          ) : (
+            <Text style={[styles.identityText, { color: colors.ink3 }]}>
+              Connect your website on the web dashboard so the AI grounds these results in what your app really does.
+            </Text>
+          )}
+        </View>
+      )}
 
       {/* Active optimization goal + target keywords (read-only on mobile — edit on web) */}
       {app?.optimization_goal && (
@@ -179,6 +206,8 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: 7, paddingVertical: 3, borderWidth: 1, borderRadius: 3 },
   chipText: { fontSize: 10, fontFamily: 'InterTight_400Regular' },
   kwField: { fontSize: 12, fontFamily: 'InterTight_400Regular', padding: 10, borderRadius: 6, lineHeight: 18 },
+  identityRow: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12 },
+  identityText: { fontSize: 12, fontFamily: 'InterTight_400Regular', lineHeight: 17 },
   goalCard: { borderWidth: 1, borderRadius: 6, padding: 12, marginBottom: 16 },
   goalRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 4 },
   goalLabel: { fontSize: 10, fontFamily: 'InterTight_500Medium', letterSpacing: 1.2, minWidth: 60, paddingTop: 2 },

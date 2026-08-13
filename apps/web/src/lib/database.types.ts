@@ -249,6 +249,10 @@ export interface Database {
           is_active: boolean
           optimization_goal: string
           target_keywords: string[]
+          website_url: string | null
+          app_profile: Record<string, unknown> | null
+          profile_status: string
+          profile_updated_at: string | null
           created_at: string
           updated_at: string
         }
@@ -266,6 +270,10 @@ export interface Database {
           is_active?: boolean
           optimization_goal?: string
           target_keywords?: string[]
+          website_url?: string | null
+          app_profile?: Record<string, unknown> | null
+          profile_status?: string
+          profile_updated_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -278,6 +286,10 @@ export interface Database {
           is_active?: boolean
           optimization_goal?: string
           target_keywords?: string[]
+          website_url?: string | null
+          app_profile?: Record<string, unknown> | null
+          profile_status?: string
+          profile_updated_at?: string | null
           updated_at?: string
         }
         Relationships: []

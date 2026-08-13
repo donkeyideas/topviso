@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import type { AppProfile } from '@/lib/website-profile'
 
 interface AppData {
   id: string
@@ -15,6 +16,9 @@ interface AppData {
   is_active: boolean
   optimization_goal: string
   target_keywords?: string[]
+  website_url?: string | null
+  app_profile?: AppProfile | null
+  profile_status?: 'none' | 'pending' | 'ready' | 'failed'
 }
 
 export function useApp(appId: string | null) {

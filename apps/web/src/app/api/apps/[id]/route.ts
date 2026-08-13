@@ -48,6 +48,7 @@ export async function PATCH(
     current_version?: string | null
     optimization_goal?: string
     target_keywords?: string[]
+    website_url?: string | null
   } = {}
 
   if ('name' in body) updates.name = body.name
@@ -56,6 +57,19 @@ export async function PATCH(
   if ('category' in body) updates.category = body.category
   if ('current_version' in body) updates.current_version = body.current_version
   if ('optimization_goal' in body) updates.optimization_goal = body.optimization_goal
+  if ('website_url' in body) {
+    const raw = body.website_url
+    if (raw === null || raw === '') {
+      updates.website_url = null
+    } else if (typeof raw === 'string') {
+      try {
+        const u = new URL(raw.trim())
+        if (u.protocol === 'https:' || u.protocol === 'http:') updates.website_url = u.toString()
+      } catch {
+        return NextResponse.json({ error: 'Invalid website URL' }, { status: 400 })
+      }
+    }
+  }
   if ('target_keywords' in body && Array.isArray(body.target_keywords)) {
     updates.target_keywords = body.target_keywords
       .map((k: unknown) => String(k ?? '').trim())

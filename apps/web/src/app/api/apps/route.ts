@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   const supabase = getSupabaseAdmin()
 
   const body = await request.json()
-  const { organization_id, platform, store_id, name } = body
+  const { organization_id, platform, store_id, name, website_url } = body
 
   if (!organization_id || !platform || !store_id || !name) {
     return NextResponse.json(
@@ -46,6 +46,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid platform' }, { status: 400 })
   }
 
+  // Optional first-party website — only accept a well-formed http(s) URL.
+  let websiteUrl: string | null = null
+  if (typeof website_url === 'string' && website_url.trim()) {
+    try {
+      const u = new URL(website_url.trim())
+      if (u.protocol === 'https:' || u.protocol === 'http:') websiteUrl = u.toString()
+    } catch {
+      // ignore a malformed URL rather than blocking app creation
+    }
+  }
+
   const limitCheck = await checkAppLimit(organization_id)
   if (!limitCheck.allowed) {
     return NextResponse.json(
@@ -56,7 +67,7 @@ export async function POST(request: Request) {
 
   const { data: app, error } = await supabase
     .from('apps')
-    .insert({ organization_id, platform, store_id, name })
+    .insert({ organization_id, platform, store_id, name, website_url: websiteUrl })
     .select()
     .single()
 

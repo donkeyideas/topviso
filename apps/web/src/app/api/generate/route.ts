@@ -3,6 +3,7 @@ import { getDeepSeekClient, loggedChatCompletion } from '@/lib/deepseek'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { checkKeywordLimit } from '@/lib/plan-limits'
+import { formatProfileForPrompt, type AppProfile } from '@/lib/website-profile'
 
 // Sync can take a while (keyword ranking checks are sequential with delays)
 export const maxDuration = 300
@@ -3365,6 +3366,12 @@ async function buildAppContext(
 
   if (app.category) lines.push(`Category: ${app.category}`)
   if (app.developer) lines.push(`Developer: ${app.developer}`)
+
+  // App Identity profile — first-party source of truth about what the app IS.
+  // Anchored high so the model treats it as ground truth over the store copy it
+  // is being asked to rewrite (which would otherwise be its only description).
+  const profileBlock = formatProfileForPrompt(app.app_profile as AppProfile | null)
+  if (profileBlock) lines.push(`\n${profileBlock}`)
 
   if (snapshot) {
     if (snapshot.title) lines.push(`Current Title: ${snapshot.title}`)

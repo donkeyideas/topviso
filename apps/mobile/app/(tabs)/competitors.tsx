@@ -85,7 +85,7 @@ export default function CompetitorsScreen() {
                       <Text style={[styles.compDev, { color: colors.accent }]}>Your app</Text>
                     </View>
                   </View>
-                  <Text style={[styles.tdNum, { color: colors.ink, width: 50 }]}>{Number(data?.yourRating ?? app?.rating ?? 0) > 0 ? Number(data?.yourRating ?? app?.rating ?? 0).toFixed(1) : '--'}</Text>
+                  <Text style={[styles.tdNum, { color: colors.ink, width: 50 }]}>{Number(data?.yourRating ?? 0) > 0 ? Number(data?.yourRating ?? 0).toFixed(1) : '--'}</Text>
                   <Text style={[styles.tdNum, { color: colors.ink, width: 42 }]}>--</Text>
                   <View style={{ width: 50, alignItems: 'flex-end' }}><Pill text="YOU" variant="accent" /></View>
                 </View>

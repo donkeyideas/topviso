@@ -10,6 +10,10 @@ export interface AppData {
   icon_url: string | null
   optimization_goal?: string
   target_keywords?: string[]
+  // App Identity — the website is connected + analyzed on the web dashboard;
+  // mobile only reads these to reflect whether generation is grounded.
+  website_url?: string | null
+  profile_status?: 'none' | 'pending' | 'ready' | 'failed'
 }
 
 interface AppDataContextType {
@@ -44,7 +48,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       // Get ALL apps in org
       const { data: orgApps } = await supabase
         .from('apps')
-        .select('id, name, platform, store_id, icon_url, optimization_goal, target_keywords')
+        .select('id, name, platform, store_id, icon_url, optimization_goal, target_keywords, website_url, profile_status')
         .eq('organization_id', profile.default_organization_id)
         .order('created_at', { ascending: true })
 

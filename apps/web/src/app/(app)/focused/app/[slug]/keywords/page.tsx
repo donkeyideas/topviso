@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useApp } from '@/hooks/useApp'
 import { TopStrip } from '@/components/dashboard/TopStrip'
 import { PageHero } from '@/components/dashboard/PageHero'
+import { AppIdentityPanel } from '@/components/dashboard/AppIdentityPanel'
 import { useAnalysis } from '@/hooks/useAnalysis'
 import { useGenerate } from '@/hooks/useGenerate'
 import type {
@@ -229,6 +230,14 @@ export default function KeywordsV2Page() {
       </div>
 
       <div className="content">
+        {/* App Identity — grounds keyword generation in what the app actually does */}
+        <AppIdentityPanel
+          appId={slug}
+          initialProfile={appData?.app_profile}
+          initialWebsite={appData?.website_url}
+          initialStatus={appData?.profile_status}
+        />
+
         {/* ═══ RANKINGS TAB ═══ */}
         {activeTab === 'rankings' && (
           <>
