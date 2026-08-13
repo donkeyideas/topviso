@@ -302,7 +302,7 @@ export default function AppPickerPage() {
               Remove <em style={{ color: 'var(--color-warn)' }}>{removeTarget.name}</em>?
             </h3>
             <p style={{ fontSize: 14, color: 'var(--color-ink-2)', lineHeight: 1.5, marginBottom: 24 }}>
-              This will permanently delete the app and all its analysis data. This action cannot be undone.
+              This removes <em>{removeTarget.name}</em> from your dashboard and frees a slot. Its keywords, rankings, and analysis are preserved — re-add the app anytime to restore everything.
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
               <button onClick={() => setRemoveTarget(null)} className="btn ghost">Cancel</button>

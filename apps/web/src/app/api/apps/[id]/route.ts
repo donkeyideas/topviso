@@ -96,6 +96,12 @@ export async function PATCH(
 }
 
 // DELETE /api/apps/:id
+// Soft-delete: flip is_active off instead of hard-deleting the row. A hard
+// delete cascades (ON DELETE CASCADE) and destroys all keywords, rank history,
+// and analysis for the app — unrecoverable if the app is later re-added. Soft
+// delete hides the app (GET filters is_active=true) and frees the plan slot
+// (checkAppLimit counts only active rows) while preserving all history, so a
+// re-add of the same store app reactivates it with its data intact.
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -109,7 +115,7 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('apps')
-    .delete()
+    .update({ is_active: false })
     .eq('id', id)
 
   if (error) {

@@ -57,6 +57,48 @@ export async function POST(request: Request) {
     }
   }
 
+  // Reactivate/dedupe: if this org already has a row for this store app (active
+  // OR soft-deleted), reuse it instead of inserting a duplicate. This restores a
+  // soft-deleted app WITH its keyword/rank history rather than starting fresh,
+  // and prevents duplicate rows for the same store listing.
+  const { data: existingRows } = await supabase
+    .from('apps')
+    .select('*')
+    .eq('organization_id', organization_id)
+    .eq('platform', platform)
+    .eq('store_id', store_id)
+    .order('created_at', { ascending: false })
+
+  const existingApp = existingRows?.find((r) => r.is_active) ?? existingRows?.[0]
+  if (existingApp) {
+    // Already tracked and active → return it (idempotent), refresh website if given.
+    if (existingApp.is_active) {
+      const { data: updated } = await supabase
+        .from('apps')
+        .update({ name, ...(websiteUrl ? { website_url: websiteUrl } : {}) })
+        .eq('id', existingApp.id)
+        .select()
+        .single()
+      return NextResponse.json({ data: updated ?? existingApp, existed: true }, { status: 200 })
+    }
+    // Soft-deleted → reactivating counts against the plan limit.
+    const limitCheck = await checkAppLimit(organization_id)
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: limitCheck.message, code: 'LIMIT_EXCEEDED', current: limitCheck.current, limit: limitCheck.limit },
+        { status: 403 }
+      )
+    }
+    const { data: reactivated, error: reErr } = await supabase
+      .from('apps')
+      .update({ is_active: true, name, ...(websiteUrl ? { website_url: websiteUrl } : {}) })
+      .eq('id', existingApp.id)
+      .select()
+      .single()
+    if (reErr) return NextResponse.json({ error: reErr.message }, { status: 500 })
+    return NextResponse.json({ data: reactivated, reactivated: true }, { status: 200 })
+  }
+
   const limitCheck = await checkAppLimit(organization_id)
   if (!limitCheck.allowed) {
     return NextResponse.json(
