@@ -345,16 +345,24 @@ function AddAppButton({ orgId, onAppAdded, appCount, appLimit, onUpgrade }: { or
         throw new Error(err.error || 'Failed to create app')
       }
       const { data: app } = await createRes.json()
-      fetch(`/api/apps/${app.id}/enrich`, { method: 'POST' })
-        .then(res => res.json())
-        .then(({ data }) => { if (data) onAppAdded(data as App) })
-        .catch(() => onAppAdded(app as App))
-      // Kick off the App Identity crawl in the background (non-blocking, like enrich).
-      // Fire after enrich so the extractor can cross-reference store metadata.
-      if (website) {
-        fetch(`/api/apps/${app.id}/profile`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ website_url: website }) })
-          .catch(() => {})
-      }
+      // Background onboarding pipeline so a new app is useful immediately with
+      // zero extra clicks: enrich store metadata → build the website profile (if
+      // a URL was given) → auto-generate a wide, rank-checked keyword table.
+      // Sequenced so keyword generation is grounded in the profile when present.
+      void (async () => {
+        try {
+          const enrichRes = await fetch(`/api/apps/${app.id}/enrich`, { method: 'POST' })
+          const enriched = await enrichRes.json().catch(() => null)
+          onAppAdded((enriched?.data ?? app) as App)
+        } catch { onAppAdded(app as App) }
+        if (website) {
+          try {
+            await fetch(`/api/apps/${app.id}/profile`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ website_url: website }) })
+          } catch { /* profile is best-effort */ }
+        }
+        // Wide-net keyword generation (exhaustive AI + store autocomplete).
+        fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'keywords', appId: app.id }) }).catch(() => {})
+      })()
       setStoreUrl('')
       setWebsiteUrl('')
       setShowForm(false)

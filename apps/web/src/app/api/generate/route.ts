@@ -4,6 +4,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { checkKeywordLimit } from '@/lib/plan-limits'
 import { formatProfileForPrompt, type AppProfile } from '@/lib/website-profile'
+import { discoverKeywords, type DiscoverApp } from '@/lib/keyword-discovery'
 
 // Sync can take a while (keyword ranking checks are sequential with delays)
 export const maxDuration = 300
@@ -220,43 +221,28 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         const existingKeywords = Array.isArray(existingKwAnalysis?.result) ? existingKwAnalysis.result : []
-        const existingSet = new Set(existingKeywords.map((k: Record<string, unknown>) => String(k.keyword ?? '').toLowerCase()))
+        // 2-3. Wide-net candidate discovery: exhaustive AI + real store
+        // autocomplete (iOS/Android), deduped vs what's already tracked and
+        // capped by the plan's remaining allowance and a per-run rank-check
+        // budget that fits the function's 300s ceiling. This is what makes a
+        // freshly-added app show a broad, ranked table instead of a trickle.
+        const kwLimit = await checkKeywordLimit(app.organization_id as string)
+        const allowedNew = Math.max(0, kwLimit.limit - kwLimit.current)
+        const RANK_CHECK_BATCH = 60
+        const existingTexts = (existingKeywords as Array<Record<string, unknown>>).map((k) => String(k.keyword ?? ''))
+        const newKeywords = allowedNew > 0
+          ? await discoverKeywords(app as unknown as DiscoverApp, null, existingTexts, Math.min(allowedNew, RANK_CHECK_BATCH))
+          : []
 
-        // 2. Ask AI for keyword TEXT suggestions only (not metrics)
-        const kwCompletion = await loggedChatCompletion({
-          model: 'deepseek-chat',
-          messages: [
-            {
-              role: 'system',
-              content: 'You are an ASO keyword expert. Return ONLY a JSON array of 20 keyword strings (1-3 words each) that users would search to find this app. No explanations, no objects — just an array of strings.',
-            },
-            { role: 'user', content: appContext },
-          ],
-          temperature: 0.7,
-          max_tokens: 500,
-        }, { action: 'keywords' })
-
-        let aiSuggestions: string[] = []
-        try {
-          const rawKw = kwCompletion.choices[0]?.message?.content ?? '[]'
-          const cleanedKw = rawKw.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()
-          aiSuggestions = JSON.parse(cleanedKw) as string[]
-        } catch { /* use empty */ }
-
-        // 3. Filter to only NEW keywords not already tracked
-        const newKeywords = aiSuggestions.filter(kw => !existingSet.has(kw.toLowerCase()))
-
-        // 4. Run REAL rank checks on new keywords via store search API
+        // 4. Run REAL rank checks on the discovered keywords via store search API
         let newEnriched: Array<Record<string, unknown>> = []
         if (newKeywords.length > 0) {
           const newRankings = app.platform === 'ios'
-            ? await batchCheckKeywordRankingsIOS(newKeywords.slice(0, 15), app.store_id as string, 'us', 400)
-            : await batchCheckKeywordRankings(newKeywords.slice(0, 15), app.store_id as string, 'us', 300)
+            ? await batchCheckKeywordRankingsIOS(newKeywords, app.store_id as string, 'us', 350)
+            : await batchCheckKeywordRankings(newKeywords, app.store_id as string, 'us', 250)
 
-          // Enforce keyword limit: only persist up to the remaining allowance
-          const kwLimit = await checkKeywordLimit(app.organization_id as string)
-          const allowedNew = Math.max(0, kwLimit.limit - kwLimit.current)
-          const cappedRankings = newRankings.slice(0, allowedNew)
+          // Already capped to the plan allowance; persist all checked keywords.
+          const cappedRankings = newRankings
 
           // Persist new keywords to the keywords table + keyword_ranks_daily
           for (const r of cappedRankings) {

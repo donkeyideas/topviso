@@ -100,8 +100,12 @@ export default function OnboardingPage() {
       const { data: app } = await res.json()
       const newAppId = app.id
 
-      // Fetch store metadata (icon, real name, category) in background
-      fetch(`/api/apps/${newAppId}/enrich`, { method: 'POST' }).catch(() => {})
+      // Background: enrich store metadata, then auto-generate a wide, rank-checked
+      // keyword table so the app is useful the moment onboarding finishes.
+      void (async () => {
+        try { await fetch(`/api/apps/${newAppId}/enrich`, { method: 'POST' }) } catch { /* best-effort */ }
+        fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'keywords', appId: newAppId }) }).catch(() => {})
+      })()
 
       setAppId(newAppId)
       setStep('mode')
