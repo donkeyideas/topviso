@@ -338,33 +338,38 @@ async function generateKeywordSuggestions(
   return dedupeKeywords([...seeds, ...llmKeywords, ...profileKeywords], 25)
 }
 
-// Sequential rank check across all keywords.
+// Concurrency-limited rank check across all keywords.
 //   Android: google-play-scraper
 //   iOS:     iTunes Search API
 //
-// We use the retry-with-backoff inside each scraper call (store-scraper.ts)
-// as the primary defense against rate limits. If a check still errors after
-// retries, the cron at /api/cron/rank-check is the safety net — it picks
-// up errored rows on its 8-minute cadence and retries them outside the
-// burst window.
+// Previously this ran strictly one-at-a-time with inter-keyword delays, which
+// made a full sync's rank pass scale linearly with keyword count and risk the
+// function time ceiling. We now run a bounded number of checks in parallel
+// (CONCURRENCY) so the pass finishes in a few waves. The retry-with-backoff
+// inside each scraper call (store-scraper.ts) is the primary defense against
+// rate limits; if a check still errors after retries, the cron at
+// /api/cron/rank-check is the safety net — it picks up errored rows on its
+// 8-minute cadence and retries them outside the burst window.
 async function batchCheckKeywordRankingsUnified(
   keywords: string[],
   targetAppId: string,
   platform: 'ios' | 'android',
   country: string = 'us',
 ): Promise<KeywordRankResult[]> {
-  const results: KeywordRankResult[] = []
-  // Shorter inter-keyword delay than before because the cron mops up errors
-  // anyway — better to finish in time than to be polite and time out.
-  const delayMs = platform === 'ios' ? 250 : 200
+  const CONCURRENCY = 6
+  const check = platform === 'ios' ? checkKeywordRankingIOS : checkKeywordRanking
 
-  for (const keyword of keywords) {
-    const r = platform === 'ios'
-      ? await checkKeywordRankingIOS(keyword, targetAppId, country)
-      : await checkKeywordRanking(keyword, targetAppId, country)
-    results.push(r)
-    if (delayMs > 0) await new Promise((res) => setTimeout(res, delayMs))
+  const results: KeywordRankResult[] = new Array(keywords.length)
+  let cursor = 0
+  const worker = async () => {
+    while (cursor < keywords.length) {
+      const idx = cursor++
+      results[idx] = await check(keywords[idx]!, targetAppId, country)
+    }
   }
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, keywords.length) }, worker),
+  )
   return results
 }
 

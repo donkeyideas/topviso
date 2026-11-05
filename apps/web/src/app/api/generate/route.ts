@@ -53,6 +53,28 @@ interface GenerateRequest {
   imageUrl?: string
 }
 
+// Run an async mapper over items with a fixed concurrency ceiling. Used for
+// rank checks so a full batch finishes in a few waves instead of one-at-a-time
+// (critical to stay well under the serverless function ceiling).
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length)
+  let cursor = 0
+  const worker = async () => {
+    while (cursor < items.length) {
+      const idx = cursor++
+      results[idx] = await fn(items[idx]!, idx)
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(1, concurrency), items.length) }, worker),
+  )
+  return results
+}
+
 export async function POST(req: NextRequest) {
   const serverClient = await getSupabaseServerClient()
   const { data: { user } } = await serverClient.auth.getUser()
@@ -208,9 +230,22 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case 'keywords': {
-        // Real data pipeline: AI suggests keyword TEXT only, then we check real ranks
-        const { batchCheckKeywordRankings, batchCheckKeywordRankingsIOS } = await import('@/lib/store-scraper')
+        // Real data pipeline: AI suggests keyword TEXT only, then we check real ranks.
+        //
+        // This runs as a single serverless request against the function's time
+        // ceiling (300s). Every step below is bounded so it finishes with wide
+        // margin:
+        //   - new-keyword discovery is capped (RANK_CHECK_BATCH)
+        //   - rank checks run with bounded CONCURRENCY, not one-at-a-time
+        //   - DB writes are bulk upserts, not one await per row
+        //   - there is NO per-existing-keyword network backfill. That loop ran
+        //     a store request for every tracked keyword (236+ here), sequential
+        //     and with retries, and was the primary cause of the 504s. The
+        //     /api/cron/rank-check job refreshes ranks + competitors for the
+        //     existing set in the background instead.
+        const { checkKeywordRanking, checkKeywordRankingIOS } = await import('@/lib/store-scraper')
         const { estimateKeywordMetrics } = await import('@/lib/keyword-enrichment')
+        const today = new Date().toISOString().split('T')[0]
 
         // 1. Fetch existing real keyword data (don't overwrite it)
         const { data: existingKwAnalysis } = await supabaseAdmin
@@ -221,100 +256,105 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         const existingKeywords = Array.isArray(existingKwAnalysis?.result) ? existingKwAnalysis.result : []
-        // 2-3. Wide-net candidate discovery: exhaustive AI + real store
-        // autocomplete (iOS/Android), deduped vs what's already tracked and
-        // capped by the plan's remaining allowance and a per-run rank-check
-        // budget that fits the function's 300s ceiling. This is what makes a
-        // freshly-added app show a broad, ranked table instead of a trickle.
+        // 2. Wide-net candidate discovery: AI + real store autocomplete, deduped
+        //    vs what's already tracked and capped by the plan's remaining
+        //    allowance and a per-run budget sized for the 60s ceiling.
         const kwLimit = await checkKeywordLimit(app.organization_id as string)
         const allowedNew = Math.max(0, kwLimit.limit - kwLimit.current)
-        const RANK_CHECK_BATCH = 60
+        const RANK_CHECK_BATCH = 40
         const existingTexts = (existingKeywords as Array<Record<string, unknown>>).map((k) => String(k.keyword ?? ''))
         const newKeywords = allowedNew > 0
           ? await discoverKeywords(app as unknown as DiscoverApp, null, existingTexts, Math.min(allowedNew, RANK_CHECK_BATCH))
           : []
 
-        // 4. Run REAL rank checks on the discovered keywords via store search API
+        // 3. Run REAL rank checks on the discovered keywords with bounded
+        //    concurrency so a full batch finishes in a few waves, not minutes.
         let newEnriched: Array<Record<string, unknown>> = []
         if (newKeywords.length > 0) {
-          const newRankings = app.platform === 'ios'
-            ? await batchCheckKeywordRankingsIOS(newKeywords, app.store_id as string, 'us', 350)
-            : await batchCheckKeywordRankings(newKeywords, app.store_id as string, 'us', 250)
+          const check = app.platform === 'ios' ? checkKeywordRankingIOS : checkKeywordRanking
+          const checked = await mapWithConcurrency(
+            newKeywords,
+            6,
+            (kw) => check(kw, app.store_id as string, 'us').catch(() => null),
+          )
+          const newRankings = checked.filter((r): r is NonNullable<typeof r> => r != null)
 
-          // Already capped to the plan allowance; persist all checked keywords.
-          const cappedRankings = newRankings
-
-          // Persist new keywords to the keywords table + keyword_ranks_daily
-          for (const r of cappedRankings) {
-            const { data: kw } = await supabaseAdmin
+          if (newRankings.length > 0) {
+            // Bulk upsert the keyword rows, then read ids back to attach ranks.
+            const { data: upsertedKws } = await supabaseAdmin
               .from('keywords')
               .upsert(
-                {
+                newRankings.map((r) => ({
                   app_id: appId,
                   organization_id: app.organization_id as string,
                   text: r.keyword,
                   country: r.country.toUpperCase(),
                   is_tracked: true,
-                },
+                })),
                 { onConflict: 'app_id,text,country' },
               )
-              .select('id')
-              .single()
+              .select('id, text, country')
 
-            if (kw) {
-              await supabaseAdmin.from('keyword_ranks_daily').upsert(
-                {
-                  keyword_id: kw.id,
-                  date: new Date().toISOString().split('T')[0],
+            const idByKey = new Map<string, string>()
+            for (const k of upsertedKws ?? []) {
+              idByKey.set(`${String(k.text).toLowerCase()}|${String(k.country).toUpperCase()}`, k.id)
+            }
+
+            const now = new Date().toISOString()
+            const rankRows = newRankings
+              .map((r) => {
+                const id = idByKey.get(`${r.keyword.toLowerCase()}|${r.country.toUpperCase()}`)
+                if (!id) return null
+                return {
+                  keyword_id: id,
+                  date: today,
                   rank: r.position,
-                },
-                { onConflict: 'keyword_id,date' },
-              )
-            }
-          }
+                  status: r.status,
+                  source: r.source,
+                  last_checked_at: now,
+                  error_reason: r.errorReason ?? null,
+                }
+              })
+              .filter((row): row is NonNullable<typeof row> => row != null)
 
-          // Enrich with heuristic estimates (clearly flagged)
-          newEnriched = newRankings.map(r => {
-            const metrics = estimateKeywordMetrics(r.keyword, app.platform as 'ios' | 'android' | undefined)
-            const keiScore = Math.round(metrics.volume / Math.max(metrics.difficulty, 1))
-            return {
-              keyword: r.keyword,
-              intent: metrics.intent,
-              difficulty: metrics.difficulty,
-              relevance: r.position ? Math.max(10, 100 - r.position) : 30,
-              volume: metrics.volume,
-              cpc: metrics.cpc,
-              rank: r.position,
-              country: r.country,
-              delta7d: 0,
-              kei: String(keiScore),
-              topCompetitor: r.topCompetitor ?? null,
-              isEstimate: { volume: true, cpc: true, difficulty: true },
+            if (rankRows.length > 0) {
+              await supabaseAdmin
+                .from('keyword_ranks_daily')
+                .upsert(rankRows, { onConflict: 'keyword_id,date' })
             }
-          })
+
+            // Enrich with heuristic estimates (clearly flagged)
+            newEnriched = newRankings.map(r => {
+              const metrics = estimateKeywordMetrics(r.keyword, app.platform as 'ios' | 'android' | undefined)
+              const keiScore = Math.round(metrics.volume / Math.max(metrics.difficulty, 1))
+              return {
+                keyword: r.keyword,
+                intent: metrics.intent,
+                difficulty: metrics.difficulty,
+                relevance: r.position ? Math.max(10, 100 - r.position) : 30,
+                volume: metrics.volume,
+                cpc: metrics.cpc,
+                rank: r.position,
+                country: r.country,
+                delta7d: 0,
+                kei: String(keiScore),
+                topCompetitor: r.topCompetitor ?? null,
+                isEstimate: { volume: true, cpc: true, difficulty: true },
+              }
+            })
+          }
         }
 
-        // 5. Backfill KEI + topCompetitor for existing keywords that don't have them
-        const { checkKeywordRanking: backfillCheckAndroid, checkKeywordRankingIOS: backfillCheckIOS } = await import('@/lib/store-scraper')
-        const backfillCheck = app.platform === 'ios' ? backfillCheckIOS : backfillCheckAndroid
+        // 4. Cheap in-memory refresh for existing keywords: recompute KEI from
+        //    current volume/difficulty. No network calls — rank + competitor
+        //    refresh for the existing set is handled by /api/cron/rank-check.
         for (const kw of existingKeywords as Array<Record<string, unknown>>) {
-          // Always compute KEI from current volume/difficulty
           if (kw.volume && kw.difficulty) {
             kw.kei = String(Math.round(Number(kw.volume) / Math.max(Number(kw.difficulty), 1)))
           }
-          // Fetch topCompetitor if missing (first 10 only to limit API calls)
-          if (!kw.topCompetitor && kw.keyword) {
-            try {
-              const check = await backfillCheck(String(kw.keyword), app.store_id as string, 'us')
-              if (check.topCompetitor) kw.topCompetitor = check.topCompetitor
-              // Also refresh rank while we're at it
-              if (check.position != null) kw.rank = check.position
-              await new Promise(r => setTimeout(r, 200))
-            } catch { /* skip */ }
-          }
         }
 
-        // 6. Merge: existing real data + new AI-discovered keywords with real ranks
+        // 5. Merge: existing real data + new AI-discovered keywords with real ranks
         const mergedKeywords = [...existingKeywords, ...newEnriched]
         await supabaseAdmin.from('analysis_results').upsert(
           {
