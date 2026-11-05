@@ -55,7 +55,7 @@ interface GenerateRequest {
 
 // Run an async mapper over items with a fixed concurrency ceiling. Used for
 // rank checks so a full batch finishes in a few waves instead of one-at-a-time
-// (critical to stay under the 60s serverless ceiling on Vercel Hobby).
+// (critical to stay well under the serverless function ceiling).
 async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
@@ -232,16 +232,17 @@ export async function POST(req: NextRequest) {
       case 'keywords': {
         // Real data pipeline: AI suggests keyword TEXT only, then we check real ranks.
         //
-        // Hard constraint: this runs as a single serverless request on a 60s
-        // ceiling (Vercel Hobby). Every step below is bounded so it finishes
-        // comfortably under that budget:
+        // This runs as a single serverless request against the function's time
+        // ceiling (300s). Every step below is bounded so it finishes with wide
+        // margin:
         //   - new-keyword discovery is capped (RANK_CHECK_BATCH)
         //   - rank checks run with bounded CONCURRENCY, not one-at-a-time
         //   - DB writes are bulk upserts, not one await per row
         //   - there is NO per-existing-keyword network backfill. That loop ran
-        //     a store request for every tracked keyword (236+ here) and was the
-        //     primary cause of the 504s. The /api/cron/rank-check job refreshes
-        //     ranks + competitors for the existing set in the background.
+        //     a store request for every tracked keyword (236+ here), sequential
+        //     and with retries, and was the primary cause of the 504s. The
+        //     /api/cron/rank-check job refreshes ranks + competitors for the
+        //     existing set in the background instead.
         const { checkKeywordRanking, checkKeywordRankingIOS } = await import('@/lib/store-scraper')
         const { estimateKeywordMetrics } = await import('@/lib/keyword-enrichment')
         const today = new Date().toISOString().split('T')[0]
@@ -260,7 +261,7 @@ export async function POST(req: NextRequest) {
         //    allowance and a per-run budget sized for the 60s ceiling.
         const kwLimit = await checkKeywordLimit(app.organization_id as string)
         const allowedNew = Math.max(0, kwLimit.limit - kwLimit.current)
-        const RANK_CHECK_BATCH = 24
+        const RANK_CHECK_BATCH = 40
         const existingTexts = (existingKeywords as Array<Record<string, unknown>>).map((k) => String(k.keyword ?? ''))
         const newKeywords = allowedNew > 0
           ? await discoverKeywords(app as unknown as DiscoverApp, null, existingTexts, Math.min(allowedNew, RANK_CHECK_BATCH))
@@ -273,7 +274,7 @@ export async function POST(req: NextRequest) {
           const check = app.platform === 'ios' ? checkKeywordRankingIOS : checkKeywordRanking
           const checked = await mapWithConcurrency(
             newKeywords,
-            5,
+            6,
             (kw) => check(kw, app.store_id as string, 'us').catch(() => null),
           )
           const newRankings = checked.filter((r): r is NonNullable<typeof r> => r != null)
