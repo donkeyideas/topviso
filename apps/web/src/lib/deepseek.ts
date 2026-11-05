@@ -8,10 +8,12 @@ export function getDeepSeekClient(): OpenAI {
     client = new OpenAI({
       apiKey: process.env.DEEPSEEK_API_KEY!,
       baseURL: 'https://api.deepseek.com',
-      // Fail a hung call fast enough to stay under the route's maxDuration (300s),
-      // and let the SDK retry transient 429/5xx/network errors rather than 500ing.
-      timeout: 60_000,
-      maxRetries: 2,
+      // Fail a hung call fast enough to stay under the serverless ceiling
+      // (Vercel Hobby caps functions at 60s regardless of route maxDuration).
+      // One retry on transient 429/5xx/network errors; worst case ~60s total
+      // rather than the old 180s (60s x 3 attempts) that guaranteed a 504.
+      timeout: 28_000,
+      maxRetries: 1,
     })
   }
   return client
